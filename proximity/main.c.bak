@@ -61,15 +61,15 @@ int main(void)
     init_leds();
     flash_leds();
     flash_leds();
-    
-    enable_radio_tx();
+    volatile uint32_t stat = 0;
+    //enable_radio_tx();
     uint32_t i = 0;
     while (1)
     {
         clear_pin(GREEN_LED);        
-        radio_transmit(i);
+        //radio_transmit(i);
         clear_pin(BLUE_LED);
-        volatile uint32_t stat = NRF_RADIO->STATE;
+        stat = NRF_RADIO->STATE;
         i ++;
         if (i > 4)
         {

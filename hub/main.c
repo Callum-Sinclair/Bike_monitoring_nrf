@@ -57,6 +57,7 @@ uint32_t radio_recieve()
     NRF_RADIO->TASKS_START = 1;
     volatile uint32_t state = NRF_RADIO->STATE;
     while (NRF_RADIO->EVENTS_END == 0);
+    state = NRF_RADIO->STATE;
     return data_buff[5];
 }
 

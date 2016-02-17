@@ -39,6 +39,7 @@ void enable_radio_tx()
                        (2 << RADIO_PCNF1_BALEN_Pos) | \
                        (RADIO_PCNF1_ENDIAN_Little << RADIO_PCNF1_ENDIAN_Pos) | \
                        (RADIO_PCNF1_WHITEEN_Disabled << RADIO_PCNF1_WHITEEN_Pos);
+    NRF_RADIO->TXPOWER = RADIO_TXPOWER_TXPOWER_Neg30dBm;
     NRF_RADIO->TASKS_TXEN = 1;
     while (NRF_RADIO->EVENTS_READY == 0);
 }
@@ -62,12 +63,12 @@ int main(void)
     flash_leds();
     flash_leds();
     volatile uint32_t stat = 0;
-    enable_radio_tx();
+    //enable_radio_tx();
     uint32_t i = 0;
     while (1)
     {
         clear_pin(GREEN_LED);        
-        radio_transmit(i);
+        //radio_transmit(i);
         clear_pin(BLUE_LED);
         stat = NRF_RADIO->STATE;
         i ++;
