@@ -31,10 +31,12 @@ void init_leds()
 
 void enable_radio_tx()
 {
+    NRF_RADIO->BASE0 = 0xE7E7E7E7;
+    NRF_RADIO->PREFIX0 = 0xE7E7E7E7;
     NRF_RADIO->PCNF0 = (0 << RADIO_PCNF0_LFLEN_Pos) | \
                        (0 << RADIO_PCNF0_S0LEN_Pos) | \
                        (0 << RADIO_PCNF0_S1LEN_Pos);
-    NRF_RADIO->PCNF1 = (10 << RADIO_PCNF1_MAXLEN_Pos) | \
+    NRF_RADIO->PCNF1 = (64 << RADIO_PCNF1_MAXLEN_Pos) | \
                        (0 << RADIO_PCNF1_STATLEN_Pos) | \
                        (2 << RADIO_PCNF1_BALEN_Pos) | \
                        (RADIO_PCNF1_ENDIAN_Little << RADIO_PCNF1_ENDIAN_Pos) | \
