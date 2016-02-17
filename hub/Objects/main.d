@@ -13,3 +13,5 @@
 .\objects\main.o: C:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_DeviceFamilyPack\8.3.2\Device\Include\nrf52_name_change.h
 .\objects\main.o: C:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_DeviceFamilyPack\8.3.2\Device\Include\compiler_abstraction.h
 .\objects\main.o: C:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_Drivers\4.0.0-2.alpha\delay\nrf_delay.h
+.\objects\main.o: ../shared_libs/cds_gpio_lib.h
+.\objects\main.o: ../shared_libs/cds_hub_brd.h
