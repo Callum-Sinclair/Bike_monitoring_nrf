@@ -3,8 +3,8 @@
 #include "nrf52_bitfields.h"
 #include "nrf.h"                        // Device header
 #include "nrf_delay.h"                  // NordicSemiconductor::nRF_Drivers:nrf_delay
-#include "cds_gpio_lib.h"
-#include "cds_hub_brd.h"
+#include "gpio_lib.h"
+#include "hub_brd.h"
 
 int main(void)
 {
