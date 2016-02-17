@@ -43,7 +43,7 @@ void enable_radio_rx()
                        (8 << RADIO_PCNF0_S1LEN_Pos) | \
                        (RADIO_PCNF0_PLEN_8bit << RADIO_PCNF0_PLEN_Pos);
     NRF_RADIO->PCNF1 = (64 << RADIO_PCNF1_MAXLEN_Pos) | \
-                       (0 << RADIO_PCNF1_STATLEN_Pos) | \
+                       (16 << RADIO_PCNF1_STATLEN_Pos) | \
                        (4 << RADIO_PCNF1_BALEN_Pos) | \
                        (RADIO_PCNF1_ENDIAN_Little << RADIO_PCNF1_ENDIAN_Pos) | \
                        (RADIO_PCNF1_WHITEEN_Disabled << RADIO_PCNF1_WHITEEN_Pos);
@@ -107,7 +107,7 @@ int main(void)
             default:
                     clear_pin(LED1);
                     clear_pin(LED2);
-                    clear_pin(LED3);
+                    //clear_pin(LED3);
                     clear_pin(LED4);
             break;
         }

@@ -37,7 +37,7 @@ void enable_radio_tx()
                        (0 << RADIO_PCNF0_S0LEN_Pos) | \
                        (8 << RADIO_PCNF0_S1LEN_Pos);
     NRF_RADIO->PCNF1 = (64 << RADIO_PCNF1_MAXLEN_Pos) | \
-                       (0 << RADIO_PCNF1_STATLEN_Pos) | \
+                       (16 << RADIO_PCNF1_STATLEN_Pos) | \
                        (4 << RADIO_PCNF1_BALEN_Pos) | \
                        (RADIO_PCNF1_ENDIAN_Little << RADIO_PCNF1_ENDIAN_Pos) | \
                        (RADIO_PCNF1_WHITEEN_Disabled << RADIO_PCNF1_WHITEEN_Pos);
@@ -47,15 +47,15 @@ void enable_radio_tx()
     NRF_RADIO->CRCINIT = 0xFFFF;
     NRF_RADIO->CRCPOLY = 0x11021;
     NRF_RADIO->MODE = RADIO_MODE_MODE_Nrf_250Kbit;
-    NRF_RADIO->TXPOWER = RADIO_TXPOWER_TXPOWER_Neg8dBm;
+    NRF_RADIO->TXPOWER = RADIO_TXPOWER_TXPOWER_Neg16dBm;
     NRF_RADIO->TASKS_TXEN = 1;
     while (NRF_RADIO->EVENTS_READY == 0);
 }
 
 void radio_transmit(uint32_t val)
 {
-    uint32_t data_buff[20];
-    for (uint8_t i = 0; i < 20; i++)
+    uint32_t data_buff[64];
+    for (uint8_t i = 0; i < 64; i++)
     {
         data_buff[i] = val;
     }
@@ -77,7 +77,6 @@ int main(void)
     volatile uint32_t stat = 0;
     enable_radio_tx();
     uint32_t i = 0;
-    clear_pin(RED_LED);
     while (1)
     {
         clear_pin(GREEN_LED);        

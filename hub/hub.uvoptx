@@ -150,7 +150,7 @@
           <Type>0</Type>
           <LineNumber>71</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>2788</Address>
+          <Address>2790</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
@@ -182,6 +182,11 @@
           <count>3</count>
           <WinNumber>1</WinNumber>
           <ItemText>data_buff[5]</ItemText>
+        </Ww>
+        <Ww>
+          <count>4</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>data_buff</ItemText>
         </Ww>
       </WatchWindow1>
       <Tracepoint>
