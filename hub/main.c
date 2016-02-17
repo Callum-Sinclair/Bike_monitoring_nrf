@@ -72,6 +72,8 @@ uint32_t radio_recieve()
 
 int main(void)
 {
+    NRF_CLOCK->TASKS_HFCLKSTART = 1;
+    while (NRF_CLOCK->EVENTS_HFCLKSTARTED == 0);
     init_leds();
     gpio_pin_in_init(BUT1);
     flash_leds();

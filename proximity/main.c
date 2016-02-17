@@ -67,16 +67,19 @@ void radio_transmit(uint32_t val)
 
 int main(void)
 {
+    NRF_CLOCK->TASKS_HFCLKSTART = 1;
+    while (NRF_CLOCK->EVENTS_HFCLKSTARTED == 0);
+
     init_leds();
     flash_leds();
     flash_leds();
     volatile uint32_t stat = 0;
-    //enable_radio_tx();
+    enable_radio_tx();
     uint32_t i = 0;
     while (1)
     {
         clear_pin(GREEN_LED);        
-        //radio_transmit(i);
+        radio_transmit(i);
         clear_pin(BLUE_LED);
         stat = NRF_RADIO->STATE;
         i ++;
