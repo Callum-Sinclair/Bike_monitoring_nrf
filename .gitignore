@@ -1,0 +1,9 @@
+_Objects/
+.bak
+*.jlink
+*.log
+*.o
+*.d
+*.lib
+*.dep
+JLinkLog.txt
