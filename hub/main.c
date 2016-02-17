@@ -71,7 +71,7 @@ uint32_t radio_recieve()
     state = NRF_RADIO->STATE;
     NRF_RADIO->TASKS_DISABLE = 1;
     while (NRF_RADIO->EVENTS_DISABLED == 0);
-    return data_buff[5];
+    return data_buff[0];
 }
 
 int main(void)
