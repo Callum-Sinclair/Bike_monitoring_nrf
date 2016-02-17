@@ -33,14 +33,19 @@ void enable_radio_tx()
 {
     NRF_RADIO->BASE0 = 0xE7E7E7E7;
     NRF_RADIO->PREFIX0 = 0xE7E7E7E7;
-    NRF_RADIO->PCNF0 = (0 << RADIO_PCNF0_LFLEN_Pos) | \
+    NRF_RADIO->PCNF0 = (8 << RADIO_PCNF0_LFLEN_Pos) | \
                        (0 << RADIO_PCNF0_S0LEN_Pos) | \
-                       (0 << RADIO_PCNF0_S1LEN_Pos);
+                       (8 << RADIO_PCNF0_S1LEN_Pos);
     NRF_RADIO->PCNF1 = (64 << RADIO_PCNF1_MAXLEN_Pos) | \
                        (0 << RADIO_PCNF1_STATLEN_Pos) | \
-                       (2 << RADIO_PCNF1_BALEN_Pos) | \
+                       (4 << RADIO_PCNF1_BALEN_Pos) | \
                        (RADIO_PCNF1_ENDIAN_Little << RADIO_PCNF1_ENDIAN_Pos) | \
                        (RADIO_PCNF1_WHITEEN_Disabled << RADIO_PCNF1_WHITEEN_Pos);
+    NRF_RADIO->FREQUENCY = 40;
+    NRF_RADIO->TIFS = 150;
+    NRF_RADIO->CRCCNF = RADIO_CRCCNF_LEN_Two << RADIO_CRCCNF_LEN_Pos;
+    NRF_RADIO->CRCINIT = 0xFFFF;
+    NRF_RADIO->CRCPOLY = 0x11021;
     NRF_RADIO->TXPOWER = RADIO_TXPOWER_TXPOWER_Neg30dBm;
     NRF_RADIO->TASKS_TXEN = 1;
     while (NRF_RADIO->EVENTS_READY == 0);
@@ -53,6 +58,7 @@ void radio_transmit(uint32_t val)
     {
         data_buff[i] = val;
     }
+    NRF_RADIO->RXADDRESSES = RADIO_RXADDRESSES_ADDR0_Enabled << RADIO_RXADDRESSES_ADDR0_Pos;
     NRF_RADIO->PACKETPTR = (uint32_t)&data_buff[0];
     NRF_RADIO->TASKS_START = 1;
     volatile uint32_t state = NRF_RADIO->STATE;
