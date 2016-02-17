@@ -47,7 +47,7 @@ void enable_radio_tx()
     NRF_RADIO->CRCINIT = 0xFFFF;
     NRF_RADIO->CRCPOLY = 0x11021;
     NRF_RADIO->MODE = RADIO_MODE_MODE_Nrf_250Kbit;
-    NRF_RADIO->TXPOWER = RADIO_TXPOWER_TXPOWER_Pos4dBm;
+    NRF_RADIO->TXPOWER = RADIO_TXPOWER_TXPOWER_Neg8dBm;
     NRF_RADIO->TASKS_TXEN = 1;
     while (NRF_RADIO->EVENTS_READY == 0);
 }
@@ -80,18 +80,18 @@ int main(void)
     clear_pin(RED_LED);
     while (1)
     {
-        //clear_pin(GREEN_LED);        
+        clear_pin(GREEN_LED);        
         radio_transmit(i);
-        //clear_pin(BLUE_LED);
-        /*stat = NRF_RADIO->STATE;
+        clear_pin(BLUE_LED);
+        stat = NRF_RADIO->STATE;
         i ++;
         if (i > 4)
         {
             i = 0;
-        }*/
-        //nrf_delay_ms(1000);
-        //set_pin(GREEN_LED);
-        //set_pin(BLUE_LED);
-        //nrf_delay_ms(1000);
+        }
+        nrf_delay_ms(1000);
+        set_pin(GREEN_LED);
+        set_pin(BLUE_LED);
+        nrf_delay_ms(1000);
     }
 }

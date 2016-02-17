@@ -64,10 +64,13 @@ uint32_t radio_recieve()
     uint32_t data_buff[20];
     NRF_RADIO->RXADDRESSES = RADIO_RXADDRESSES_ADDR0_Enabled << RADIO_RXADDRESSES_ADDR0_Pos;
     NRF_RADIO->PACKETPTR = (uint32_t)&data_buff[0];
+    NRF_RADIO->EVENTS_END = 0;
     NRF_RADIO->TASKS_START = 1;
     volatile uint32_t state = NRF_RADIO->STATE;
     while (NRF_RADIO->EVENTS_END == 0);
     state = NRF_RADIO->STATE;
+    NRF_RADIO->TASKS_DISABLE = 1;
+    while (NRF_RADIO->EVENTS_DISABLED == 0);
     return data_buff[5];
 }
 
@@ -85,6 +88,7 @@ int main(void)
     enable_radio_rx();
     while (1)
     {
+        enable_radio_rx();
         recieved_val = radio_recieve();
         set_pin(LED1);
         set_pin(LED2);
