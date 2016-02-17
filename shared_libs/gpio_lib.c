@@ -17,12 +17,12 @@ void gpio_pin_out_init(uint8_t pin)
                            | GPIO_PIN_CNF_SENSE_Disabled << GPIO_PIN_CNF_SENSE_Pos;
 }
 
-void set_pin(uint8_t pin)
+volatile void set_pin(uint8_t pin)
 {
     NRF_GPIO->OUTSET = 1UL << pin;
 }
 
-void clear_pin(uint8_t pin)
+volatile void clear_pin(uint8_t pin)
 {
     NRF_GPIO->OUTCLR = 1UL << pin;
 }

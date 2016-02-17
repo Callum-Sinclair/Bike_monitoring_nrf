@@ -3,9 +3,9 @@
 <title>Static Call Graph - [.\Objects\hub.axf]</title></head>
 <body><HR>
 <H1>Static Call Graph for image .\Objects\hub.axf</H1><HR>
-<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5060061: Last Updated: Wed Feb 17 12:41:17 2016
+<BR><P>#&#060CALLGRAPH&#062# ARM Linker, 5060061: Last Updated: Wed Feb 17 14:41:33 2016
 <BR><P>
-<H3>Maximum Stack Usage =         80 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
+<H3>Maximum Stack Usage =         84 bytes + Unknown(Functions without stacksize, Cycles, Untraceable Function Pointers)</H3><H3>
 Call chain for Maximum Stack Depth:</H3>
 __rt_entry_main &rArr; main &rArr; radio_recieve
 <P>
@@ -197,7 +197,7 @@ Global Symbols
 <P><STRONG><a name="[76]"></a>__rt_entry_postsh_1</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, __rtentry2.o(.ARM.Collect$$rtentry$$00000009))
 
 <P><STRONG><a name="[3e]"></a>__rt_entry_main</STRONG> (Thumb, 0 bytes, Stack size unknown bytes, __rtentry2.o(.ARM.Collect$$rtentry$$0000000D))
-<BR><BR>[Stack]<UL><LI>Max Depth = 80 + Unknown Stack Size
+<BR><BR>[Stack]<UL><LI>Max Depth = 84 + Unknown Stack Size
 <LI>Call Chain = __rt_entry_main &rArr; main &rArr; radio_recieve
 </UL>
 <BR>[Calls]<UL><LI><a href="#[40]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;exit
@@ -496,7 +496,7 @@ Global Symbols
 </UL>
 
 <P><STRONG><a name="[3f]"></a>main</STRONG> (Thumb, 134 bytes, Stack size 0 bytes, main.o(i.main))
-<BR><BR>[Stack]<UL><LI>Max Depth = 80<LI>Call Chain = main &rArr; radio_recieve
+<BR><BR>[Stack]<UL><LI>Max Depth = 84<LI>Call Chain = main &rArr; radio_recieve
 </UL>
 <BR>[Calls]<UL><LI><a href="#[51]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;set_pin
 <LI><a href="#[54]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;gpio_pin_in_init
@@ -517,8 +517,8 @@ Global Symbols
 <BR>[Called By]<UL><LI><a href="#[4e]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;flash_leds
 </UL>
 
-<P><STRONG><a name="[56]"></a>radio_recieve</STRONG> (Thumb, 30 bytes, Stack size 80 bytes, main.o(i.radio_recieve))
-<BR><BR>[Stack]<UL><LI>Max Depth = 80<LI>Call Chain = radio_recieve
+<P><STRONG><a name="[56]"></a>radio_recieve</STRONG> (Thumb, 52 bytes, Stack size 84 bytes, main.o(i.radio_recieve))
+<BR><BR>[Stack]<UL><LI>Max Depth = 84<LI>Call Chain = radio_recieve
 </UL>
 <BR>[Called By]<UL><LI><a href="#[3f]">&gt;&gt;</a>&nbsp;&nbsp;&nbsp;main
 </UL>

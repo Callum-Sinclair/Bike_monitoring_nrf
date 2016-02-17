@@ -1,3 +1,4 @@
+#pragma once
 #include "nrf.h"
 
 void gpio_pin_in_init(uint8_t pin);

@@ -36,8 +36,6 @@ void init_leds()
 
 void enable_radio_rx()
 {
-    NRF_RADIO->TASKS_RXEN = 1;
-    while (NRF_RADIO->EVENTS_READY == 0);
     NRF_RADIO->PCNF0 = (0 << RADIO_PCNF0_LFLEN_Pos) | \
                        (0 << RADIO_PCNF0_S0LEN_Pos) | \
                        (0 << RADIO_PCNF0_S1LEN_Pos) | \
@@ -47,6 +45,8 @@ void enable_radio_rx()
                        (2 << RADIO_PCNF1_BALEN_Pos) | \
                        (RADIO_PCNF1_ENDIAN_Little << RADIO_PCNF1_ENDIAN_Pos) | \
                        (RADIO_PCNF1_WHITEEN_Disabled << RADIO_PCNF1_WHITEEN_Pos);
+    NRF_RADIO->TASKS_RXEN = 1;
+    while (NRF_RADIO->EVENTS_READY == 0);
 
 }
 
@@ -55,6 +55,7 @@ uint32_t radio_recieve()
     uint32_t data_buff[20];
     NRF_RADIO->PACKETPTR = (uint32_t)&data_buff[0];
     NRF_RADIO->TASKS_START = 1;
+    volatile uint32_t state = NRF_RADIO->STATE;
     while (NRF_RADIO->EVENTS_END == 0);
     return data_buff[5];
 }

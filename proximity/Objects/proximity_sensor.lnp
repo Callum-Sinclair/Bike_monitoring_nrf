@@ -1,0 +1,9 @@
+--cpu Cortex-M0
+".\objects\main.o"
+".\objects\gpio_lib.o"
+".\objects\arm_startup_nrf51.o"
+".\objects\system_nrf51.o"
+".\objects\nrf_delay.o"
+--ro-base 0x00000000 --entry 0x00000000 --rw-base 0x20000000 --entry Reset_Handler --first __Vectors --strict --summary_stderr --info summarysizes --map --xref --callgraph --symbols
+--info sizes --info totals --info unused --info veneers
+--list ".\Listings\proximity_sensor.map" -o .\Objects\proximity_sensor.axf

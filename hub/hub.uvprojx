@@ -256,17 +256,17 @@
                 <Size>0x0</Size>
               </XRAM>
               <OCR_RVCT1>
-                <Type>0</Type>
+                <Type>1</Type>
                 <StartAddress>0x0</StartAddress>
                 <Size>0x0</Size>
               </OCR_RVCT1>
               <OCR_RVCT2>
-                <Type>0</Type>
+                <Type>1</Type>
                 <StartAddress>0x0</StartAddress>
                 <Size>0x0</Size>
               </OCR_RVCT2>
               <OCR_RVCT3>
-                <Type>0</Type>
+                <Type>1</Type>
                 <StartAddress>0x0</StartAddress>
                 <Size>0x0</Size>
               </OCR_RVCT3>
@@ -276,7 +276,7 @@
                 <Size>0x80000</Size>
               </OCR_RVCT4>
               <OCR_RVCT5>
-                <Type>0</Type>
+                <Type>1</Type>
                 <StartAddress>0x0</StartAddress>
                 <Size>0x0</Size>
               </OCR_RVCT5>
@@ -322,7 +322,7 @@
             <wLevel>2</wLevel>
             <uThumb>0</uThumb>
             <uSurpInc>0</uSurpInc>
-            <uC99>0</uC99>
+            <uC99>1</uC99>
             <useXO>0</useXO>
             <v6Lang>1</v6Lang>
             <v6LangP>1</v6LangP>
@@ -332,7 +332,7 @@
               <MiscControls></MiscControls>
               <Define></Define>
               <Undefine></Undefine>
-              <IncludePath></IncludePath>
+              <IncludePath>../shared_libs</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -381,14 +381,19 @@
               <FilePath>.\main.c</FilePath>
             </File>
             <File>
-              <FileName>cds_gpio_lib.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\shared_libs\cds_gpio_lib.h</FilePath>
+              <FileName>gpio_lib.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\shared_libs\gpio_lib.c</FilePath>
             </File>
             <File>
-              <FileName>cds_gpio_lib.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\shared_libs\cds_gpio_lib.c</FilePath>
+              <FileName>gpio_lib.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\shared_libs\gpio_lib.h</FilePath>
+            </File>
+            <File>
+              <FileName>hub_brd.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\shared_libs\hub_brd.h</FilePath>
             </File>
           </Files>
         </Group>

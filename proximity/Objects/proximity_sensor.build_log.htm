@@ -16,25 +16,25 @@ Linker/Locator:  ArmLink.exe V5.06 update 1 (build 61)
 Library Manager: ArmAr.exe V5.06 update 1 (build 61)
 Hex Converter:   FromElf.exe V5.06 update 1 (build 61)
 CPU DLL:         SARMCM3.DLL V5.18
-Dialog DLL:      DCM.DLL V1.13.6.0
+Dialog DLL:      DARMCM1.DLL V1.12.0.0
 Target DLL:      Segger\JL2CM3.dll V2.99.18.0
-Dialog DLL:      TCM.DLL V1.14.8.0
+Dialog DLL:      TARMCM1.DLL V1.9.0.0
  
 <h2>Project:</h2>
-S:\nrf_bike_project\Bike_monitoring_nrf\hub\hub.uvprojx
+S:\nrf_bike_project\Bike_monitoring_nrf\proximity\proximity_sensor.uvprojx
 Project File Date:  02/17/2016
 
 <h2>Output:</h2>
 *** Using Compiler 'V5.06 update 1 (build 61)', folder: 'C:\Keil_v5\ARM\ARMCC\Bin'
 Rebuild target 'Target 1'
-assembling arm_startup_nrf52.s...
+assembling arm_startup_nrf51.s...
+compiling main.c...
+compiling system_nrf51.c...
 compiling gpio_lib.c...
 compiling nrf_delay.c...
-compiling main.c...
-compiling system_nrf52.c...
 linking...
-Program Size: Code=1716 RO-data=1056 RW-data=4 ZI-data=16484  
-".\Objects\hub.axf" - 0 Error(s), 0 Warning(s).
+Program Size: Code=988 RO-data=224 RW-data=4 ZI-data=4196  
+".\Objects\proximity_sensor.axf" - 0 Error(s), 0 Warning(s).
 
 <h2>Software Packages used:</h2>
 
@@ -43,7 +43,6 @@ Package Vendor: ARM
                 ARM::CMSIS:CORE:4.3.0
                 CMSIS (Cortex Microcontroller Software Interface Standard)
    * Component: CORE Version: 4.3.0
-   * Component: DSP Version: 1.4.6
 
 Package Vendor: NordicSemiconductor
                 http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_DeviceFamilyPack/NordicSemiconductor.nRF_DeviceFamilyPack.8.3.2.pack
@@ -58,7 +57,7 @@ Package Vendor: NordicSemiconductor
    * Component: nrf_delay Version: 4.0.0-2.alpha
 
 <h2>Collection of Component include folders:</h2>
-  S:\nrf_bike_project\Bike_monitoring_nrf\hub\RTE
+  S:\nrf_bike_project\Bike_monitoring_nrf\proximity\RTE
   C:\Keil_v5\ARM\PACK\ARM\CMSIS\4.5.0\CMSIS\Include
   C:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_DeviceFamilyPack\8.3.2\Device\Include
   C:\Keil_v5\ARM\PACK\NordicSemiconductor\nRF_Drivers\4.0.0-2.alpha\delay
@@ -67,18 +66,14 @@ Package Vendor: NordicSemiconductor
 
    * Component: ARM::CMSIS:CORE:4.3.0
 
-   * Component: ARM::CMSIS:DSP:1.4.6
-      Library file:  CMSIS\Lib\ARM\arm_cortexM4lf_math.lib
-      Include file:  CMSIS\Include\arm_math.h
-
    * Component: NordicSemiconductor::Device:Startup:8.3.2
-      Include file:  Device\Include\system_nrf52.h
-      Source file:   Device\Source\arm\arm_startup_nrf52.s
-      Source file:   Device\Source\system_nrf52.c
+      Source file:   Device\Source\arm\arm_startup_nrf51.s
+      Source file:   Device\Source\system_nrf51.c
+      Include file:  Device\Include\system_nrf51.h
 
    * Component: NordicSemiconductor::nRF_Drivers:nrf_delay:4.0.0-2.alpha
-      Source file:   delay\nrf_delay.c
       Include file:  delay\nrf_delay.h
+      Source file:   delay\nrf_delay.c
 Build Time Elapsed:  00:00:01
 </pre>
 </body>
