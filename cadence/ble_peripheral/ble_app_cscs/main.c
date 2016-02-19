@@ -47,6 +47,8 @@
 #include "app_trace.h"
 #include "bsp.h"
 #include "bsp_btn_ble.h"
+#include "hub_brd.h"
+#include "gpio_lib.h"
 
 #define IS_SRVC_CHANGED_CHARACT_PRESENT 0                                          /**< Include or not the service_changed characteristic. if not enabled, the server's database cannot be changed for the lifetime of the device*/
 
@@ -186,7 +188,6 @@ static void battery_level_meas_timeout_handler(void * p_context)
     battery_level_update();
 }
 
-uint32_t callum_testing_var = 0;
 /**@brief Function for populating simulated cycling speed and cadence measurements.
  */
 static void csc_sim_measurement(ble_cscs_meas_t * p_measurement)
@@ -202,15 +203,12 @@ static void csc_sim_measurement(ble_cscs_meas_t * p_measurement)
 
     // Per specification event time is in 1/1024th's of a second.
     event_time_inc = (1024 * SPEED_AND_CADENCE_MEAS_INTERVAL) / 1000;
+    NRF_TIMER4->TASKS_CAPTURE[0] = 1;
 
     // Calculate simulated wheel revolution values.
     p_measurement->is_wheel_rev_data_present = true;
-
-    mm_per_sec = KPH_TO_MM_PER_SEC * callum_testing_var;
-    callum_testing_var ++;
-
-    wheel_revolution_mm     += mm_per_sec * SPEED_AND_CADENCE_MEAS_INTERVAL / 1000;
-    m_cumulative_wheel_revs += wheel_revolution_mm / WHEEL_CIRCUMFERENCE_MM;
+    
+    m_cumulative_wheel_revs = NRF_TIMER4->CC[0];
     wheel_revolution_mm     %= WHEEL_CIRCUMFERENCE_MM;
 
     p_measurement->cumulative_wheel_revs = m_cumulative_wheel_revs;
@@ -847,13 +845,34 @@ static void power_manage(void)
     APP_ERROR_CHECK(err_code);
 }
 
+void reed_sw_init(uint32_t pin)
+{
+    // Sets TIMER1's counter to be incremented each time "pin" is toggled
+    // This uses PPI channel 1 and TIMER4
+    // De-bouncing the switch is not considered
+    gpio_pin_in_init(pin);
+    //GPIOTE setup
+    NRF_GPIOTE->CONFIG[0] = ((GPIOTE_CONFIG_MODE_Event << GPIOTE_CONFIG_MODE_Pos) | \
+                             (pin << GPIOTE_CONFIG_PSEL_Pos) | \
+                             (GPIOTE_CONFIG_POLARITY_LoToHi << GPIOTE_CONFIG_POLARITY_Pos));
+    //Timer(Counter) setup
+    NRF_TIMER4->MODE = TIMER_MODE_MODE_Counter;
+    NRF_TIMER4->BITMODE = TIMER_BITMODE_BITMODE_16Bit;
+    NRF_TIMER4->TASKS_CLEAR = 1;
+    NRF_TIMER4->TASKS_START = 1;
+    //PPI setup
+    NRF_PPI->CH[0].EEP = (uint32_t)&(NRF_GPIOTE->EVENTS_IN[0]);
+    NRF_PPI->CH[0].TEP = (uint32_t)&(NRF_TIMER4->TASKS_COUNT);
+    NRF_PPI->CHENSET = 1;
 
+}
 /**@brief Function for application main entry.
  */
 int main(void)
 {
     uint32_t err_code;
     bool erase_bonds;
+    
     
     // Initialize.
     app_trace_init();
@@ -867,10 +886,12 @@ int main(void)
     sensor_simulator_init();
     conn_params_init();
 
+    reed_sw_init(BUT4);
     // Start execution.
     application_timers_start();
     err_code = ble_advertising_start(BLE_ADV_MODE_FAST);
     APP_ERROR_CHECK(err_code);
+    reed_sw_init(BUT4);
 
     // Enter main loop.
     for (;; )
