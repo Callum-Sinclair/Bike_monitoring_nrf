@@ -39,7 +39,7 @@ void enable_radio_rx()
     NRF_RADIO->BASE0 = 0xE7E7E7E7;
     NRF_RADIO->PREFIX0 = 0xE7E7E7E7;
     NRF_RADIO->PCNF0 = (8 << RADIO_PCNF0_LFLEN_Pos) | \
-                       (0 << RADIO_PCNF0_S0LEN_Pos) | \
+                       (8 << RADIO_PCNF0_S0LEN_Pos) | \
                        (8 << RADIO_PCNF0_S1LEN_Pos) | \
                        (RADIO_PCNF0_PLEN_8bit << RADIO_PCNF0_PLEN_Pos);
     NRF_RADIO->PCNF1 = (64 << RADIO_PCNF1_MAXLEN_Pos) | \
@@ -52,7 +52,7 @@ void enable_radio_rx()
     NRF_RADIO->CRCCNF = RADIO_CRCCNF_LEN_Two << RADIO_CRCCNF_LEN_Pos;
     NRF_RADIO->CRCINIT = 0xFFFF;
     NRF_RADIO->CRCPOLY = 0x11021;
-    NRF_RADIO->MODE = RADIO_MODE_MODE_Nrf_250Kbit;
+    NRF_RADIO->MODE = RADIO_MODE_MODE_Ble_1Mbit;
     
     NRF_RADIO->TASKS_RXEN = 1;
     while (NRF_RADIO->EVENTS_READY == 0);
@@ -71,7 +71,7 @@ uint32_t radio_recieve()
     state = NRF_RADIO->STATE;
     NRF_RADIO->TASKS_DISABLE = 1;
     while (NRF_RADIO->EVENTS_DISABLED == 0);
-    return data_buff[0];
+    return data_buff[3];
 }
 
 int main(void)
