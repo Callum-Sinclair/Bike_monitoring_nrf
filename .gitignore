@@ -9,3 +9,5 @@
 *.lib
 *.dep
 JLinkLog.txt
+*/_build/
+*/*/*/*/*/*/_build/
