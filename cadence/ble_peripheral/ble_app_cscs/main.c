@@ -49,6 +49,7 @@
 #include "bsp_btn_ble.h"
 #include "hub_brd.h"
 #include "gpio_lib.h"
+NRF_TIMER_Type* rotation_counter;
 
 #define IS_SRVC_CHANGED_CHARACT_PRESENT 0                                          /**< Include or not the service_changed characteristic. if not enabled, the server's database cannot be changed for the lifetime of the device*/
 
@@ -203,12 +204,12 @@ static void csc_sim_measurement(ble_cscs_meas_t * p_measurement)
 
     // Per specification event time is in 1/1024th's of a second.
     event_time_inc = (1024 * SPEED_AND_CADENCE_MEAS_INTERVAL) / 1000;
-    NRF_TIMER4->TASKS_CAPTURE[0] = 1;
+    rotation_counter->TASKS_CAPTURE[0] = 1;
 
     // Calculate simulated wheel revolution values.
     p_measurement->is_wheel_rev_data_present = true;
     
-    m_cumulative_wheel_revs = NRF_TIMER4->CC[0];
+    m_cumulative_wheel_revs = rotation_counter->CC[0];
     wheel_revolution_mm     %= WHEEL_CIRCUMFERENCE_MM;
 
     p_measurement->cumulative_wheel_revs = m_cumulative_wheel_revs;
@@ -856,23 +857,24 @@ void reed_sw_init(uint32_t pin)
                              (pin << GPIOTE_CONFIG_PSEL_Pos) | \
                              (GPIOTE_CONFIG_POLARITY_LoToHi << GPIOTE_CONFIG_POLARITY_Pos));
     //Timer(Counter) setup
-    NRF_TIMER4->MODE = TIMER_MODE_MODE_Counter;
-    NRF_TIMER4->BITMODE = TIMER_BITMODE_BITMODE_16Bit;
-    NRF_TIMER4->TASKS_CLEAR = 1;
-    NRF_TIMER4->TASKS_START = 1;
+    rotation_counter->MODE = TIMER_MODE_MODE_Counter;
+    rotation_counter->BITMODE = TIMER_BITMODE_BITMODE_16Bit;
+    rotation_counter->TASKS_CLEAR = 1;
+    rotation_counter->TASKS_START = 1;
     //PPI setup
     NRF_PPI->CH[0].EEP = (uint32_t)&(NRF_GPIOTE->EVENTS_IN[0]);
-    NRF_PPI->CH[0].TEP = (uint32_t)&(NRF_TIMER4->TASKS_COUNT);
+    NRF_PPI->CH[0].TEP = (uint32_t)&(rotation_counter->TASKS_COUNT);
     NRF_PPI->CHENSET = 1;
 
 }
+
 /**@brief Function for application main entry.
  */
 int main(void)
 {
     uint32_t err_code;
     bool erase_bonds;
-    
+    rotation_counter = NRF_TIMER4;
     
     // Initialize.
     app_trace_init();
