@@ -192,7 +192,7 @@ static void battery_level_meas_timeout_handler(void * p_context)
 
 /**@brief Function for populating simulated cycling speed and cadence measurements.
  */
-static void csc_sim_measurement(ble_cscs_meas_t * p_measurement)
+static void csc_measure(ble_cscs_meas_t * p_measurement)
 {
     static uint16_t cumulative_crank_revs = 0;
     static uint16_t event_time            = 0;
@@ -205,7 +205,6 @@ static void csc_sim_measurement(ble_cscs_meas_t * p_measurement)
 
     // Per specification event time is in 1/1024th's of a second.
     event_time_inc = (1024 * SPEED_AND_CADENCE_MEAS_INTERVAL) / 1000;
-    rotation_counter->TASKS_CAPTURE[0] = 1;
 
     // Calculate simulated wheel revolution values.
     p_measurement->is_wheel_rev_data_present = true;
@@ -214,18 +213,10 @@ static void csc_sim_measurement(ble_cscs_meas_t * p_measurement)
     wheel_revolution_mm     %= WHEEL_CIRCUMFERENCE_MM;
 
     p_measurement->cumulative_wheel_revs = m_cumulative_wheel_revs;
-    p_measurement->last_wheel_event_time =
-        event_time + (event_time_inc * (mm_per_sec - wheel_revolution_mm) / mm_per_sec);
+    p_measurement->last_wheel_event_time = event_time + (event_time_inc);
 
     // Calculate simulated cadence values.
     p_measurement->is_crank_rev_data_present = false;
-
-    degrees_per_sec = RPM_TO_DEGREES_PER_SEC * sensorsim_measure(&m_crank_rpm_sim_state,
-                                                                     &m_crank_rpm_sim_cfg);
-
-    crank_rev_degrees     += degrees_per_sec * SPEED_AND_CADENCE_MEAS_INTERVAL / 1000;
-    cumulative_crank_revs += crank_rev_degrees / DEGREES_PER_REVOLUTION;
-    crank_rev_degrees     %= DEGREES_PER_REVOLUTION;
 
     p_measurement->cumulative_crank_revs = 0;
     p_measurement->last_crank_event_time = 0;
@@ -244,12 +235,13 @@ static void csc_sim_measurement(ble_cscs_meas_t * p_measurement)
  */
 static void csc_meas_timeout_handler(void * p_context)
 {
+    rotation_counter->TASKS_CAPTURE[0] = 1;
     uint32_t        err_code;
     ble_cscs_meas_t cscs_measurement;
 
     UNUSED_PARAMETER(p_context);
 
-    csc_sim_measurement(&cscs_measurement);
+    csc_measure(&cscs_measurement);
 
     err_code = ble_cscs_measurement_send(&m_cscs, &cscs_measurement);
     if ((err_code != NRF_SUCCESS) &&
