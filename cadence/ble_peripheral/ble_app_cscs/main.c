@@ -50,6 +50,7 @@
 #include "hub_brd.h"
 #include "gpio_lib.h"
 NRF_TIMER_Type* rotation_counter;
+NRF_TIMER_Type* debounce_timer;
 
 #define IS_SRVC_CHANGED_CHARACT_PRESENT 0                                          /**< Include or not the service_changed characteristic. if not enabled, the server's database cannot be changed for the lifetime of the device*/
 
@@ -848,9 +849,9 @@ static void power_manage(void)
 
 void reed_sw_init(uint32_t pin)
 {
-    // Sets TIMER1's counter to be incremented each time "pin" is toggled
-    // This uses PPI channel 1 and TIMER4
-    // De-bouncing the switch is not considered
+    // Sets TIMER4's counter to be incremented each time "pin" is toggled
+    // This uses PPI channel 0-3 and TIMER4&3 (defined at top)
+    // De-bouncing with a 4 ms 
     gpio_pin_in_init(pin);
     //GPIOTE setup
     NRF_GPIOTE->CONFIG[0] = ((GPIOTE_CONFIG_MODE_Event << GPIOTE_CONFIG_MODE_Pos) | \
@@ -861,10 +862,32 @@ void reed_sw_init(uint32_t pin)
     rotation_counter->BITMODE = TIMER_BITMODE_BITMODE_16Bit;
     rotation_counter->TASKS_CLEAR = 1;
     rotation_counter->TASKS_START = 1;
+    //Timer (debounce) setup
+    debounce_timer->MODE = TIMER_MODE_MODE_Timer;
+    debounce_timer->BITMODE = TIMER_BITMODE_BITMODE_32Bit;
+    debounce_timer->PRESCALER = 8; //gives T=0.16ms
+    
+    debounce_timer->CC[0] = 1;  // 0.16 ms
+    debounce_timer->CC[1] = 25; // 4 ms
+    debounce_timer->CC[2] = 0x40000; // about 10 min (use eventually for power off)
+    
+    debounce_timer->TASKS_CLEAR = 1;
+    debounce_timer->TASKS_START = 1;
     //PPI setup
     NRF_PPI->CH[0].EEP = (uint32_t)&(NRF_GPIOTE->EVENTS_IN[0]);
     NRF_PPI->CH[0].TEP = (uint32_t)&(rotation_counter->TASKS_COUNT);
-    NRF_PPI->CHENSET = 1;
+    
+    NRF_PPI->CH[1].EEP = (uint32_t)&(NRF_GPIOTE->EVENTS_IN[0]);
+    NRF_PPI->CH[1].TEP = (uint32_t)&(debounce_timer->TASKS_CLEAR);
+    
+    NRF_PPI->CH[2].EEP = (uint32_t)&(debounce_timer->EVENTS_COMPARE[0]);
+    NRF_PPI->CH[2].TEP = (uint32_t)&(rotation_counter->TASKS_STOP);
+    
+    NRF_PPI->CH[3].EEP = (uint32_t)&(debounce_timer->EVENTS_COMPARE[1]);
+    NRF_PPI->CH[3].TEP = (uint32_t)&(rotation_counter->TASKS_START);
+    
+    
+    NRF_PPI->CHENSET = 0xF;
 
 }
 
@@ -875,6 +898,7 @@ int main(void)
     uint32_t err_code;
     bool erase_bonds;
     rotation_counter = NRF_TIMER4;
+    debounce_timer = NRF_TIMER3;
     
     // Initialize.
     app_trace_init();
