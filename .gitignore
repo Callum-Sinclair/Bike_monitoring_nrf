@@ -1,6 +1,7 @@
 */Objects/
 */Listings/
 *.uvguix.*
+*.uvgui.*
 *.bak
 *.jlink
 *.log
