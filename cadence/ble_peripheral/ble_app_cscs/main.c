@@ -209,7 +209,7 @@ static void csc_measure(ble_cscs_meas_t * p_measurement)
     // Calculate simulated wheel revolution values.
     p_measurement->is_wheel_rev_data_present = true;
     
-    m_cumulative_wheel_revs = rotation_counter->CC[0];
+    m_cumulative_wheel_revs = rotation_counter->CC[0] / 2; //each pass of the magnet causes two increments
     wheel_revolution_mm     %= WHEEL_CIRCUMFERENCE_MM;
 
     p_measurement->cumulative_wheel_revs = m_cumulative_wheel_revs;
@@ -857,11 +857,11 @@ void reed_sw_init(uint32_t pin)
     //Timer (debounce) setup
     debounce_timer->MODE = TIMER_MODE_MODE_Timer;
     debounce_timer->BITMODE = TIMER_BITMODE_BITMODE_32Bit;
-    debounce_timer->PRESCALER = 8; //gives T=0.16ms
+    debounce_timer->PRESCALER = 4; //gives T=0.01ms
     
-    debounce_timer->CC[0] = 1;  // 0.16 ms
-    debounce_timer->CC[1] = 25; // 4 ms
-    debounce_timer->CC[2] = 0x40000; // about 10 min (use eventually for power off)
+    debounce_timer->CC[0] = 1;  // 0.01 ms
+    debounce_timer->CC[1] = 4000; // 40 ms
+    debounce_timer->CC[2] = 0x800000; // about 10 min (use eventually for power off)
     
     debounce_timer->TASKS_CLEAR = 1;
     debounce_timer->TASKS_START = 1;
@@ -904,12 +904,12 @@ int main(void)
     sensor_simulator_init();
     conn_params_init();
 
-    reed_sw_init(BUT4);
+    reed_sw_init(30);
     // Start execution.
     application_timers_start();
     err_code = ble_advertising_start(BLE_ADV_MODE_FAST);
     APP_ERROR_CHECK(err_code);
-    reed_sw_init(BUT4);
+    reed_sw_init(30);
 
     // Enter main loop.
     for (;; )
