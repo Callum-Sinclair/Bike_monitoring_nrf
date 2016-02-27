@@ -37,7 +37,6 @@
 #include "ble_advertising.h"
 #include "ble_bas.h"
 #include "ble_cscs.h"
-#include "ble_bps.h"
 #include "ble_dis.h"
 #include "ble_conn_params.h"
 #include "sensorsim.h"
@@ -106,11 +105,10 @@ NRF_TIMER_Type* debounce_timer;
 
 #define APP_FEATURE_NOT_SUPPORTED       BLE_GATT_STATUS_ATTERR_APP_BEGIN + 2       /**< Reply when unsupported features are requested. */
 
-volatile uint16_t adc_sample = 0x55;
-
+volatile uint16_t                       adc_sample;
 static uint16_t                         m_conn_handle = BLE_CONN_HANDLE_INVALID;   /**< Handle of the current connection. */
 static ble_bas_t                        m_bas;                                     /**< Structure used to identify the battery service. */
-static ble_bps_t                        m_bps;                                     /**< Structure used to identify the cycling speed and cadence service. */
+static ble_cscs_t                       m_cscs;                                    /**< Structure used to identify the cycling speed and cadence service. */
 
 static sensorsim_cfg_t                  m_battery_sim_cfg;                         /**< Battery Level sensor simulator configuration. */
 static sensorsim_state_t                m_battery_sim_state;                       /**< Battery Level sensor simulator state. */
@@ -121,9 +119,21 @@ static sensorsim_cfg_t                  m_crank_rpm_sim_cfg;                    
 static sensorsim_state_t                m_crank_rpm_sim_state;                     /**< Crank simulator state. */
 
 APP_TIMER_DEF(m_battery_timer_id);                                                 /**< Battery timer. */
-APP_TIMER_DEF(m_usr_meas_timer_id);                                                /**< CSC measurement timer. */
+APP_TIMER_DEF(m_csc_meas_timer_id);                                                /**< CSC measurement timer. */
 static dm_application_instance_t        m_app_handle;                              /**< Application identifier allocated by device manager. */
+static uint32_t                         m_cumulative_wheel_revs;                   /**< Cumulative wheel revolutions. */
 static bool                             m_auto_calibration_in_progress;            /**< Set when an autocalibration is in progress. */
+
+static ble_sensor_location_t supported_locations[] = {BLE_SENSOR_LOCATION_FRONT_WHEEL ,
+                                                      BLE_SENSOR_LOCATION_LEFT_CRANK  ,
+                                                      BLE_SENSOR_LOCATION_RIGHT_CRANK ,
+                                                      BLE_SENSOR_LOCATION_LEFT_PEDAL  ,
+                                                      BLE_SENSOR_LOCATION_RIGHT_PEDAL ,
+                                                      BLE_SENSOR_LOCATION_FRONT_HUB   ,
+                                                      BLE_SENSOR_LOCATION_REAR_DROPOUT,
+                                                      BLE_SENSOR_LOCATION_CHAINSTAY   ,
+                                                      BLE_SENSOR_LOCATION_REAR_WHEEL  ,
+                                                      BLE_SENSOR_LOCATION_REAR_HUB};          /**< supported location for the sensor location. */
 
 static ble_uuid_t m_adv_uuids[] = {{BLE_UUID_CYCLING_SPEED_AND_CADENCE,  BLE_UUID_TYPE_BLE},
                                    {BLE_UUID_BATTERY_SERVICE,            BLE_UUID_TYPE_BLE},
@@ -145,6 +155,17 @@ void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name)
     app_error_handler(DEAD_BEEF, line_num, p_file_name);
 }
 
+uint16_t usr_measure(void)
+{
+    uint32_t result;
+    
+    NRF_SAADC->EVENTS_DONE = 0;
+    NRF_SAADC->TASKS_START = 1;
+    NRF_SAADC->TASKS_SAMPLE = 1;
+    while (NRF_SAADC->EVENTS_DONE == 0);
+    result = adc_sample;
+    return result;
+}
 
 /**@brief Function for performing battery measurement and updating the Battery Level characteristic
  *        in Battery Service.
@@ -154,7 +175,7 @@ static void battery_level_update(void)
     uint32_t err_code;
     uint8_t  battery_level;
 
-    battery_level = (uint8_t)sensorsim_measure(&m_battery_sim_state, &m_battery_sim_cfg);
+    battery_level = (uint8_t)usr_measure();
 
     err_code = ble_bas_battery_level_update(&m_bas, battery_level);
     if ((err_code != NRF_SUCCESS) &&
@@ -183,25 +204,44 @@ static void battery_level_meas_timeout_handler(void * p_context)
 
 /**@brief Function for populating simulated cycling speed and cadence measurements.
  */
-static void usr_measure(ble_bps_meas_t * p_measurement)
+static void csc_measure(ble_cscs_meas_t * p_measurement)
 {
     uint32_t result;
     
     NRF_SAADC->EVENTS_DONE = 0;
+    NRF_SAADC->TASKS_START = 1;
     NRF_SAADC->TASKS_SAMPLE = 1;
     while (NRF_SAADC->EVENTS_DONE == 0);
-    result = adc_sample / 8;
+    result = adc_sample;
     
-    p_measurement->pulse_rate.mantissa = result;
-    p_measurement->pulse_rate.exponent = 0;
+    static uint16_t cumulative_crank_revs = 0;
+    static uint16_t event_time            = 0;
+    static uint16_t wheel_revolution_mm   = 0;
+    static uint16_t crank_rev_degrees     = 0;
+
+    uint16_t mm_per_sec;
+    uint16_t degrees_per_sec;
+    uint16_t event_time_inc;
+
+    // Per specification event time is in 1/1024th's of a second.
+    event_time_inc = (1024 * SPEED_AND_CADENCE_MEAS_INTERVAL) / 1000;
+
+    // Calculate simulated wheel revolution values.
+    p_measurement->is_wheel_rev_data_present = true;
+    
+    m_cumulative_wheel_revs = rotation_counter->CC[0] / 2; //each pass of the magnet causes two increments
+    wheel_revolution_mm     %= WHEEL_CIRCUMFERENCE_MM;
+
+    p_measurement->cumulative_wheel_revs = 0;
+    p_measurement->last_wheel_event_time = event_time + (event_time_inc);
 
     // Calculate simulated cadence values.
+    p_measurement->is_crank_rev_data_present = false;
 
-    p_measurement->blood_pressure_units_in_kpa = 0;
-    p_measurement->time_stamp_present = 0;
-    p_measurement->pulse_rate_present = 1;
-    p_measurement->user_id_present = 0;
-    p_measurement->measurement_status_present = 0;
+    p_measurement->cumulative_crank_revs = 0;
+    p_measurement->last_crank_event_time = 0;
+    
+    event_time += event_time_inc;
 }
 
 
@@ -213,17 +253,17 @@ static void usr_measure(ble_bps_meas_t * p_measurement)
  * @param[in] p_context  Pointer used for passing some arbitrary information (context) from the
  *                       app_start_timer() call to the timeout handler.
  */
-static void usr_meas_timeout_handler(void * p_context)
+static void csc_meas_timeout_handler(void * p_context)
 {
-    NRF_SAADC->TASKS_SAMPLE = 1;
+    rotation_counter->TASKS_CAPTURE[0] = 1;
     uint32_t        err_code;
-    ble_bps_meas_t usr_measurement;
+    ble_cscs_meas_t cscs_measurement;
 
     UNUSED_PARAMETER(p_context);
 
-    usr_measure(&usr_measurement);
+    csc_measure(&cscs_measurement);
 
-    err_code = ble_bps_measurement_send(&m_bps, &usr_measurement);
+    err_code = ble_cscs_measurement_send(&m_cscs, &cscs_measurement);
     if ((err_code != NRF_SUCCESS) &&
         (err_code != NRF_ERROR_INVALID_STATE) &&
         (err_code != BLE_ERROR_NO_TX_PACKETS) &&
@@ -234,14 +274,14 @@ static void usr_meas_timeout_handler(void * p_context)
     }
     if (m_auto_calibration_in_progress)
     {
-//        err_code = ble_sc_ctrlpt_rsp_send(&(m_bps.ctrl_pt), BLE_SCPT_SUCCESS);
-//        if ((err_code != NRF_SUCCESS) &&
-//            (err_code != NRF_ERROR_INVALID_STATE) &&
-//            (err_code != BLE_ERROR_NO_TX_PACKETS)
-//            )
-//        {
-//            APP_ERROR_HANDLER(err_code);
-//        }
+        err_code = ble_sc_ctrlpt_rsp_send(&(m_cscs.ctrl_pt), BLE_SCPT_SUCCESS);
+        if ((err_code != NRF_SUCCESS) &&
+            (err_code != NRF_ERROR_INVALID_STATE) &&
+            (err_code != BLE_ERROR_NO_TX_PACKETS)
+            )
+        {
+            APP_ERROR_HANDLER(err_code);
+        }
         if (err_code != BLE_ERROR_NO_TX_PACKETS)
         {
             m_auto_calibration_in_progress = false;
@@ -268,9 +308,9 @@ static void timers_init(void)
     APP_ERROR_CHECK(err_code);
 
     // Create battery timer.
-    err_code = app_timer_create(&m_usr_meas_timer_id,
+    err_code = app_timer_create(&m_csc_meas_timer_id,
                                 APP_TIMER_MODE_REPEATED,
-                                usr_meas_timeout_handler);
+                                csc_meas_timeout_handler);
     APP_ERROR_CHECK(err_code);
 }
 
@@ -320,7 +360,7 @@ ble_scpt_response_t sc_ctrlpt_event_handler(ble_sc_ctrlpt_t     * p_sc_ctrlpt,
     switch (p_evt->evt_type)
     {
         case BLE_SC_CTRLPT_EVT_SET_CUMUL_VALUE:
-            while(1);
+            m_cumulative_wheel_revs = p_evt->params.cumulative_value;
             break;
 
         case BLE_SC_CTRLPT_EVT_START_CALIBRATION:
@@ -342,21 +382,36 @@ ble_scpt_response_t sc_ctrlpt_event_handler(ble_sc_ctrlpt_t     * p_sc_ctrlpt,
 static void services_init(void)
 {
     uint32_t              err_code;
-    ble_bps_init_t        bps_init;
+    ble_cscs_init_t       cscs_init;
     ble_bas_init_t        bas_init;
     ble_dis_init_t        dis_init;
+    ble_sensor_location_t sensor_location;
 
     // Initialize Cycling Speed and Cadence Service.
-    memset(&bps_init, 0, sizeof(bps_init));
+    memset(&cscs_init, 0, sizeof(cscs_init));
 
-    bps_init.evt_handler = NULL;
-    bps_init.feature     = BLE_BPS_FEATURE_PULSE_RATE_RANGE_BIT;
+    cscs_init.evt_handler = NULL;
+    cscs_init.feature     = BLE_CSCS_FEATURE_WHEEL_REV_BIT | BLE_CSCS_FEATURE_CRANK_REV_BIT |
+                            BLE_CSCS_FEATURE_MULTIPLE_SENSORS_BIT;
 
     // Here the sec level for the Cycling Speed and Cadence Service can be changed/increased.
-    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&bps_init.bps_meas_attr_md.cccd_write_perm);   // for the measurement characteristic, only the CCCD write permission can be set by the application, others are mandated by service specification
-    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&bps_init.bps_feature_attr_md.read_perm);      // for the feature characteristic, only the read permission can be set by the application, others are mandated by service specification
+    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&cscs_init.csc_meas_attr_md.cccd_write_perm);   // for the measurement characteristic, only the CCCD write permission can be set by the application, others are mandated by service specification
+    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&cscs_init.csc_feature_attr_md.read_perm);      // for the feature characteristic, only the read permission can be set by the application, others are mandated by service specification
+    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&cscs_init.csc_ctrlpt_attr_md.write_perm);      // for the SC control point characteristic, only the write permission and CCCD write can be set by the application, others are mandated by service specification
+    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&cscs_init.csc_ctrlpt_attr_md.cccd_write_perm); // for the SC control point characteristic, only the write permission and CCCD write can be set by the application, others are mandated by service specification
     
-    err_code = ble_bps_init(&m_bps, &bps_init);
+    cscs_init.ctrplt_supported_functions    = BLE_SRV_SC_CTRLPT_CUM_VAL_OP_SUPPORTED
+                                              |BLE_SRV_SC_CTRLPT_SENSOR_LOCATIONS_OP_SUPPORTED
+                                              |BLE_SRV_SC_CTRLPT_START_CALIB_OP_SUPPORTED;
+    cscs_init.ctrlpt_evt_handler            = sc_ctrlpt_event_handler;
+    cscs_init.list_supported_locations      = supported_locations;
+    cscs_init.size_list_supported_locations = sizeof(supported_locations) / sizeof(ble_sensor_location_t);            
+    
+    sensor_location           = BLE_SENSOR_LOCATION_FRONT_WHEEL;                    // initializes the sensor location to add the sensor location characteristic.
+    cscs_init.sensor_location = &sensor_location;
+    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&cscs_init.csc_sensor_loc_attr_md.read_perm);    // for the sensor location characteristic, only the read permission can be set by the application, others are mendated by service specification
+
+    err_code = ble_cscs_init(&m_cscs, &cscs_init);
     APP_ERROR_CHECK(err_code);
 
     // Initialize Battery Service.
@@ -415,6 +470,8 @@ static void sensor_simulator_init(void)
 
     sensorsim_init(&m_crank_rpm_sim_state, &m_crank_rpm_sim_cfg);
 
+    m_cumulative_wheel_revs        = 0;
+    m_auto_calibration_in_progress = false;
 }
 
 
@@ -431,7 +488,7 @@ static void application_timers_start(void)
 
     csc_meas_timer_ticks = APP_TIMER_TICKS(SPEED_AND_CADENCE_MEAS_INTERVAL, APP_TIMER_PRESCALER);
 
-    err_code = app_timer_start(m_usr_meas_timer_id, csc_meas_timer_ticks, NULL);
+    err_code = app_timer_start(m_csc_meas_timer_id, csc_meas_timer_ticks, NULL);
     APP_ERROR_CHECK(err_code);
 }
 
@@ -482,7 +539,7 @@ static void conn_params_init(void)
     connection_params_init.first_conn_params_update_delay = FIRST_CONN_PARAMS_UPDATE_DELAY;
     connection_params_init.next_conn_params_update_delay  = NEXT_CONN_PARAMS_UPDATE_DELAY;
     connection_params_init.max_conn_params_update_count   = MAX_CONN_PARAMS_UPDATE_COUNT;
-    connection_params_init.start_on_notify_cccd_handle    = m_bps.meas_handles.cccd_handle;
+    connection_params_init.start_on_notify_cccd_handle    = m_cscs.meas_handles.cccd_handle;
     connection_params_init.disconnect_on_fail             = false;
     connection_params_init.evt_handler                    = on_conn_params_evt;
     connection_params_init.error_handler                  = conn_params_error_handler;
@@ -609,7 +666,7 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
 static void ble_evt_dispatch(ble_evt_t * p_ble_evt)
 {
     dm_ble_evt_handler(p_ble_evt);
-    ble_bps_on_ble_evt(&m_bps, p_ble_evt);
+    ble_cscs_on_ble_evt(&m_cscs, p_ble_evt);
     ble_bas_on_ble_evt(&m_bas, p_ble_evt);
     ble_conn_params_on_ble_evt(p_ble_evt);
     bsp_btn_ble_on_ble_evt(p_ble_evt);
@@ -827,7 +884,6 @@ void usr_init(uint32_t pin)
 
     NRF_SAADC->ENABLE = 1;
 }
-
 /**@brief Function for application main entry.
  */
 int main(void)
@@ -838,7 +894,7 @@ int main(void)
     debounce_timer = NRF_TIMER3;
     
     // Initialize.
-    /*app_trace_init();
+    app_trace_init();
     timers_init();
     buttons_leds_init(&erase_bonds);
     ble_stack_init();
@@ -847,30 +903,20 @@ int main(void)
     advertising_init();
     services_init();
     sensor_simulator_init();
-    conn_params_init();*/
+    conn_params_init();
 
     usr_init(30);
     // Start execution.
-    /*application_timers_start();
+    application_timers_start();
     err_code = ble_advertising_start(BLE_ADV_MODE_FAST);
     APP_ERROR_CHECK(err_code);
-    usr_init(30);*/
-    volatile uint16_t result = 0xBB;
-    while (1)
-    {
-        NRF_SAADC->EVENTS_DONE = 0;
-        NRF_SAADC->TASKS_START = 1;
-        NRF_SAADC->TASKS_SAMPLE = 1;
-        while (NRF_SAADC->EVENTS_DONE == 0);
-        result = adc_sample;
-        volatile uint32_t num = NRF_SAADC->RESULT.AMOUNT;
+    usr_init(30);
 
-    }
     // Enter main loop.
-    /*for (;; )
+    for (;; )
     {
-        //power_manage();
-    }*/
+        power_manage();
+    }
 }
 
 
