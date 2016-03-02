@@ -49,6 +49,7 @@
 #include "bsp_btn_ble.h"
 #include "hub_brd.h"
 #include "gpio_lib.h"
+#include "battery_measure_nrf52.h"
 NRF_TIMER_Type* rotation_counter;
 NRF_TIMER_Type* debounce_timer;
 
@@ -104,6 +105,8 @@ NRF_TIMER_Type* debounce_timer;
 #define DEAD_BEEF                       0xDEADBEEF                                 /**< Value used as error code on stack dump, can be used to identify stack location on stack unwind. */
 
 #define APP_FEATURE_NOT_SUPPORTED       BLE_GATT_STATUS_ATTERR_APP_BEGIN + 2       /**< Reply when unsupported features are requested. */
+
+#define BAT_PIN                         8 //Analogue pin used to sense battery level
 
 static uint16_t                         m_conn_handle = BLE_CONN_HANDLE_INVALID;   /**< Handle of the current connection. */
 static ble_bas_t                        m_bas;                                     /**< Structure used to identify the battery service. */
@@ -163,7 +166,7 @@ static void battery_level_update(void)
     uint32_t err_code;
     uint8_t  battery_level;
 
-    battery_level = (uint8_t)sensorsim_measure(&m_battery_sim_state, &m_battery_sim_cfg);
+    battery_level = battery_measure(BAT_PIN);
 
     err_code = ble_bas_battery_level_update(&m_bas, battery_level);
     if ((err_code != NRF_SUCCESS) &&
@@ -893,6 +896,7 @@ int main(void)
     debounce_timer = NRF_TIMER3;
     
     // Initialize.
+    adc_init(BAT_PIN);
     app_trace_init();
     timers_init();
     buttons_leds_init(&erase_bonds);
