@@ -33,5 +33,9 @@ uint8_t battery_measure(uint8_t a_pin)
     
     uint8_t bat_percent = (uint8_t)(((adc_sample - BAT_0) * 100) / (BAT_100 - BAT_0)); // calcutate the battery percentage
     
+    if (adc_sample < BAT_0)
+    {
+        return 0;
+    }
     return bat_percent;
 }
