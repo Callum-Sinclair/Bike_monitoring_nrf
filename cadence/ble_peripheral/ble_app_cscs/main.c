@@ -209,6 +209,18 @@ static void csc_measure(ble_cscs_meas_t * p_measurement)
     // Per specification event time is in 1/1024th's of a second.
     event_time_inc = (1024 * SPEED_AND_CADENCE_MEAS_INTERVAL) / 1000;
 
+#ifdef CADENCE
+    // Calculate simulated wheel revolution values.
+    p_measurement->is_wheel_rev_data_present = false;
+    p_measurement->cumulative_wheel_revs = 0;
+    p_measurement->last_wheel_event_time = 0;
+
+    // Calculate simulated cadence values.
+    p_measurement->is_crank_rev_data_present = true;
+
+    p_measurement->cumulative_crank_revs = rotation_counter->CC[0] / 2; //each pass of the magnet causes two increments
+    p_measurement->last_crank_event_time = event_time + (event_time_inc);
+#else //SPEED
     // Calculate simulated wheel revolution values.
     p_measurement->is_wheel_rev_data_present = true;
     
@@ -220,9 +232,9 @@ static void csc_measure(ble_cscs_meas_t * p_measurement)
 
     // Calculate simulated cadence values.
     p_measurement->is_crank_rev_data_present = false;
-
     p_measurement->cumulative_crank_revs = 0;
     p_measurement->last_crank_event_time = 0;
+#endif
     
     event_time += event_time_inc;
 }
@@ -888,6 +900,8 @@ void reed_sw_init(uint32_t pin)
 
 /**@brief Function for application main entry.
  */
+// FOR CADENCE must use #define CADENCE
+// FOR SPEED must not use above define
 int main(void)
 {
     uint32_t err_code;
