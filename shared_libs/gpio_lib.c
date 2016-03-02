@@ -1,4 +1,3 @@
-#pragma once
 #include "gpio_lib.h"
 
 void gpio_pin_in_init(uint8_t pin)
