@@ -110,7 +110,8 @@ NRF_TIMER_Type* debounce_timer;
 
 #define APP_FEATURE_NOT_SUPPORTED       BLE_GATT_STATUS_ATTERR_APP_BEGIN + 2       /**< Reply when unsupported features are requested. */
 
-#define BAT_PIN                         8 //Analogue pin used to sense battery level
+#define BAT_PIN                         7  // Analogue pin used to sense battery level
+#define READ_SW_PIN                     30 // gpio pin that the reed switch is connected to
 
 static uint16_t                         m_conn_handle = BLE_CONN_HANDLE_INVALID;   /**< Handle of the current connection. */
 static ble_bas_t                        m_bas;                                     /**< Structure used to identify the battery service. */
@@ -201,13 +202,9 @@ static void battery_level_meas_timeout_handler(void * p_context)
  */
 static void csc_measure(ble_cscs_meas_t * p_measurement)
 {
-    static uint16_t cumulative_crank_revs = 0;
     static uint16_t event_time            = 0;
     static uint16_t wheel_revolution_mm   = 0;
-    static uint16_t crank_rev_degrees     = 0;
 
-    uint16_t mm_per_sec;
-    uint16_t degrees_per_sec;
     uint16_t event_time_inc;
 
     // Per specification event time is in 1/1024th's of a second.
@@ -926,12 +923,12 @@ int main(void)
     sensor_simulator_init();
     conn_params_init();
 
-    reed_sw_init(30);
+    reed_sw_init(READ_SW_PIN);
     // Start execution.
     application_timers_start();
     err_code = ble_advertising_start(BLE_ADV_MODE_FAST);
     APP_ERROR_CHECK(err_code);
-    reed_sw_init(30);
+    reed_sw_init(READ_SW_PIN);
 
     // Enter main loop.
     for (;; )

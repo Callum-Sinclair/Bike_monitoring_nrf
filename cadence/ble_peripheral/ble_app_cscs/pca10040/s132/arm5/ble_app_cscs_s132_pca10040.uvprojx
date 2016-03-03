@@ -444,6 +444,16 @@ rf52xxx_uicr.flm))</FlashDriverDll>
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\..\shared_libs\gpio_lib.c</FilePath>
             </File>
+            <File>
+              <FileName>battery_measure_nrf52.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\..\shared_libs\battery_measure_nrf52.c</FilePath>
+            </File>
+            <File>
+              <FileName>battery_measure_nrf52.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\..\..\..\..\shared_libs\battery_measure_nrf52.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -920,6 +930,16 @@ rf52xxx_uicr.flm))</FlashDriverDll>
               <FileName>gpio_lib.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\..\..\..\..\..\shared_libs\gpio_lib.c</FilePath>
+            </File>
+            <File>
+              <FileName>battery_measure_nrf52.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\..\shared_libs\battery_measure_nrf52.c</FilePath>
+            </File>
+            <File>
+              <FileName>battery_measure_nrf52.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\..\..\..\..\shared_libs\battery_measure_nrf52.h</FilePath>
             </File>
           </Files>
         </Group>
