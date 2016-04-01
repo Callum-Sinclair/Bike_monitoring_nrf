@@ -49,6 +49,8 @@
 #include "bsp_btn_ble.h"
 #include "hub_brd.h"
 #include "gpio_lib.h"
+#include "nrf_delay.h"                  // NordicSemiconductor::nRF_Drivers:nrf_delay
+
 NRF_TIMER_Type* rotation_counter;
 NRF_TIMER_Type* debounce_timer;
 
@@ -105,6 +107,8 @@ NRF_TIMER_Type* debounce_timer;
 
 #define APP_FEATURE_NOT_SUPPORTED       BLE_GATT_STATUS_ATTERR_APP_BEGIN + 2       /**< Reply when unsupported features are requested. */
 
+#define USR_EN_PIN                      9
+
 volatile uint16_t                       adc_sample;
 static uint16_t                         m_conn_handle = BLE_CONN_HANDLE_INVALID;   /**< Handle of the current connection. */
 static ble_bas_t                        m_bas;                                     /**< Structure used to identify the battery service. */
@@ -158,11 +162,16 @@ void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name)
 uint16_t usr_measure(void)
 {
     uint32_t result;
-    
+    //enable USR
+    set_pin(USR_EN_PIN);
+    //delay 20us
+    nrf_delay_us(20);
     NRF_SAADC->EVENTS_DONE = 0;
     NRF_SAADC->TASKS_START = 1;
     NRF_SAADC->TASKS_SAMPLE = 1;
     while (NRF_SAADC->EVENTS_DONE == 0);
+    //unenable USR
+    clear_pin(USR_EN_PIN);
     result = adc_sample;
     return result;
 }
@@ -861,6 +870,8 @@ static void power_manage(void)
 
 void usr_init(uint32_t pin)
 {
+    gpio_pin_out_init(USR_EN_PIN);
+    clear_pin(USR_EN_PIN);
     // Sets up PIN as an analogue input
     NRF_SAADC->CH[0].PSELP = SAADC_CH_PSELP_PSELP_AnalogInput7;
     NRF_SAADC->CH[0].PSELN = SAADC_CH_PSELN_PSELN_NC;
