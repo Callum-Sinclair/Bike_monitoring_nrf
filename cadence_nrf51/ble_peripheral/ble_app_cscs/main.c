@@ -60,11 +60,11 @@ NRF_TIMER_Type* debounce_timer;
 #ifdef CADNECE
 #define DEVICE_NAME                     "Cadence"                                  /**< Name of device. Will be included in the advertising data. */
 #else
-#define DEVICE_NAME                     "Speed"                                    /**< Name of device. Will be included in the advertising data. */
+#define DEVICE_NAME                     "Speedy"                                    /**< Name of device. Will be included in the advertising data. */
 #endif
 #define MANUFACTURER_NAME               "SmartBike"                                /**< Manufacturer. Will be passed to Device Information Service. */
 #define APP_ADV_INTERVAL                40                                         /**< The advertising interval (in units of 0.625 ms. This value corresponds to 25 ms). */
-#define APP_ADV_TIMEOUT_IN_SECONDS      180                                        /**< The advertising timeout in units of seconds. */
+#define APP_ADV_TIMEOUT_IN_SECONDS      360                                        /**< The advertising timeout in units of seconds. */
 
 #define APP_TIMER_PRESCALER             0                                          /**< Value of the RTC1 PRESCALER register. */
 #define APP_TIMER_OP_QUEUE_SIZE         4                                          /**< Size of timer operation queues. */
@@ -206,6 +206,8 @@ static void csc_measure(ble_cscs_meas_t * p_measurement)
 {
     static uint16_t event_time            = 0;
     static uint16_t wheel_revolution_mm   = 0;
+    static uint32_t rot_counter_last      = 0;
+    static uint16_t still_counter         = 0;
 
     uint16_t event_time_inc;
 
@@ -238,6 +240,20 @@ static void csc_measure(ble_cscs_meas_t * p_measurement)
     p_measurement->cumulative_crank_revs = 0;
     p_measurement->last_crank_event_time = 0;
 #endif
+    
+    if (rot_counter_last == rotation_counter->CC[0])
+    {
+        still_counter ++;
+    }
+    else
+    {
+        still_counter = 0;
+    }
+    if (still_counter > 200)
+    {
+        NRF_POWER->SYSTEMOFF = 1;
+    }
+    rot_counter_last = rotation_counter->CC[0];
     
     event_time += event_time_inc;
 }
@@ -879,7 +895,6 @@ void reed_sw_init(uint32_t pin)
     
     debounce_timer->CC[0] = 1;  // 0.01 ms
     debounce_timer->CC[1] = 4000; // 40 ms
-    debounce_timer->CC[2] = 0x800000; // about 10 min (use eventually for power off)
     
     debounce_timer->TASKS_CLEAR = 1;
     debounce_timer->TASKS_START = 1;

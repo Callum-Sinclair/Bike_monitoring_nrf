@@ -6,7 +6,7 @@ void gpio_pin_in_init(uint8_t pin)
                            | GPIO_PIN_CNF_INPUT_Connect << GPIO_PIN_CNF_INPUT_Pos \
                            | GPIO_PIN_CNF_PULL_Pullup << GPIO_PIN_CNF_PULL_Pos \
                            | GPIO_PIN_CNF_DRIVE_S0S1 << GPIO_PIN_CNF_DRIVE_Pos \
-                           | GPIO_PIN_CNF_SENSE_Disabled << GPIO_PIN_CNF_SENSE_Pos;
+                           | GPIO_PIN_CNF_SENSE_Low << GPIO_PIN_CNF_SENSE_Pos;
 }
 
 void gpio_pin_out_init(uint8_t pin)
