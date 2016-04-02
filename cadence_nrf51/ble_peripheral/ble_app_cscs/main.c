@@ -109,8 +109,8 @@ NRF_TIMER_Type* debounce_timer;
 
 #define APP_FEATURE_NOT_SUPPORTED       BLE_GATT_STATUS_ATTERR_APP_BEGIN + 2       /**< Reply when unsupported features are requested. */
 
-#define BAT_PIN                         6  // Analogue pin used to sense battery level
-#define READ_SW_PIN                     18 // gpio pin that the reed switch is connected to
+#define BAT_PIN                         3  // Analogue pin used to sense battery level
+#define READ_SW_PIN                     5  // gpio pin that the reed switch is connected to
 
 //UART0_CONFIG_PSEL_TXD=1 UART0_CONFIG_PSEL_RXD=1 UART0_CONFIG_PSEL_CTS=1 UART0_CONFIG_PSEL_RTS=1 UART0_CONFIG_HWFC=1 UART0_CONFIG_PARITY=1 UART0_CONFIG_BAUDRATE=1 UART0_CONFIG_IRQ_PRIORITY=1
 
