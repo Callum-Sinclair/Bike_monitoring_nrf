@@ -105,6 +105,7 @@
 
 #define USR_EN_PIN                      9
 #define BRD_LED_PIN                     19
+#define BAT_PIN                         5
 
 typedef enum
 {
@@ -195,7 +196,7 @@ static void rsc_sim_measurement(ble_rscs_meas_t * p_measurement)
     
     p_measurement->inst_stride_length = usr_measure();
     
-    p_measurement->total_distance     = sensorsim_measure(&m_battery_sim_state, &m_battery_sim_cfg);
+    p_measurement->total_distance     = battery_measure(BAT_PIN);
 
     if (p_measurement->inst_speed > (uint32_t)(MIN_RUNNING_SPEED * 256))
     {
@@ -742,7 +743,7 @@ int main(void)
     
     usr_init(30);
     set_pin(USR_EN_PIN);
-    bat_adc_init(4);
+    bat_adc_init(BAT_PIN);
 
     // Start execution.
     application_timers_start();
