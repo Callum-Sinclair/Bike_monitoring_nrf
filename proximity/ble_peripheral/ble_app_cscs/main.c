@@ -60,7 +60,7 @@ NRF_TIMER_Type* debounce_timer;
 #define CENTRAL_LINK_COUNT              0                                          /**<number of central links used by the application. When changing this number remember to adjust the RAM settings*/
 #define PERIPHERAL_LINK_COUNT           1                                          /**<number of peripheral links used by the application. When changing this number remember to adjust the RAM settings*/
 
-#define DEVICE_NAME                     "Cadences"                                  /**< Name of device. Will be included in the advertising data. */
+#define DEVICE_NAME                     "USR"                                  /**< Name of device. Will be included in the advertising data. */
 #define MANUFACTURER_NAME               "SmartBike"                                /**< Manufacturer. Will be passed to Device Information Service. */
 #define APP_ADV_INTERVAL                40                                         /**< The advertising interval (in units of 0.625 ms. This value corresponds to 25 ms). */
 #define APP_ADV_TIMEOUT_IN_SECONDS      180                                        /**< The advertising timeout in units of seconds. */
@@ -185,7 +185,7 @@ uint16_t usr_measure(void)
     NRF_ADC->TASKS_START = 1;
     while (NRF_ADC->EVENTS_END == 0);
     //unenable USR
-    //clear_pin(USR_EN_PIN);
+    clear_pin(USR_EN_PIN);
     result = NRF_ADC->RESULT;
     NRF_ADC->ENABLE = ADC_ENABLE_ENABLE_Disabled;
     return result;
@@ -883,7 +883,7 @@ void usr_init(uint32_t pin)
     NRF_ADC->CONFIG = ((ADC_CONFIG_RES_8bit                             << ADC_CONFIG_RES_Pos) | \
                        (ADC_CONFIG_INPSEL_AnalogInputOneThirdPrescaling << ADC_CONFIG_INPSEL_Pos) | \
                        (ADC_CONFIG_REFSEL_SupplyOneThirdPrescaling      << ADC_CONFIG_REFSEL_Pos) | \
-                       (ADC_CONFIG_PSEL_AnalogInput5                    << ADC_CONFIG_PSEL_Pos) | \
+                       (ADC_CONFIG_PSEL_AnalogInput6                    << ADC_CONFIG_PSEL_Pos) | \
                        (ADC_CONFIG_EXTREFSEL_None                       << ADC_CONFIG_EXTREFSEL_Pos));
 }
 /**@brief Function for application main entry.
@@ -907,8 +907,8 @@ int main(void)
     sensor_simulator_init();
     conn_params_init();
 
-    //usr_init(30);
-        //set_pin(USR_EN_PIN);
+    usr_init(30);
+    set_pin(USR_EN_PIN);
     bat_adc_init(4);
     
     gpio_pin_out_init(BRD_LED_PIN);
