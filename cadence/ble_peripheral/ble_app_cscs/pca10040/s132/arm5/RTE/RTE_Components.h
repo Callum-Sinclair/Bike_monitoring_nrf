@@ -4,7 +4,7 @@
  *      *** Do not modify ! ***
  *
  * Project: 'ble_app_cscs_s132_pca10040' 
- * Target:  'nrf52832_xxaa_s132' 
+ * Target:  'flash_s132_nrf52_2.0.0-7.alpha_softdevice' 
  */
 
 #ifndef RTE_COMPONENTS_H
@@ -16,13 +16,5 @@
  */
 #define CMSIS_device_header "nrf.h"
 
-#define GPIOTE_CONFIG_NUM_OF_LOW_POWER_EVENTS
-#define GPIOTE_ENABLED
-  #define GPIOTE_CONFIG_NUM_OF_LOW_POWER_EVENTS
-#define NRF_LOG_USES_UART=1
-#define S132
-#define SOFTDEVICE_PRESENT
-#define SWI_DISABLE0
-#define UART0_ENABLED
 
 #endif /* RTE_COMPONENTS_H */
