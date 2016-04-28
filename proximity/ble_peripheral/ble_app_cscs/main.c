@@ -50,6 +50,7 @@
 #include "hub_brd.h"
 #include "gpio_lib.h"
 #include "nrf_delay.h"                  // NordicSemiconductor::nRF_Drivers:nrf_delay
+#include "battery_measure_lib.h"
 
 NRF_TIMER_Type* rotation_counter;
 NRF_TIMER_Type* debounce_timer;
@@ -59,7 +60,7 @@ NRF_TIMER_Type* debounce_timer;
 #define CENTRAL_LINK_COUNT              0                                          /**<number of central links used by the application. When changing this number remember to adjust the RAM settings*/
 #define PERIPHERAL_LINK_COUNT           1                                          /**<number of peripheral links used by the application. When changing this number remember to adjust the RAM settings*/
 
-#define DEVICE_NAME                     "Cadence"                                  /**< Name of device. Will be included in the advertising data. */
+#define DEVICE_NAME                     "Cadences"                                  /**< Name of device. Will be included in the advertising data. */
 #define MANUFACTURER_NAME               "SmartBike"                                /**< Manufacturer. Will be passed to Device Information Service. */
 #define APP_ADV_INTERVAL                40                                         /**< The advertising interval (in units of 0.625 ms. This value corresponds to 25 ms). */
 #define APP_ADV_TIMEOUT_IN_SECONDS      180                                        /**< The advertising timeout in units of seconds. */
@@ -108,6 +109,7 @@ NRF_TIMER_Type* debounce_timer;
 #define APP_FEATURE_NOT_SUPPORTED       BLE_GATT_STATUS_ATTERR_APP_BEGIN + 2       /**< Reply when unsupported features are requested. */
 
 #define USR_EN_PIN                      9
+#define BRD_LED_PIN                     19
 
 volatile uint16_t                       adc_sample;
 static uint16_t                         m_conn_handle = BLE_CONN_HANDLE_INVALID;   /**< Handle of the current connection. */
@@ -161,18 +163,31 @@ void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name)
 
 uint16_t usr_measure(void)
 {
-    uint32_t result;
+    static bool led = true;
+    volatile uint32_t result;
     //enable USR
     set_pin(USR_EN_PIN);
+    if (led)
+    {
+        set_pin(BRD_LED_PIN);
+        led = false;
+    }
+    else
+    {
+        clear_pin(BRD_LED_PIN);
+        led = true;
+    }
+    
     //delay 20us
     nrf_delay_us(20);
-    NRF_SAADC->EVENTS_DONE = 0;
-    NRF_SAADC->TASKS_START = 1;
-    NRF_SAADC->TASKS_SAMPLE = 1;
-    while (NRF_SAADC->EVENTS_DONE == 0);
+    NRF_ADC->ENABLE = ADC_ENABLE_ENABLE_Enabled;
+    NRF_ADC->EVENTS_END = 0;
+    NRF_ADC->TASKS_START = 1;
+    while (NRF_ADC->EVENTS_END == 0);
     //unenable USR
-    clear_pin(USR_EN_PIN);
-    result = adc_sample;
+    //clear_pin(USR_EN_PIN);
+    result = NRF_ADC->RESULT;
+    NRF_ADC->ENABLE = ADC_ENABLE_ENABLE_Disabled;
     return result;
 }
 
@@ -215,14 +230,6 @@ static void battery_level_meas_timeout_handler(void * p_context)
  */
 static void csc_measure(ble_cscs_meas_t * p_measurement)
 {
-    uint32_t result;
-    
-    NRF_SAADC->EVENTS_DONE = 0;
-    NRF_SAADC->TASKS_START = 1;
-    NRF_SAADC->TASKS_SAMPLE = 1;
-    while (NRF_SAADC->EVENTS_DONE == 0);
-    result = adc_sample;
-    
     static uint16_t cumulative_crank_revs = 0;
     static uint16_t event_time            = 0;
     static uint16_t wheel_revolution_mm   = 0;
@@ -873,27 +880,11 @@ void usr_init(uint32_t pin)
     gpio_pin_out_init(USR_EN_PIN);
     clear_pin(USR_EN_PIN);
     // Sets up PIN as an analogue input
-    NRF_SAADC->CH[0].PSELP = SAADC_CH_PSELP_PSELP_AnalogInput7;
-    NRF_SAADC->CH[0].PSELN = SAADC_CH_PSELN_PSELN_NC;
-    NRF_SAADC->RESOLUTION = SAADC_RESOLUTION_VAL_8bit;
-    NRF_SAADC->SAMPLERATE = SAADC_SAMPLERATE_MODE_Task << SAADC_SAMPLERATE_MODE_Pos;
-    NRF_SAADC->RESULT.PTR = (uint32_t)&adc_sample;
-    NRF_SAADC->RESULT.MAXCNT = 1;
-    NRF_SAADC->CH[0].CONFIG = ((SAADC_CH_CONFIG_RESP_Bypass   << SAADC_CH_CONFIG_RESP_Pos) | \
-                               (SAADC_CH_CONFIG_RESN_Bypass   << SAADC_CH_CONFIG_RESN_Pos) | \
-                               (SAADC_CH_CONFIG_GAIN_Gain1_4  << SAADC_CH_CONFIG_GAIN_Pos) | \
-                               (SAADC_CH_CONFIG_REFSEL_VDD1_4 << SAADC_CH_CONFIG_REFSEL_Pos) | \
-                               (SAADC_CH_CONFIG_TACQ_10us     << SAADC_CH_CONFIG_TACQ_Pos) | \
-                               (SAADC_CH_CONFIG_MODE_SE       << SAADC_CH_CONFIG_MODE_Pos));
-    uint32_t abcd = NRF_SAADC->CH[0].PSELP;
-    abcd= NRF_SAADC->CH[0].PSELN;
-    abcd= NRF_SAADC->RESOLUTION;
-    abcd= NRF_SAADC->SAMPLERATE;
-    abcd= NRF_SAADC->RESULT.PTR;
-    abcd= NRF_SAADC->RESULT.MAXCNT;
-    abcd= NRF_SAADC->CH[0].CONFIG;
-
-    NRF_SAADC->ENABLE = 1;
+    NRF_ADC->CONFIG = ((ADC_CONFIG_RES_8bit                             << ADC_CONFIG_RES_Pos) | \
+                       (ADC_CONFIG_INPSEL_AnalogInputOneThirdPrescaling << ADC_CONFIG_INPSEL_Pos) | \
+                       (ADC_CONFIG_REFSEL_SupplyOneThirdPrescaling      << ADC_CONFIG_REFSEL_Pos) | \
+                       (ADC_CONFIG_PSEL_AnalogInput5                    << ADC_CONFIG_PSEL_Pos) | \
+                       (ADC_CONFIG_EXTREFSEL_None                       << ADC_CONFIG_EXTREFSEL_Pos));
 }
 /**@brief Function for application main entry.
  */
@@ -901,8 +892,8 @@ int main(void)
 {
     uint32_t err_code;
     bool erase_bonds;
-    rotation_counter = NRF_TIMER4;
-    debounce_timer = NRF_TIMER3;
+    rotation_counter = NRF_TIMER1;
+    debounce_timer = NRF_TIMER2;
     
     // Initialize.
     app_trace_init();
@@ -916,7 +907,12 @@ int main(void)
     sensor_simulator_init();
     conn_params_init();
 
-    usr_init(30);
+    //usr_init(30);
+        //set_pin(USR_EN_PIN);
+    bat_adc_init(4);
+    
+    gpio_pin_out_init(BRD_LED_PIN);
+
     // Start execution.
     application_timers_start();
     err_code = ble_advertising_start(BLE_ADV_MODE_FAST);

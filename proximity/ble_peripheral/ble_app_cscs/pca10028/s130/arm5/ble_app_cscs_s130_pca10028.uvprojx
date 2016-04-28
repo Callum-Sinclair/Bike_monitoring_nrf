@@ -311,7 +311,7 @@ rf51xxx.flm))</FlashDriverDll>
           </ArmAdsMisc>
           <Cads>
             <interw>1</interw>
-            <Optim>4</Optim>
+            <Optim>1</Optim>
             <oTime>0</oTime>
             <SplitLS>0</SplitLS>
             <OneElfS>1</OneElfS>
@@ -323,7 +323,7 @@ rf51xxx.flm))</FlashDriverDll>
             <wLevel>0</wLevel>
             <uThumb>0</uThumb>
             <uSurpInc>0</uSurpInc>
-            <uC99>0</uC99>
+            <uC99>1</uC99>
             <useXO>0</useXO>
             <v6Lang>1</v6Lang>
             <v6LangP>1</v6LangP>
@@ -428,6 +428,16 @@ rf51xxx.flm))</FlashDriverDll>
                 </FileArmAds>
               </FileOption>
             </File>
+            <File>
+              <FileName>battery_measure_lib.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\..\shared_libs\battery_measure_lib.c</FilePath>
+            </File>
+            <File>
+              <FileName>gpio_lib.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\..\shared_libs\gpio_lib.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -494,7 +504,7 @@ rf51xxx.flm))</FlashDriverDll>
           <SLE66CMisc></SLE66CMisc>
           <SLE66AMisc></SLE66AMisc>
           <SLE66LinkerMisc></SLE66LinkerMisc>
-          <SFDFile></SFDFile>
+          <SFDFile>$$Device:nRF51422_xxAC$SVD\nrf51.svd</SFDFile>
           <bCustSvd>0</bCustSvd>
           <UseEnv>0</UseEnv>
           <BinPath></BinPath>
@@ -888,6 +898,16 @@ rf51xxx.flm))</FlashDriverDll>
                   </Cads>
                 </FileArmAds>
               </FileOption>
+            </File>
+            <File>
+              <FileName>battery_measure_lib.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\..\shared_libs\battery_measure_lib.c</FilePath>
+            </File>
+            <File>
+              <FileName>gpio_lib.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\..\shared_libs\gpio_lib.c</FilePath>
             </File>
           </Files>
         </Group>
