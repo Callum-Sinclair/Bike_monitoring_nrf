@@ -37,7 +37,6 @@
 #include "ble_dis.h"
 #include "ble_conn_params.h"
 #include "boards.h"
-#include "sensorsim.h"
 #include "softdevice_handler.h"
 #include "app_timer.h"
 #include "device_manager.h"
@@ -64,24 +63,7 @@
 #define APP_TIMER_PRESCALER             0                                          /**< Value of the RTC1 PRESCALER register. */
 #define APP_TIMER_OP_QUEUE_SIZE         4                                          /**< Size of timer operation queues. */
 
-#define MIN_BATTERY_LEVEL               81                                          /**< Minimum battery level as returned by the simulated measurement function. */
-#define MAX_BATTERY_LEVEL               100                                         /**< Maximum battery level as returned by the simulated measurement function. */
-#define BATTERY_LEVEL_INCREMENT         1                                           /**< Value by which the battery level is incremented/decremented for each call to the simulated measurement function. */
-
 #define SPEED_AND_CADENCE_MEAS_INTERVAL 1000                                        /**< Speed and cadence measurement interval (milliseconds). */
-
-#define MIN_SPEED_MPS                   0.5                                         /**< Minimum speed in meters per second for use in the simulated measurement function. */
-#define MAX_SPEED_MPS                   6.5                                         /**< Maximum speed in meters per second for use in the simulated measurement function. */
-#define SPEED_MPS_INCREMENT             1.5                                         /**< Value by which speed is incremented/decremented for each call to the simulated measurement function. */
-#define MIN_RUNNING_SPEED               3                                           /**< speed threshold to set the running bit. */
-
-#define MIN_CADENCE_RPM                 40                                          /**< Minimum cadence in revolutions per minute for use in the simulated measurement function. */
-#define MAX_CADENCE_RPM                 160                                         /**< Maximum cadence in revolutions per minute for use in the simulated measurement function. */
-#define CADENCE_RPM_INCREMENT           20                                          /**< Value by which cadence is incremented/decremented in the simulated measurement function. */
-
-#define MIN_STRIDE_LENGTH               20                                          /**< Minimum stride length in decimeter for use in the simulated measurement function. */
-#define MAX_STRIDE_LENGTH               125                                         /**< Maximum stride length in decimeter for use in the simulated measurement function. */
-#define STRIDE_LENGTH_INCREMENT         5                                           /**< Value by which stride length is incremented/decremented in the simulated measurement function. */
 
 #define MIN_CONN_INTERVAL               MSEC_TO_UNITS(500, UNIT_1_25_MS)            /**< Minimum acceptable connection interval (0.5 seconds). */
 #define MAX_CONN_INTERVAL               MSEC_TO_UNITS(1000, UNIT_1_25_MS)           /**< Maximum acceptable connection interval (1 second). */
@@ -119,16 +101,6 @@ typedef enum
 
 static uint16_t                         m_conn_handle = BLE_CONN_HANDLE_INVALID;    /**< Handle of the current connection. */
 static ble_rscs_t                       m_rscs;                                     /**< Structure used to identify the running speed and cadence service. */
-
-static sensorsim_cfg_t                  m_battery_sim_cfg;                         /**< Battery Level sensor simulator configuration. */
-static sensorsim_state_t                m_battery_sim_state;                       /**< Battery Level sensor simulator state. */
-
-static sensorsim_cfg_t                  m_speed_mps_sim_cfg;                       /**< Speed simulator configuration. */
-static sensorsim_state_t                m_speed_mps_sim_state;                     /**< Speed simulator state. */
-static sensorsim_cfg_t                  m_cadence_rpm_sim_cfg;                     /**< Cadence simulator configuration. */
-static sensorsim_state_t                m_cadence_rpm_sim_state;                   /**< Cadence simulator state. */
-static sensorsim_cfg_t                  m_cadence_stl_sim_cfg;                     /**< stride length simulator configuration. */
-static sensorsim_state_t                m_cadence_stl_sim_state;                   /**< stride length simulator state. */
 
 APP_TIMER_DEF(m_rsc_meas_timer_id);                                                /**< RSC measurement timer. */
 static dm_application_instance_t        m_app_handle;                              /**< Application identifier allocated by device manager. */
@@ -198,10 +170,7 @@ static void rsc_sim_measurement(ble_rscs_meas_t * p_measurement)
     
     p_measurement->total_distance     = battery_measure(BAT_PIN);
 
-    if (p_measurement->inst_speed > (uint32_t)(MIN_RUNNING_SPEED * 256))
-    {
-        p_measurement->is_running = true;
-    }
+    p_measurement->is_running = true;
 }
 
 
@@ -334,34 +303,6 @@ static void services_init(void)
 
     err_code = ble_dis_init(&dis_init);
     APP_ERROR_CHECK(err_code);
-}
-
-
-/**@brief Function for initializing the sensor simulators.
- */
-static void sensor_simulator_init(void)
-{
-    // speed is in units of meters per second divided by 256
-    m_speed_mps_sim_cfg.min          = (uint32_t)(MIN_SPEED_MPS * 256);
-    m_speed_mps_sim_cfg.max          = (uint32_t)(MAX_SPEED_MPS * 256);
-    m_speed_mps_sim_cfg.incr         = (uint32_t)(SPEED_MPS_INCREMENT * 256);
-    m_speed_mps_sim_cfg.start_at_max = false;
-
-    sensorsim_init(&m_speed_mps_sim_state, &m_speed_mps_sim_cfg);
-
-    m_cadence_rpm_sim_cfg.min          = MIN_CADENCE_RPM;
-    m_cadence_rpm_sim_cfg.max          = MAX_CADENCE_RPM;
-    m_cadence_rpm_sim_cfg.incr         = CADENCE_RPM_INCREMENT;
-    m_cadence_rpm_sim_cfg.start_at_max = false;
-
-    sensorsim_init(&m_cadence_rpm_sim_state, &m_cadence_rpm_sim_cfg);
-
-    m_cadence_stl_sim_cfg.min          = MIN_STRIDE_LENGTH;
-    m_cadence_stl_sim_cfg.max          = MAX_STRIDE_LENGTH;
-    m_cadence_stl_sim_cfg.incr         = STRIDE_LENGTH_INCREMENT;
-    m_cadence_stl_sim_cfg.start_at_max = false;
-
-    sensorsim_init(&m_cadence_stl_sim_state, &m_cadence_stl_sim_cfg);
 }
 
 
@@ -738,7 +679,6 @@ int main(void)
     gap_params_init();
     advertising_init();
     services_init();
-    sensor_simulator_init();
     conn_params_init();
     
     usr_init(30);
