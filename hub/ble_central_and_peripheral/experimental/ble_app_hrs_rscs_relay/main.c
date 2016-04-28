@@ -146,8 +146,8 @@ static ble_db_discovery_t        m_ble_db_discovery_rsc;                        
 #define PERIPHERAL_ADVERTISING_LED       BSP_LED_2_MASK
 #define PERIPHERAL_CONNECTED_LED         BSP_LED_3_MASK
 
-#define DEVICE_NAME                      "Relay"                                    /**< Name of device used for advertising. */
-#define MANUFACTURER_NAME                "NordicSemiconductor"                      /**< Manufacturer. Will be passed to Device Information Service. */
+#define DEVICE_NAME                      "Bike_Hub"                                 /**< Name of device used for advertising. */
+#define MANUFACTURER_NAME                "SmartBike"                                /**< Manufacturer. Will be passed to Device Information Service. */
 #define APP_ADV_INTERVAL                 300                                        /**< The advertising interval (in units of 0.625 ms). This value corresponds to 25 ms. */
 #define APP_ADV_TIMEOUT_IN_SECONDS       180                                        /**< The advertising timeout in units of seconds. */
 
@@ -1069,7 +1069,7 @@ int main(void)
     bool       erase_bonds;
 
     //err_code = NRF_LOG_INIT();
-    APP_ERROR_CHECK(err_code);
+    //APP_ERROR_CHECK(err_code);
 
     //NRF_LOG_PRINTF("Relay Example\r\n");
 
