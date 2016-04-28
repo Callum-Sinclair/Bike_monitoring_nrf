@@ -64,7 +64,6 @@
 #define APP_TIMER_PRESCALER             0                                          /**< Value of the RTC1 PRESCALER register. */
 #define APP_TIMER_OP_QUEUE_SIZE         4                                          /**< Size of timer operation queues. */
 
-#define BATTERY_LEVEL_MEAS_INTERVAL     APP_TIMER_TICKS(2000, APP_TIMER_PRESCALER)  /**< Battery level measurement interval (ticks). */
 #define MIN_BATTERY_LEVEL               81                                          /**< Minimum battery level as returned by the simulated measurement function. */
 #define MAX_BATTERY_LEVEL               100                                         /**< Maximum battery level as returned by the simulated measurement function. */
 #define BATTERY_LEVEL_INCREMENT         1                                           /**< Value by which the battery level is incremented/decremented for each call to the simulated measurement function. */
@@ -118,7 +117,6 @@ typedef enum
 } ble_advertising_mode_t;
 
 static uint16_t                         m_conn_handle = BLE_CONN_HANDLE_INVALID;    /**< Handle of the current connection. */
-static ble_bas_t                        m_bas;                                      /**< Structure used to identify the battery service. */
 static ble_rscs_t                       m_rscs;                                     /**< Structure used to identify the running speed and cadence service. */
 
 static sensorsim_cfg_t                  m_battery_sim_cfg;                         /**< Battery Level sensor simulator configuration. */
@@ -131,12 +129,10 @@ static sensorsim_state_t                m_cadence_rpm_sim_state;                
 static sensorsim_cfg_t                  m_cadence_stl_sim_cfg;                     /**< stride length simulator configuration. */
 static sensorsim_state_t                m_cadence_stl_sim_state;                   /**< stride length simulator state. */
 
-APP_TIMER_DEF(m_battery_timer_id);                                                 /**< Battery timer. */
 APP_TIMER_DEF(m_rsc_meas_timer_id);                                                /**< RSC measurement timer. */
 static dm_application_instance_t        m_app_handle;                              /**< Application identifier allocated by device manager. */
 
 static ble_uuid_t m_adv_uuids[] = {{BLE_UUID_RUNNING_SPEED_AND_CADENCE,  BLE_UUID_TYPE_BLE},
-                                   {BLE_UUID_BATTERY_SERVICE,            BLE_UUID_TYPE_BLE},
                                    {BLE_UUID_DEVICE_INFORMATION_SERVICE, BLE_UUID_TYPE_BLE}}; /**< Universally unique service identifiers. */
 
 /**@brief Callback function for asserts in the SoftDevice.
@@ -183,41 +179,6 @@ uint16_t usr_measure(void)
     result = NRF_ADC->RESULT;
     NRF_ADC->ENABLE = ADC_ENABLE_ENABLE_Disabled;
     return result;
-}
-
-/**@brief Function for performing battery measurement and updating the Battery Level characteristic
- *        in Battery Service.
- */
-static void battery_level_update(void)
-{
-    uint32_t err_code;
-    uint8_t  battery_level;
-
-    battery_level = (uint8_t)sensorsim_measure(&m_battery_sim_state, &m_battery_sim_cfg);
-    
-    err_code = ble_bas_battery_level_update(&m_bas, battery_level);
-    if ((err_code != NRF_SUCCESS) &&
-        (err_code != NRF_ERROR_INVALID_STATE) &&
-        (err_code != BLE_ERROR_NO_TX_PACKETS) &&
-        (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
-        )
-    {
-        APP_ERROR_HANDLER(err_code);
-    }
-}
-
-
-/**@brief Function for handling the Battery measurement timer timeout.
- *
- * @details This function will be called each time the battery level measurement timer expires.
- *
- * @param[in]   p_context   Pointer used for passing some arbitrary information (context) from the
- *                          app_start_timer() call to the timeout handler.
- */
-static void battery_level_meas_timeout_handler(void * p_context)
-{
-    UNUSED_PARAMETER(p_context);
-    battery_level_update();
 }
 
 
@@ -288,12 +249,6 @@ static void timers_init(void)
     APP_TIMER_INIT(APP_TIMER_PRESCALER, APP_TIMER_OP_QUEUE_SIZE, false);
 
     // Create timers.
-    err_code = app_timer_create(&m_battery_timer_id,
-                                APP_TIMER_MODE_REPEATED,
-                                battery_level_meas_timeout_handler);
-    APP_ERROR_CHECK(err_code);
-
-    // Create battery timer.
     err_code = app_timer_create(&m_rsc_meas_timer_id,
                                 APP_TIMER_MODE_REPEATED,
                                 rsc_meas_timeout_handler);
@@ -342,7 +297,6 @@ static void services_init(void)
 {
     uint32_t        err_code;
     ble_rscs_init_t rscs_init;
-    ble_bas_init_t  bas_init;
     ble_dis_init_t  dis_init;
 
     // Initialize Running Speed and Cadence Service
@@ -369,24 +323,6 @@ static void services_init(void)
     err_code = ble_rscs_init(&m_rscs, &rscs_init);
     APP_ERROR_CHECK(err_code);
 
-    // Initialize Battery Service.
-    memset(&bas_init, 0, sizeof(bas_init));
-
-    // Here the sec level for the Battery Service can be changed/increased.
-    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&bas_init.battery_level_char_attr_md.cccd_write_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&bas_init.battery_level_char_attr_md.read_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS(&bas_init.battery_level_char_attr_md.write_perm);
-
-    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&bas_init.battery_level_report_read_perm);
-
-    bas_init.evt_handler          = NULL;
-    bas_init.support_notification = true;
-    bas_init.p_report_ref         = NULL;
-    bas_init.initial_batt_level   = 100;
-
-    err_code = ble_bas_init(&m_bas, &bas_init);
-    APP_ERROR_CHECK(err_code);
-
     // Initialize Device Information Service.
     memset(&dis_init, 0, sizeof(dis_init));
 
@@ -404,13 +340,6 @@ static void services_init(void)
  */
 static void sensor_simulator_init(void)
 {
-    m_battery_sim_cfg.min          = MIN_BATTERY_LEVEL;
-    m_battery_sim_cfg.max          = MAX_BATTERY_LEVEL;
-    m_battery_sim_cfg.incr         = BATTERY_LEVEL_INCREMENT;
-    m_battery_sim_cfg.start_at_max = true;
-
-    sensorsim_init(&m_battery_sim_state, &m_battery_sim_cfg);
-
     // speed is in units of meters per second divided by 256
     m_speed_mps_sim_cfg.min          = (uint32_t)(MIN_SPEED_MPS * 256);
     m_speed_mps_sim_cfg.max          = (uint32_t)(MAX_SPEED_MPS * 256);
@@ -443,9 +372,6 @@ static void application_timers_start(void)
     uint32_t rsc_meas_timer_ticks;
 
     // Start application timers.
-    err_code = app_timer_start(m_battery_timer_id, BATTERY_LEVEL_MEAS_INTERVAL, NULL);
-    APP_ERROR_CHECK(err_code);
-
     rsc_meas_timer_ticks = APP_TIMER_TICKS(SPEED_AND_CADENCE_MEAS_INTERVAL, APP_TIMER_PRESCALER);
 
     err_code = app_timer_start(m_rsc_meas_timer_id, rsc_meas_timer_ticks, NULL);
@@ -590,7 +516,6 @@ static void ble_evt_dispatch(ble_evt_t * p_ble_evt)
 {
     dm_ble_evt_handler(p_ble_evt);
     ble_rscs_on_ble_evt(&m_rscs, p_ble_evt);
-    ble_bas_on_ble_evt(&m_bas, p_ble_evt);
     ble_conn_params_on_ble_evt(p_ble_evt);
     bsp_btn_ble_on_ble_evt(p_ble_evt);
     on_ble_evt(p_ble_evt);
