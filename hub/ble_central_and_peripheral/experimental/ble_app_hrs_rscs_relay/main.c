@@ -55,7 +55,7 @@
 #include "bsp.h"
 #include "bsp_btn_ble.h"
 #include "ble.h"
-#include "app_uart.h"
+//#include "app_uart.h"
 #include "ble_advdata.h"
 #include "ble_advertising.h"
 #include "ble_conn_params.h"
@@ -67,9 +67,9 @@
 #include "ble_hrs_c.h"
 #include "ble_rscs_c.h"
 #include "ble_conn_state.h"
-#include "fstorage.h"
+//#include "fstorage.h"
 
-#include "fds.h"
+//#include "fds.h"
 
 #define CENTRAL_LINK_COUNT          2                                  /**<number of central links used by the application. When changing this number remember to adjust the RAM settings*/
 #define PERIPHERAL_LINK_COUNT       1                                  /**<number of peripheral links used by the application. When changing this number remember to adjust the RAM settings*/
@@ -222,7 +222,7 @@ static void battery_level_meas_timeout_handler(void * p_context)
 }
 
 
-void uart_error_handle(app_uart_evt_t * p_event)
+/*void uart_error_handle(app_uart_evt_t * p_event)
 {
     if (p_event->evt_type == APP_UART_COMMUNICATION_ERROR)
     {
@@ -232,7 +232,7 @@ void uart_error_handle(app_uart_evt_t * p_event)
     {
         APP_ERROR_HANDLER(p_event->data.error_code);
     }
-}
+}*/
 
 
 /**@brief Function for the Timer initialization.
@@ -322,13 +322,13 @@ static void scan_start(void)
  * @param[in] p_evt  Peer Manager event.
  * @param[in] cmd
  */
-static void fds_evt_handler(fds_evt_t const * const p_evt)
-{
+/*static void fds_evt_handler(fds_evt_t const * const p_evt)
+{*/
     /*if (p_evt->id == FDS_EVT_GC)
     {
         NRF_LOG_PRINTF("GC completed\n");
     }*/
-}
+//}
 
 
 /**@brief Function for handling Peer Manager events.
@@ -375,7 +375,7 @@ static void pm_evt_handler(pm_evt_t const * p_evt)
 
         case PM_EVT_STORAGE_FULL:
             // Run garbage collection on the flash.
-            err_code = fds_gc();
+            //err_code = fds_gc();
             if (err_code != NRF_ERROR_BUSY)
             {
                 APP_ERROR_CHECK(err_code);
@@ -857,7 +857,7 @@ static void sys_evt_dispatch(uint32_t sys_evt)
     ble_advertising_on_sys_evt(sys_evt);
     /** Dispatch the system event to the Flash Storage module, where it will be
      *  dispatched to the Flash Data Storage module and from there to the Peer Manager. */
-    fs_sys_event_handler(sys_evt);
+    //fs_sys_event_handler(sys_evt);
 }
 
 
@@ -961,8 +961,8 @@ static void peer_manager_init(bool erase_bonds)
     err_code = pm_register(pm_evt_handler);
     APP_ERROR_CHECK(err_code);
 
-    err_code = fds_register(fds_evt_handler);
-    APP_ERROR_CHECK(err_code);
+    //err_code = fds_register(fds_evt_handler);
+    //APP_ERROR_CHECK(err_code);
 }
 
 
