@@ -21,10 +21,16 @@ All modules connect to each other via BLE, with the network looking like this:
 
 Phone   <-BLE->    Hub
 
+
 Hub     <-I2C->    Temparature, Gradient
+
 Hub     <-ADC->    Heart Rate
+
 Hub     <-BLE->    Speed
+
 Hub     <-BLE->    USR
+
 Hub     <-BLE->    Cadence  <-BLE->   Force
+
 
 Each module has further details in a readme file in each sub-folder
