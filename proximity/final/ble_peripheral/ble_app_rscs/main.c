@@ -124,12 +124,28 @@ void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name)
     app_error_handler(DEAD_BEEF, line_num, p_file_name);
 }
 
+// Initialise the ADC for measurming the USR
+void usr_init(void)
+{
+    gpio_pin_out_init(USR_EN_PIN);
+    clear_pin(USR_EN_PIN);
+    // Sets up PIN as an analogue input
+    NRF_ADC->CONFIG = ((ADC_CONFIG_RES_8bit                             << ADC_CONFIG_RES_Pos) | \
+                       (ADC_CONFIG_INPSEL_AnalogInputOneThirdPrescaling << ADC_CONFIG_INPSEL_Pos) | \
+                       (ADC_CONFIG_REFSEL_SupplyOneThirdPrescaling      << ADC_CONFIG_REFSEL_Pos) | \
+                       (ADC_CONFIG_PSEL_AnalogInput6                    << ADC_CONFIG_PSEL_Pos) | \
+                       (ADC_CONFIG_EXTREFSEL_None                       << ADC_CONFIG_EXTREFSEL_Pos));
+}
+
 uint16_t usr_measure(void)
 {
     static bool led = true;
     volatile uint32_t result;
     //enable USR
     set_pin(USR_EN_PIN);
+    // have to re-initialise each time as battery uses the ADC too, with different settings
+    usr_init();
+    
     if (led)
     {
         set_pin(BRD_LED_PIN);
@@ -168,6 +184,8 @@ static void rsc_sim_measurement(ble_rscs_meas_t * p_measurement)
     
     p_measurement->inst_stride_length = usr_measure();
     
+    // have to re-initialise each time as USR uses the ADC too, with different settings
+    bat_adc_init(BAT_PIN);
     p_measurement->total_distance     = battery_measure(BAT_PIN);
 
     p_measurement->is_running = true;
@@ -650,17 +668,7 @@ static void power_manage(void)
     APP_ERROR_CHECK(err_code);
 }
 
-void usr_init(uint32_t pin)
-{
-    gpio_pin_out_init(USR_EN_PIN);
-    clear_pin(USR_EN_PIN);
-    // Sets up PIN as an analogue input
-    NRF_ADC->CONFIG = ((ADC_CONFIG_RES_8bit                             << ADC_CONFIG_RES_Pos) | \
-                       (ADC_CONFIG_INPSEL_AnalogInputOneThirdPrescaling << ADC_CONFIG_INPSEL_Pos) | \
-                       (ADC_CONFIG_REFSEL_SupplyOneThirdPrescaling      << ADC_CONFIG_REFSEL_Pos) | \
-                       (ADC_CONFIG_PSEL_AnalogInput6                    << ADC_CONFIG_PSEL_Pos) | \
-                       (ADC_CONFIG_EXTREFSEL_None                       << ADC_CONFIG_EXTREFSEL_Pos));
-}
+
 
 /**@brief Function for application main entry.
  */
@@ -681,15 +689,14 @@ int main(void)
     services_init();
     conn_params_init();
     
-    usr_init(30);
-    set_pin(USR_EN_PIN);
+    usr_init();
     bat_adc_init(BAT_PIN);
 
     // Start execution.
     application_timers_start();
     err_code = ble_advertising_start(BLE_ADV_MODE_FAST);
     APP_ERROR_CHECK(err_code);
-    usr_init(30);
+    usr_init();
 
     // Enter main loop.
     for (;;)
