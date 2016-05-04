@@ -844,7 +844,7 @@ static void cadence_measure(uint16_t * cadence)
     
     cadence_tracker[count_num] = rotation_counter->CC[0] / 2; //each pass of the magnet causes two increments
     // get the average cadence in the last 5 s
-    if (count_num == CADENCE_COUNT_ARRAY_SIZE)
+    if (count_num == CADENCE_COUNT_ARRAY_SIZE - 1)
     {
         cadence_calc = (60 * (cadence_tracker[count_num] - cadence_tracker[0])) / ((TX_INTERVAL_MS * (CADENCE_COUNT_ARRAY_SIZE - 1)) / 1000);
         if (cadence_calc < 0)
@@ -903,7 +903,7 @@ static void tx_timeout_handler(void * p_context)
     
     rscs_measurement.inst_cadence = force_measurment.bat;
 //TODO TODO TODO - update force-power equation;
-    rscs_measurement.inst_speed                 = cadence;//force_measurment.force * cadence;
+    rscs_measurement.inst_speed                 = force_measurment.force * cadence;
     rscs_measurement.inst_stride_length         = cadence;
     rscs_measurement.total_distance             = battery_measure(BAT_PIN);
     
