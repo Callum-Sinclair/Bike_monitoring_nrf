@@ -57,7 +57,7 @@ NRF_TIMER_Type* debounce_timer;
 #define CENTRAL_LINK_COUNT              0                                          /**<number of central links used by the application. When changing this number remember to adjust the RAM settings*/
 #define PERIPHERAL_LINK_COUNT           1                                          /**<number of peripheral links used by the application. When changing this number remember to adjust the RAM settings*/
 
-#define DEVICE_NAME                     "Speedy"                                    /**< Name of device. Will be included in the advertising data. */
+#define DEVICE_NAME                     "Speed"                                    /**< Name of device. Will be included in the advertising data. */
 #define MANUFACTURER_NAME               "SmartBike"                                /**< Manufacturer. Will be passed to Device Information Service. */
 #define APP_ADV_INTERVAL                40                                         /**< The advertising interval (in units of 0.625 ms. This value corresponds to 25 ms). */
 #define APP_ADV_TIMEOUT_IN_SECONDS      360                                        /**< The advertising timeout in units of seconds. */
