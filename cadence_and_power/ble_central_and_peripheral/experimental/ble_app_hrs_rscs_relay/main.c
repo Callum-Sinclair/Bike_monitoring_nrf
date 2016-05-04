@@ -60,17 +60,17 @@
 #include "ble_advertising.h"
 #include "ble_conn_params.h"
 #include "ble_db_discovery.h"
-#include "ble_hrs.h"
 #include "ble_rscs.h"
-#include "ble_hrs_c.h"
 #include "ble_rscs_c.h"
 #include "ble_conn_state.h"
 #include "nrf_log.h"
 #include "fstorage.h"
+#include "battery_measure_lib.h"
+#include "gpio_lib.h"
 
 #include "fds.h"
 
-#define CENTRAL_LINK_COUNT          2                                  /**<number of central links used by the application. When changing this number remember to adjust the RAM settings*/
+#define CENTRAL_LINK_COUNT          1                                  /**<number of central links used by the application. When changing this number remember to adjust the RAM settings*/
 #define PERIPHERAL_LINK_COUNT       1                                  /**<number of peripheral links used by the application. When changing this number remember to adjust the RAM settings*/
 
 #define APPL_LOG                    app_trace_log                      /**< Macro used to log debug information over UART. */
@@ -139,11 +139,8 @@ static const ble_gap_conn_params_t m_connection_param =
     (uint16_t)SUPERVISION_TIMEOUT
 };
 
-static ble_hrs_c_t               m_ble_hrs_c;                                       /**< Main structure used by the Heart rate client module. */
 static ble_rscs_c_t              m_ble_rsc_c;                                       /**< Main structure used by the Running speed and cadence client module. */
-static uint16_t                  m_conn_handle_hrs_c  = BLE_CONN_HANDLE_INVALID;    /**< Connection handle for the HRS central application */
 static uint16_t                  m_conn_handle_rscs_c = BLE_CONN_HANDLE_INVALID;    /**< Connection handle for the RSC central application */
-static ble_db_discovery_t        m_ble_db_discovery_hrs;                            /**< HR service DB structure used by the database discovery module. */
 static ble_db_discovery_t        m_ble_db_discovery_rsc;                            /**< RSC service DB structure used by the database discovery module. */
 
 /* Peripheral related. */
@@ -151,7 +148,7 @@ static ble_db_discovery_t        m_ble_db_discovery_rsc;                        
 #define PERIPHERAL_ADVERTISING_LED       BSP_LED_2_MASK
 #define PERIPHERAL_CONNECTED_LED         BSP_LED_3_MASK
 
-#define DEVICE_NAME                      "Relay"                                    /**< Name of device used for advertising. */
+#define DEVICE_NAME                      "Cadence"                                  /**< Name of device. Will be included in the advertising data. */
 #define MANUFACTURER_NAME                "NordicSemiconductor"                      /**< Manufacturer. Will be passed to Device Information Service. */
 #define APP_ADV_INTERVAL                 300                                        /**< The advertising interval (in units of 0.625 ms). This value corresponds to 25 ms. */
 #define APP_ADV_TIMEOUT_IN_SECONDS       180                                        /**< The advertising timeout in units of seconds. */
@@ -160,12 +157,26 @@ static ble_db_discovery_t        m_ble_db_discovery_rsc;                        
 #define NEXT_CONN_PARAMS_UPDATE_DELAY    APP_TIMER_TICKS(30000, APP_TIMER_PRESCALER)/**< Time between each call to sd_ble_gap_conn_param_update after the first call (30 seconds). */
 #define MAX_CONN_PARAMS_UPDATE_COUNT     3                                          /**< Number of attempts before giving up the connection parameter negotiation. */
 
-static ble_hrs_t    m_hrs;                                                          /**< Main structure for the Heart rate server module. */
+#define TX_INTERVAL                      APP_TIMER_TICKS(1000, APP_TIMER_PRESCALER) /**< Battery level measurement interval (ticks). */
+
 static ble_rscs_t   m_rscs;                                                         /**< Main structure for the Running speed and cadence server module. */
 
 /**@brief UUIDs which the central applications will scan for, and which will be advertised by the peripherals. */
-static ble_uuid_t m_adv_uuids[] = {{BLE_UUID_HEART_RATE_SERVICE,         BLE_UUID_TYPE_BLE},
-                                   {BLE_UUID_RUNNING_SPEED_AND_CADENCE,  BLE_UUID_TYPE_BLE}};
+static ble_uuid_t m_adv_uuids[] = {{BLE_UUID_RUNNING_SPEED_AND_CADENCE,  BLE_UUID_TYPE_BLE}};
+
+// Force/Power related
+static struct force_t{
+    uint16_t force;
+    uint8_t  bat;
+}force_measurment;
+APP_TIMER_DEF(m_tx_timer_id);                                                /**< CSC measurement timer. */
+
+// Cadence related
+NRF_TIMER_Type* rotation_counter;
+NRF_TIMER_Type* debounce_timer;
+#define BAT_PIN                         3  // Analogue pin used to sense battery level
+#define READ_SW_PIN                     5  // gpio pin that the reed switch is connected to
+
 
 
 /**@brief Function to handle asserts in the SoftDevice.
@@ -352,53 +363,6 @@ static void pm_evt_handler(pm_evt_t const * p_evt)
 }
 
 
-/**@brief Handles events coming from the Heart Rate central module.
- */
-static void hrs_c_evt_handler(ble_hrs_c_t * p_hrs_c, ble_hrs_c_evt_t * p_hrs_c_evt)
-{
-    switch (p_hrs_c_evt->evt_type)
-    {
-        case BLE_HRS_C_EVT_DISCOVERY_COMPLETE:
-        {
-            ret_code_t err_code;
-
-            NRF_LOG_PRINTF("Heart rate service discovered\r\n");
-
-            // Initiate bonding.
-            err_code = pm_link_secure(p_hrs_c->conn_handle, false);
-            if (err_code != NRF_ERROR_INVALID_STATE)
-            {
-                APP_ERROR_CHECK(err_code);
-            }
-
-            // Heart rate service discovered. Enable notification of Heart Rate Measurement.
-            err_code = ble_hrs_c_hrm_notif_enable(p_hrs_c);
-            APP_ERROR_CHECK(err_code);
-        } break; // BLE_HRS_C_EVT_DISCOVERY_COMPLETE
-
-        case BLE_HRS_C_EVT_HRM_NOTIFICATION:
-        {
-            ret_code_t err_code;
-
-            NRF_LOG_PRINTF("Heart Rate = %d\r\n", p_hrs_c_evt->params.hrm.hr_value);
-
-            err_code = ble_hrs_heart_rate_measurement_send(&m_hrs, p_hrs_c_evt->params.hrm.hr_value);
-            if ((err_code != NRF_SUCCESS) &&
-                (err_code != NRF_ERROR_INVALID_STATE) &&
-                (err_code != BLE_ERROR_NO_TX_PACKETS) &&
-                (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
-                )
-            {
-                APP_ERROR_HANDLER(err_code);
-            }
-        } break; // BLE_HRS_C_EVT_HRM_NOTIFICATION
-
-        default:
-            // No implementation needed.
-            break;
-    }
-}
-
 
 /**@brief Handles events coming from  Running Speed and Cadence central module.
  */
@@ -427,20 +391,9 @@ static void rscs_c_evt_handler(ble_rscs_c_t * p_rscs_c, ble_rscs_c_evt_t * p_rsc
         case BLE_RSCS_C_EVT_RSC_NOTIFICATION:
         {
             uint32_t        err_code;
-            ble_rscs_meas_t rscs_measurment;
 
-            NRF_LOG_PRINTF("Speed      = %d\r\n", p_rscs_c_evt->params.rsc.inst_speed);
-
-            rscs_measurment.is_running                  = p_rscs_c_evt->params.rsc.is_running;
-            rscs_measurment.is_inst_stride_len_present  = p_rscs_c_evt->params.rsc.is_inst_stride_len_present;
-            rscs_measurment.is_total_distance_present   = p_rscs_c_evt->params.rsc.is_total_distance_present;
-
-            rscs_measurment.inst_stride_length = p_rscs_c_evt->params.rsc.inst_stride_length;
-            rscs_measurment.inst_cadence       = p_rscs_c_evt->params.rsc.inst_cadence;
-            rscs_measurment.inst_speed         = p_rscs_c_evt->params.rsc.inst_speed;
-            rscs_measurment.total_distance     = p_rscs_c_evt->params.rsc.total_distance;
-
-            err_code = ble_rscs_measurement_send(&m_rscs, &rscs_measurment);
+            force_measurment.force = p_rscs_c_evt->params.rsc.inst_speed;
+            force_measurment.bat   = p_rscs_c_evt->params.rsc.inst_cadence;
             if ((err_code != NRF_SUCCESS) &&
                 (err_code != NRF_ERROR_INVALID_STATE) &&
                 (err_code != BLE_ERROR_NO_TX_PACKETS) &&
@@ -473,7 +426,6 @@ static void rscs_c_evt_handler(ble_rscs_c_t * p_rscs_c, ble_rscs_c_evt_t * p_rsc
 static void on_ble_central_evt(const ble_evt_t * const p_ble_evt)
 {
     // The addresses of peers we attempted to connect to.
-    static ble_gap_addr_t periph_addr_hrs;
     static ble_gap_addr_t periph_addr_rsc;
 
     // For readability.
@@ -493,19 +445,7 @@ static void on_ble_central_evt(const ble_evt_t * const p_ble_evt)
             /** Check which peer has connected, save the connection handle and initiate DB discovery.
              *  DB discovery will invoke a callback (hrs_c_evt_handler and rscs_c_evt_handler)
              *  upon completion, which is used to enable notifications from the peer. */
-            if(memcmp(&periph_addr_hrs, peer_addr, sizeof(ble_gap_addr_t)) == 0)
-            {
-                NRF_LOG_PRINTF("HRS central connected\r\n");
-                // Reset the peer address we had saved.
-                memset(&periph_addr_hrs, 0, sizeof(ble_gap_addr_t));
-
-                m_conn_handle_hrs_c = p_gap_evt->conn_handle;
-
-                NRF_LOG_PRINTF("Starting DB discovery for HRS\r\n");
-                err_code = ble_db_discovery_start(&m_ble_db_discovery_hrs, p_gap_evt->conn_handle);
-                APP_ERROR_CHECK(err_code);
-            }
-            else if(memcmp(&periph_addr_rsc, peer_addr, sizeof(ble_gap_addr_t)) == 0)
+            if(memcmp(&periph_addr_rsc, peer_addr, sizeof(ble_gap_addr_t)) == 0)
             {
                 NRF_LOG_PRINTF("RSC central connected\r\n");
                 // Reset the peer address we had saved.
@@ -539,14 +479,7 @@ static void on_ble_central_evt(const ble_evt_t * const p_ble_evt)
         {
             uint8_t n_centrals;
 
-            if (p_gap_evt->conn_handle == m_conn_handle_hrs_c)
-            {
-                NRF_LOG_PRINTF("HRS central disconnected (reason: %d)\r\n",
-                       p_gap_evt->params.disconnected.reason);
-
-                m_conn_handle_hrs_c = BLE_CONN_HANDLE_INVALID;
-            }
-            else if(p_gap_evt->conn_handle == m_conn_handle_rscs_c)
+            if(p_gap_evt->conn_handle == m_conn_handle_rscs_c)
             {
                 NRF_LOG_PRINTF("RSC central disconnected (reason: %d)\r\n",
                        p_gap_evt->params.disconnected.reason);
@@ -610,14 +543,9 @@ static void on_ble_central_evt(const ble_evt_t * const p_ble_evt)
                  *  offers the same service. We then save the peer address, so that upon connection
                  *  we can tell which peer has connected and update its respective connection
                  *  handle. */
-                if ((extracted_uuid      == BLE_UUID_HEART_RATE_SERVICE) &&
-                    (m_conn_handle_hrs_c == BLE_CONN_HANDLE_INVALID))
-                {
-                    do_connect = true;
-                    memcpy(&periph_addr_hrs, peer_addr, sizeof(ble_gap_addr_t));
-                }
-                else if ((extracted_uuid       == BLE_UUID_RUNNING_SPEED_AND_CADENCE) &&
-                         (m_conn_handle_rscs_c == BLE_CONN_HANDLE_INVALID))
+// TODO TODO TODO - ADD CHECKING FOR APPROPRIATE PERIPHERAL
+                if ((extracted_uuid       == BLE_UUID_RUNNING_SPEED_AND_CADENCE) &&
+                    (m_conn_handle_rscs_c == BLE_CONN_HANDLE_INVALID))
                 {
                     do_connect = true;
                     memcpy(&periph_addr_rsc, peer_addr, sizeof(ble_gap_addr_t));
@@ -745,7 +673,6 @@ static void ble_evt_dispatch(ble_evt_t * p_ble_evt)
         ble_conn_params_on_ble_evt(p_ble_evt);
 
         // Dispatch to peripheral applications.
-        ble_hrs_on_ble_evt (&m_hrs, p_ble_evt);
         ble_rscs_on_ble_evt(&m_rscs, p_ble_evt);
     }
     else if ((role == BLE_GAP_ROLE_CENTRAL) || (p_ble_evt->header.evt_id == BLE_GAP_EVT_ADV_REPORT))
@@ -757,12 +684,7 @@ static void ble_evt_dispatch(ble_evt_t * p_ble_evt)
             on_ble_central_evt(p_ble_evt);
         }
 
-        if (conn_handle == m_conn_handle_hrs_c)
-        {
-            ble_hrs_c_on_ble_evt(&m_ble_hrs_c, p_ble_evt);
-            ble_db_discovery_on_ble_evt(&m_ble_db_discovery_hrs, p_ble_evt);
-        }
-        else if (conn_handle == m_conn_handle_rscs_c)
+        if (conn_handle == m_conn_handle_rscs_c)
         {
             ble_rscs_c_on_ble_evt(&m_ble_rsc_c, p_ble_evt);
             ble_db_discovery_on_ble_evt(&m_ble_db_discovery_rsc, p_ble_evt);
@@ -791,21 +713,6 @@ static void sys_evt_dispatch(uint32_t sys_evt)
      *  dispatched to the Flash Data Storage module and from there to the Peer Manager. */
     fs_sys_event_handler(sys_evt);
 }
-
-
-/**@brief Heart rate collector initialization.
- */
-static void hrs_c_init(void)
-{
-    uint32_t         err_code;
-    ble_hrs_c_init_t hrs_c_init_obj;
-
-    hrs_c_init_obj.evt_handler = hrs_c_evt_handler;
-
-    err_code = ble_hrs_c_init(&m_ble_hrs_c, &hrs_c_init_obj);
-    APP_ERROR_CHECK(err_code);
-}
-
 
 /**@brief Heart rate collector initialization.
  */
@@ -919,6 +826,97 @@ static void buttons_leds_init(bool * p_erase_bonds)
 }
 
 
+/**@brief Function for populating simulated cycling speed and cadence measurements.
+ */
+static void cadence_measure(uint16_t * cadence)
+{
+    static uint32_t rot_counter_last      = 0;
+    static uint16_t still_counter         = 0;
+
+    uint16_t cumulative_crank_revs = rotation_counter->CC[0] / 2; //each pass of the magnet causes two increments
+    *cadence = (60 * (cumulative_crank_revs - rot_counter_last)) / TX_INTERVAL;
+    
+    if (rot_counter_last == rotation_counter->CC[0])
+    {
+        still_counter ++;
+    }
+    else
+    {
+        still_counter = 0;
+    }
+    if (still_counter > 200)
+    {
+        NRF_POWER->SYSTEMOFF = 1;
+    }
+    rot_counter_last = rotation_counter->CC[0];
+}
+
+static void tx_timeout_handler(void * p_context)
+{
+    rotation_counter->TASKS_CAPTURE[0] = 1;
+    uint32_t        err_code;
+
+    UNUSED_PARAMETER(p_context);
+    
+    uint16_t cadence = 0;
+    cadence_measure(&cadence);
+    
+    ble_rscs_meas_t rscs_measurement;
+    
+    rscs_measurement.is_inst_stride_len_present = true;
+    rscs_measurement.is_running                 = false;
+    rscs_measurement.is_total_distance_present  = true;
+    
+    rscs_measurement.inst_cadence = force_measurment.bat;
+//TODO TODO TODO - update force-power equation;
+    rscs_measurement.inst_speed                 = force_measurment.force * cadence;
+    rscs_measurement.inst_stride_length         = cadence;
+    rscs_measurement.total_distance             = battery_measure(BAT_PIN);
+    
+    err_code = ble_rscs_measurement_send(&m_rscs, &rscs_measurement);
+    
+    if ((err_code != NRF_SUCCESS) &&
+        (err_code != NRF_ERROR_INVALID_STATE) &&
+        (err_code != BLE_ERROR_NO_TX_PACKETS) &&
+        (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
+        )
+    {
+        APP_ERROR_HANDLER(err_code);
+    }
+}
+
+
+
+/**@brief Function for the Timer initialization.
+ *
+ * @details Initializes the timer module. This creates and starts application timers.
+ */
+static void timers_init(void)
+{
+    uint32_t err_code;
+
+    // Initialize timer module.
+    APP_TIMER_INIT(APP_TIMER_PRESCALER, APP_TIMER_OP_QUEUE_SIZE, false);
+
+    // Create battery timer.
+    err_code = app_timer_create(&m_tx_timer_id,
+                                APP_TIMER_MODE_REPEATED,
+                                tx_timeout_handler);
+    APP_ERROR_CHECK(err_code);
+}
+
+/**@brief Function for starting application timers.
+ */
+static void application_timers_start(void)
+{
+    uint32_t err_code;
+
+    // Start application timers.
+    err_code = app_timer_start(m_tx_timer_id, TX_INTERVAL, NULL);
+    APP_ERROR_CHECK(err_code);
+}
+
+
 /**@brief Function for the GAP initialization.
  *
  * @details This function sets up all the necessary GAP (Generic Access Profile) parameters of the
@@ -989,29 +987,7 @@ static void db_discovery_init(void)
 static void services_init(void)
 {
     uint32_t        err_code;
-    ble_hrs_init_t  hrs_init;
     ble_rscs_init_t rscs_init;
-    uint8_t         body_sensor_location;
-
-    // Initialize the Heart Rate Service.
-    body_sensor_location = BLE_HRS_BODY_SENSOR_LOCATION_FINGER;
-
-    memset(&hrs_init, 0, sizeof(hrs_init));
-
-    hrs_init.evt_handler                 = NULL;
-    hrs_init.is_sensor_contact_supported = true;
-    hrs_init.p_body_sensor_location      = &body_sensor_location;
-
-    // Here the sec level for the Heart Rate Service can be changed/increased.
-    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&hrs_init.hrs_hrm_attr_md.cccd_write_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS(&hrs_init.hrs_hrm_attr_md.read_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS(&hrs_init.hrs_hrm_attr_md.write_perm);
-
-    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&hrs_init.hrs_bsl_attr_md.read_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS(&hrs_init.hrs_bsl_attr_md.write_perm);
-
-    err_code = ble_hrs_init(&m_hrs, &hrs_init);
-    APP_ERROR_CHECK(err_code);
 
     // Initialize the Running Speed and Cadence Service.
     memset(&rscs_init, 0, sizeof(rscs_init));
@@ -1058,6 +1034,48 @@ static void advertising_init(void)
     APP_ERROR_CHECK(err_code);
 }
 
+void reed_sw_init(uint32_t pin)
+{
+    // Sets TIMER4's counter to be incremented each time "pin" is toggled
+    // This uses PPI channel 0-3 and TIMER4&3 (defined at top)
+    // De-bouncing with a 4 ms 
+    gpio_pin_in_init(pin);
+    //GPIOTE setup
+    NRF_GPIOTE->CONFIG[0] = ((GPIOTE_CONFIG_MODE_Event << GPIOTE_CONFIG_MODE_Pos) | \
+                             (pin << GPIOTE_CONFIG_PSEL_Pos) | \
+                             (GPIOTE_CONFIG_POLARITY_LoToHi << GPIOTE_CONFIG_POLARITY_Pos));
+    //Timer(Counter) setup
+    rotation_counter->MODE = TIMER_MODE_MODE_Counter;
+    rotation_counter->BITMODE = TIMER_BITMODE_BITMODE_16Bit;
+    rotation_counter->TASKS_CLEAR = 1;
+    rotation_counter->TASKS_START = 1;
+    //Timer (debounce) setup
+    debounce_timer->MODE = TIMER_MODE_MODE_Timer;
+    debounce_timer->BITMODE = TIMER_BITMODE_BITMODE_32Bit;
+    debounce_timer->PRESCALER = 4; //gives T=0.01ms
+    
+    debounce_timer->CC[0] = 1;  // 0.01 ms
+    debounce_timer->CC[1] = 4000; // 40 ms
+    
+    debounce_timer->TASKS_CLEAR = 1;
+    debounce_timer->TASKS_START = 1;
+    //PPI setup
+    NRF_PPI->CH[0].EEP = (uint32_t)&(NRF_GPIOTE->EVENTS_IN[0]);
+    NRF_PPI->CH[0].TEP = (uint32_t)&(rotation_counter->TASKS_COUNT);
+    
+    NRF_PPI->CH[1].EEP = (uint32_t)&(NRF_GPIOTE->EVENTS_IN[0]);
+    NRF_PPI->CH[1].TEP = (uint32_t)&(debounce_timer->TASKS_CLEAR);
+    
+    NRF_PPI->CH[2].EEP = (uint32_t)&(debounce_timer->EVENTS_COMPARE[0]);
+    NRF_PPI->CH[2].TEP = (uint32_t)&(rotation_counter->TASKS_STOP);
+    
+    NRF_PPI->CH[3].EEP = (uint32_t)&(debounce_timer->EVENTS_COMPARE[1]);
+    NRF_PPI->CH[3].TEP = (uint32_t)&(rotation_counter->TASKS_START);
+    
+    
+    NRF_PPI->CHENSET = 0xF;
+
+}
 
 /** @brief Function to sleep until a BLE event is received by the application.
  */
@@ -1072,7 +1090,16 @@ int main(void)
 {
     ret_code_t err_code;
     bool       erase_bonds;
+    
+    rotation_counter = NRF_TIMER2;
+    debounce_timer = NRF_TIMER1;
+    force_measurment.bat = 0;
+    force_measurment.force = 0;
 
+    bat_adc_init(BAT_PIN);
+    timers_init();
+    reed_sw_init(READ_SW_PIN);
+    
     err_code = NRF_LOG_INIT();
     APP_ERROR_CHECK(err_code);
 
@@ -1091,13 +1118,13 @@ int main(void)
     peer_manager_init(erase_bonds);
 
     db_discovery_init();
-    hrs_c_init();
     rscs_c_init();
 
     gap_params_init();
     conn_params_init();
     services_init();
     advertising_init();
+    application_timers_start();
 
     /** Start scanning for peripherals and initiate connection to devices which
      *  advertise Heart Rate or Running speed and cadence UUIDs. */
