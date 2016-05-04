@@ -161,7 +161,7 @@ uint16_t force_measure(void)
 
 /**@brief Function for populating simulated running speed and cadence measurement.
  */
-static void rsc_sim_measurement(ble_rscs_meas_t * p_measurement)
+static void force_measurement(ble_rscs_meas_t * p_measurement)
 {
     uint16_t force = force_measure();
     bat_adc_init(BAT_PIN);
@@ -197,7 +197,7 @@ static void rsc_meas_timeout_handler(void * p_context)
 
     UNUSED_PARAMETER(p_context);
 
-    rsc_sim_measurement(&rscs_measurement);
+    force_measurement(&rscs_measurement);
 
     err_code = ble_rscs_measurement_send(&m_rscs, &rscs_measurement);
     if (
