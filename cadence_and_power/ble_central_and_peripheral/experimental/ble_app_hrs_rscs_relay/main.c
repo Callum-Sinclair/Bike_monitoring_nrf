@@ -157,7 +157,8 @@ static ble_db_discovery_t        m_ble_db_discovery_rsc;                        
 #define NEXT_CONN_PARAMS_UPDATE_DELAY    APP_TIMER_TICKS(30000, APP_TIMER_PRESCALER)/**< Time between each call to sd_ble_gap_conn_param_update after the first call (30 seconds). */
 #define MAX_CONN_PARAMS_UPDATE_COUNT     3                                          /**< Number of attempts before giving up the connection parameter negotiation. */
 
-#define TX_INTERVAL                      APP_TIMER_TICKS(1000, APP_TIMER_PRESCALER) /**< Battery level measurement interval (ticks). */
+#define TX_INTERVAL_MS                   2000
+#define TX_INTERVAL                      APP_TIMER_TICKS(TX_INTERVAL_MS, APP_TIMER_PRESCALER) /**< Battery level measurement interval (ticks). */
 
 static ble_rscs_t   m_rscs;                                                         /**< Main structure for the Running speed and cadence server module. */
 
@@ -825,17 +826,44 @@ static void buttons_leds_init(bool * p_erase_bonds)
     *p_erase_bonds = (startup_event == BSP_EVENT_CLEAR_BONDING_DATA);
 }
 
-
+#define CADENCE_COUNT_ARRAY_SIZE 6
 /**@brief Function for populating simulated cycling speed and cadence measurements.
  */
 static void cadence_measure(uint16_t * cadence)
 {
+    /*static uint16_t i = 50;
+    i++;
+    *cadence = i;
+    return;*/
     static uint32_t rot_counter_last      = 0;
     static uint16_t still_counter         = 0;
+    static uint32_t cadence_tracker[CADENCE_COUNT_ARRAY_SIZE];
+    static uint16_t count_num             = 0;
 
-    uint16_t cumulative_crank_revs = rotation_counter->CC[0] / 2; //each pass of the magnet causes two increments
-    *cadence = (60 * (cumulative_crank_revs - rot_counter_last)) / TX_INTERVAL;
+    int32_t cadence_calc = 0;
     
+    cadence_tracker[count_num] = rotation_counter->CC[0] / 2; //each pass of the magnet causes two increments
+    // get the average cadence in the last 5 s
+    if (count_num == CADENCE_COUNT_ARRAY_SIZE)
+    {
+        cadence_calc = (60 * (cadence_tracker[count_num] - cadence_tracker[0])) / ((TX_INTERVAL_MS * (CADENCE_COUNT_ARRAY_SIZE - 1)) / 1000);
+        if (cadence_calc < 0)
+            *cadence = (uint16_t)(cadence_calc + 65536);
+        else
+        {
+            *cadence = (uint16_t)cadence_calc;
+        }
+    }
+    else
+    {
+        cadence_calc = (60 * (cadence_tracker[count_num] - cadence_tracker[count_num + 1])) / ((TX_INTERVAL_MS * (CADENCE_COUNT_ARRAY_SIZE - 1)) / 1000);
+        if (cadence_calc < 0)
+            *cadence = (uint16_t)(cadence_calc + 65536);
+        else
+        {
+            *cadence = (uint16_t)cadence_calc;
+        }
+    }
     if (rot_counter_last == rotation_counter->CC[0])
     {
         still_counter ++;
@@ -849,6 +877,12 @@ static void cadence_measure(uint16_t * cadence)
         NRF_POWER->SYSTEMOFF = 1;
     }
     rot_counter_last = rotation_counter->CC[0];
+    
+    count_num++;
+    if (count_num == CADENCE_COUNT_ARRAY_SIZE)
+    {
+        count_num = 0;
+    }
 }
 
 static void tx_timeout_handler(void * p_context)
@@ -869,9 +903,11 @@ static void tx_timeout_handler(void * p_context)
     
     rscs_measurement.inst_cadence = force_measurment.bat;
 //TODO TODO TODO - update force-power equation;
-    rscs_measurement.inst_speed                 = force_measurment.force * cadence;
+    rscs_measurement.inst_speed                 = cadence;//force_measurment.force * cadence;
     rscs_measurement.inst_stride_length         = cadence;
     rscs_measurement.total_distance             = battery_measure(BAT_PIN);
+    
+    rscs_measurement.inst_cadence = cadence;
     
     err_code = ble_rscs_measurement_send(&m_rscs, &rscs_measurement);
     
@@ -1136,6 +1172,7 @@ int main(void)
     // Start advertising.
     err_code = ble_advertising_start(BLE_ADV_MODE_FAST);
     APP_ERROR_CHECK(err_code);
+    reed_sw_init(READ_SW_PIN);
 
     for (;;)
     {
