@@ -70,7 +70,7 @@
 
 #include "fds.h"
 
-#define CENTRAL_LINK_COUNT          1                                  /**<number of central links used by the application. When changing this number remember to adjust the RAM settings*/
+#define CENTRAL_LINK_COUNT          2                                  /**<number of central links used by the application. When changing this number remember to adjust the RAM settings*/
 #define PERIPHERAL_LINK_COUNT       1                                  /**<number of peripheral links used by the application. When changing this number remember to adjust the RAM settings*/
 
 #define APPL_LOG                    app_trace_log                      /**< Macro used to log debug information over UART. */
@@ -395,14 +395,7 @@ static void rscs_c_evt_handler(ble_rscs_c_t * p_rscs_c, ble_rscs_c_evt_t * p_rsc
 
             force_measurment.force = p_rscs_c_evt->params.rsc.inst_speed;
             force_measurment.bat   = p_rscs_c_evt->params.rsc.inst_cadence;
-            if ((err_code != NRF_SUCCESS) &&
-                (err_code != NRF_ERROR_INVALID_STATE) &&
-                (err_code != BLE_ERROR_NO_TX_PACKETS) &&
-                (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
-                )
-            {
-                APP_ERROR_HANDLER(err_code);
-            }
+
         } break; // BLE_RSCS_C_EVT_RSC_NOTIFICATION
 
         default:
@@ -446,8 +439,8 @@ static void on_ble_central_evt(const ble_evt_t * const p_ble_evt)
             /** Check which peer has connected, save the connection handle and initiate DB discovery.
              *  DB discovery will invoke a callback (hrs_c_evt_handler and rscs_c_evt_handler)
              *  upon completion, which is used to enable notifications from the peer. */
-            if(memcmp(&periph_addr_rsc, peer_addr, sizeof(ble_gap_addr_t)) == 0)
-            {
+            //if(memcmp(&periph_addr_rsc, peer_addr, sizeof(ble_gap_addr_t)) == 0)
+            //{
                 NRF_LOG_PRINTF("RSC central connected\r\n");
                 // Reset the peer address we had saved.
                 memset(&periph_addr_rsc, 0, sizeof(ble_gap_addr_t));
@@ -457,7 +450,7 @@ static void on_ble_central_evt(const ble_evt_t * const p_ble_evt)
                 NRF_LOG_PRINTF("Starting DB discovery for RSCS\r\n");
                 err_code = ble_db_discovery_start(&m_ble_db_discovery_rsc, p_gap_evt->conn_handle);
                 APP_ERROR_CHECK(err_code);
-            }
+            //}
 
             /** Update LEDs status, and check if we should be looking for more
              *  peripherals to connect to. */
@@ -480,13 +473,13 @@ static void on_ble_central_evt(const ble_evt_t * const p_ble_evt)
         {
             uint8_t n_centrals;
 
-            if(p_gap_evt->conn_handle == m_conn_handle_rscs_c)
-            {
+            //if(p_gap_evt->conn_handle == m_conn_handle_rscs_c)
+            //{
                 NRF_LOG_PRINTF("RSC central disconnected (reason: %d)\r\n",
                        p_gap_evt->params.disconnected.reason);
 
                 m_conn_handle_rscs_c = BLE_CONN_HANDLE_INVALID;
-            }
+            //}
 
             // Start scanning
             // scan_start();
@@ -545,7 +538,7 @@ static void on_ble_central_evt(const ble_evt_t * const p_ble_evt)
                  *  we can tell which peer has connected and update its respective connection
                  *  handle. */
 // TODO TODO TODO - ADD CHECKING FOR APPROPRIATE PERIPHERAL
-                if ((extracted_uuid       == BLE_UUID_RUNNING_SPEED_AND_CADENCE) &&
+                /*if ((extracted_uuid       == BLE_UUID_RUNNING_SPEED_AND_CADENCE) &&
                     (m_conn_handle_rscs_c == BLE_CONN_HANDLE_INVALID))
                 {
                     do_connect = true;
@@ -553,14 +546,14 @@ static void on_ble_central_evt(const ble_evt_t * const p_ble_evt)
                 }
 
                 if (do_connect)
-                {
+                {*/
                     // Initiate connection.
                     err_code = sd_ble_gap_connect(peer_addr, &m_scan_param, &m_connection_param);
                     if (err_code != NRF_SUCCESS)
                     {
                         APPL_LOG("[APPL]: Connection Request Failed, reason %d\r\n", err_code);
                     }
-                }
+                //}
             }
         } break; // BLE_GAP_ADV_REPORT
 
@@ -685,11 +678,11 @@ static void ble_evt_dispatch(ble_evt_t * p_ble_evt)
             on_ble_central_evt(p_ble_evt);
         }
 
-        if (conn_handle == m_conn_handle_rscs_c)
-        {
+        //if (conn_handle == m_conn_handle_rscs_c)
+        //{
             ble_rscs_c_on_ble_evt(&m_ble_rsc_c, p_ble_evt);
             ble_db_discovery_on_ble_evt(&m_ble_db_discovery_rsc, p_ble_evt);
-        }
+        //}
 
         // If the peer disconnected, we update the connection handles last.
         if (p_ble_evt->header.evt_id == BLE_GAP_EVT_DISCONNECTED)
@@ -903,11 +896,11 @@ static void tx_timeout_handler(void * p_context)
     
     rscs_measurement.inst_cadence = force_measurment.bat;
 //TODO TODO TODO - update force-power equation;
-    rscs_measurement.inst_speed                 = force_measurment.force * cadence;
+    rscs_measurement.inst_speed                 = force_measurment.force;// * cadence;
     rscs_measurement.inst_stride_length         = cadence;
     rscs_measurement.total_distance             = battery_measure(BAT_PIN);
     
-    rscs_measurement.inst_cadence = cadence;
+    rscs_measurement.inst_cadence = force_measurment.bat;
     
     err_code = ble_rscs_measurement_send(&m_rscs, &rscs_measurement);
     
