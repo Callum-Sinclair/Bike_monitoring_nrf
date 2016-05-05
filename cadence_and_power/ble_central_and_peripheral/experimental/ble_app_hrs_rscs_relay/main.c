@@ -895,8 +895,8 @@ static void tx_timeout_handler(void * p_context)
     rscs_measurement.is_total_distance_present  = true;
     
     rscs_measurement.inst_cadence = force_measurment.bat;
-//TODO TODO TODO - update force-power equation;
-    rscs_measurement.inst_speed                 = force_measurment.force;// * cadence;
+//TODO TODO TODO - enable force-power equation;
+    rscs_measurement.inst_speed                 = force_measurment.force;// * cadence * CRANK_RADIUS * 0.5;
     rscs_measurement.inst_stride_length         = cadence;
     rscs_measurement.total_distance             = battery_measure(BAT_PIN);
     
