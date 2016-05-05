@@ -39,7 +39,6 @@
 #include "ble_rscs.h"
 #include "ble_cscs.h"
 #include "ble_hrs.h"
-#include "ble_hts.h"
 #include "ble_dis.h"
 #include "ble_conn_params.h"
 #include "sensorsim.h"
@@ -60,7 +59,6 @@
 
 #define DEVICE_NAME                      "Tester"                          /**< Name of device. Will be included in the advertising data. */
 #define MANUFACTURER_NAME                "NordicSemiconductor"                      /**< Manufacturer. Will be passed to Device Information Service. */
-#define MODEL_NUM                       "NS-HTS-EXAMPLE"                           /**< Model number. Will be passed to Device Information Service. */
 #define MANUFACTURER_ID                 0x1122334455                               /**< Manufacturer ID, part of System ID. Will be passed to Device Information Service. */
 #define ORG_UNIQUE_ID                   0x667788                                   /**< Organizational Unique ID, part of System ID. Will be passed to Device Information Service. */
 
@@ -178,9 +176,7 @@ static ble_bas_t                        m_bas;                                  
 static ble_cscs_t                       m_cscs;                                    /**< Structure used to identify the cycling speed and cadence service. */
 static ble_rscs_t                       m_rscs;                                     /**< Structure used to identify the running speed and cadence service. */
 static ble_hrs_t                         m_hrs;                                     /**< Structure used to identify the heart rate service. */
-static ble_hts_t                        m_hts;                                     /**< Structure used to identify the health thermometer service. */
 static bool                              m_rr_interval_enabled = true;              /**< Flag for enabling and disabling the registration of new RR interval measurements (the purpose of disabling this is just to test sending HRM without RR interval data. */
-static bool                             m_hts_meas_ind_conf_pending = false;       /**< Flag to keep track of when an indication confirmation is pending. */
 
 static sensorsim_cfg_t                  m_battery_sim_cfg;                         /**< Battery Level sensor simulator configuration. */
 static sensorsim_state_t                m_battery_sim_state;                       /**< Battery Level sensor simulator state. */
@@ -230,7 +226,6 @@ static ble_sensor_location_t supported_locations[] = {BLE_SENSOR_LOCATION_FRONT_
 // YOUR_JOB: Use UUIDs for service(s) used in your application.
 static ble_uuid_t m_adv_uuids[] =  {{BLE_UUID_DEVICE_INFORMATION_SERVICE,   BLE_UUID_TYPE_BLE}, \
                                     {BLE_UUID_RUNNING_SPEED_AND_CADENCE,    BLE_UUID_TYPE_BLE}, \
-                                    {BLE_UUID_HEALTH_THERMOMETER_SERVICE,   BLE_UUID_TYPE_BLE},
                                     {BLE_UUID_HEART_RATE_SERVICE,           BLE_UUID_TYPE_BLE}, \
                                     {BLE_UUID_BATTERY_SERVICE,              BLE_UUID_TYPE_BLE}, \
                                     {BLE_UUID_CYCLING_SPEED_AND_CADENCE,    BLE_UUID_TYPE_BLE}}; /**< Universally unique service identifiers. */
@@ -326,9 +321,7 @@ static void csc_sim_measurement(ble_cscs_meas_t * p_measurement)
     crank_rev_degrees     %= DEGREES_PER_REVOLUTION;
 
     p_measurement->cumulative_crank_revs = cumulative_crank_revs;
-    p_measurement->last_crank_event_time =
-        event_time + (event_time_inc * (degrees_per_sec - crank_rev_degrees) / degrees_per_sec);
-
+    p_measurement->last_crank_event_time = 0x8597;
     event_time += event_time_inc;
 }
 
@@ -380,7 +373,7 @@ static void csc_meas_timeout_handler(void * p_context)
 static void rsc_sim_measurement(ble_rscs_meas_t * p_measurement)
 {
     p_measurement->is_inst_stride_len_present = true;
-    p_measurement->is_total_distance_present  = false;
+    p_measurement->is_total_distance_present  = true;
     p_measurement->is_running                 = false;
 
     p_measurement->inst_speed         = sensorsim_measure(&m_speed_mps_sim_state,
@@ -391,6 +384,8 @@ static void rsc_sim_measurement(ble_rscs_meas_t * p_measurement)
 
     p_measurement->inst_stride_length = sensorsim_measure(&m_cadence_stl_sim_state,
                                                               &m_cadence_stl_sim_cfg);
+    
+    p_measurement->total_distance = 0x75;
 
     if (p_measurement->inst_speed > (uint32_t)(MIN_RUNNING_SPEED * 256))
     {
@@ -451,10 +446,8 @@ static void heart_rate_meas_timeout_handler(void * p_context)
         APP_ERROR_HANDLER(err_code);
     }
 
-    // Disable RR Interval recording every third heart rate measurement.
-    // NOTE: An application will normally not do this. It is done here just for testing generation
-    //       of messages without RR Interval measurements.
-    m_rr_interval_enabled = ((cnt % 3) != 0);
+
+    m_rr_interval_enabled = true;
 }
 
 
@@ -495,40 +488,6 @@ static void sensor_contact_detected_timeout_handler(void * p_context)
 
     sensor_contact_detected = !sensor_contact_detected;
     ble_hrs_sensor_contact_detected_update(&m_hrs, sensor_contact_detected);
-}
-
-/**@brief Function for populating simulated health thermometer measurement.
- */
-static void hts_sim_measurement(ble_hts_meas_t * p_meas)
-{
-    static ble_date_time_t time_stamp = { 2012, 12, 5, 11, 50, 0 };
-
-    uint32_t celciusX100;
-
-    p_meas->temp_in_fahr_units = false;
-    p_meas->time_stamp_present = true;
-    p_meas->temp_type_present  = (TEMP_TYPE_AS_CHARACTERISTIC ? false : true);
-
-    celciusX100 = sensorsim_measure(&m_temp_celcius_sim_state, &m_temp_celcius_sim_cfg);
-
-    p_meas->temp_in_celcius.exponent = -2;
-    p_meas->temp_in_celcius.mantissa = celciusX100;
-    p_meas->temp_in_fahr.exponent    = -2;
-    p_meas->temp_in_fahr.mantissa    = (32 * 100) + ((celciusX100 * 9) / 5);
-    p_meas->time_stamp               = time_stamp;
-    p_meas->temp_type                = BLE_HTS_TEMP_TYPE_FINGER;
-
-    // update simulated time stamp
-    time_stamp.seconds += 27;
-    if (time_stamp.seconds > 59)
-    {
-        time_stamp.seconds -= 60;
-        time_stamp.minutes++;
-        if (time_stamp.minutes > 59)
-        {
-            time_stamp.minutes = 0;
-        }
-    }
 }
 
 
@@ -670,65 +629,6 @@ ble_scpt_response_t sc_ctrlpt_event_handler(ble_sc_ctrlpt_t     * p_sc_ctrlpt,
     return (BLE_SCPT_SUCCESS);
 }
 
-/**@brief Function for simulating and sending one Temperature Measurement.
- */
-static void temperature_measurement_send(void)
-{
-    ble_hts_meas_t simulated_meas;
-    uint32_t       err_code;
-
-    if (!m_hts_meas_ind_conf_pending)
-    {
-        hts_sim_measurement(&simulated_meas);
-
-        err_code = ble_hts_measurement_send(&m_hts, &simulated_meas);
-
-        switch (err_code)
-        {
-            case NRF_SUCCESS:
-                // Measurement was successfully sent, wait for confirmation.
-                m_hts_meas_ind_conf_pending = true;
-                break;
-
-            case NRF_ERROR_INVALID_STATE:
-                // Ignore error.
-                break;
-
-            default:
-                APP_ERROR_HANDLER(err_code);
-                break;
-        }
-    }
-}
-
-
-/**@brief Function for handling the Health Thermometer Service events.
- *
- * @details This function will be called for all Health Thermometer Service events which are passed
- *          to the application.
- *
- * @param[in] p_hts  Health Thermometer Service structure.
- * @param[in] p_evt  Event received from the Health Thermometer Service.
- */
-static void on_hts_evt(ble_hts_t * p_hts, ble_hts_evt_t * p_evt)
-{
-    switch (p_evt->evt_type)
-    {
-        case BLE_HTS_EVT_INDICATION_ENABLED:
-            // Indication has been enabled, send a single temperature measurement
-            temperature_measurement_send();
-            break;
-
-        case BLE_HTS_EVT_INDICATION_CONFIRMED:
-            m_hts_meas_ind_conf_pending = false;
-            break;
-
-        default:
-            // No implementation needed.
-            break;
-    }
-}
-
 
 
 /**@brief Function for initializing services that will be used by the application.
@@ -759,7 +659,6 @@ static void services_init(void)
     APP_ERROR_CHECK(err_code);
     */
     uint32_t              err_code;
-    ble_hts_init_t   hts_init;
     ble_cscs_init_t       cscs_init;
     ble_bas_init_t        bas_init;
     ble_dis_init_t        dis_init;
@@ -795,23 +694,6 @@ static void services_init(void)
 
     err_code = ble_cscs_init(&m_cscs, &cscs_init);
     APP_ERROR_CHECK(err_code);
-    // Initialize Health Thermometer Service
-    memset(&hts_init, 0, sizeof(hts_init));
-
-    hts_init.evt_handler                 = on_hts_evt;
-    hts_init.temp_type_as_characteristic = TEMP_TYPE_AS_CHARACTERISTIC;
-    hts_init.temp_type                   = BLE_HTS_TEMP_TYPE_BODY;
-
-    // Here the sec level for the Health Thermometer Service can be changed/increased.
-    BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&hts_init.hts_meas_attr_md.cccd_write_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS(&hts_init.hts_meas_attr_md.read_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS(&hts_init.hts_meas_attr_md.write_perm);
-
-    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&hts_init.hts_temp_type_attr_md.read_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS(&hts_init.hts_temp_type_attr_md.write_perm);
-
-    err_code = ble_hts_init(&m_hts, &hts_init);
-    APP_ERROR_CHECK(err_code);
 
     // Initialize Battery Service.
     memset(&bas_init, 0, sizeof(bas_init));
@@ -843,7 +725,8 @@ static void services_init(void)
     APP_ERROR_CHECK(err_code);
     rscs_init.evt_handler = NULL;
     rscs_init.feature     = BLE_RSCS_FEATURE_INSTANT_STRIDE_LEN_BIT |
-                            BLE_RSCS_FEATURE_WALKING_OR_RUNNING_STATUS_BIT;
+                            BLE_RSCS_FEATURE_WALKING_OR_RUNNING_STATUS_BIT |
+                            BLE_RSCS_FEATURE_TOTAL_DISTANCE_BIT;
     
     rscs_init.initial_rcm.is_inst_stride_len_present = true;
     rscs_init.initial_rcm.is_total_distance_present  = false;
@@ -1133,8 +1016,6 @@ static void ble_evt_dispatch(ble_evt_t * p_ble_evt)
     ble_cscs_on_ble_evt(&m_cscs, p_ble_evt);
     ble_bas_on_ble_evt(&m_bas, p_ble_evt);
     ble_hrs_on_ble_evt(&m_hrs, p_ble_evt);
-    ble_hts_on_ble_evt(&m_hts, p_ble_evt);
-
 }
 
 
