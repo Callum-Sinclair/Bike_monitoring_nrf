@@ -537,7 +537,8 @@ static void on_ble_central_evt(const ble_evt_t * const p_ble_evt)
                  *  handle. */
 // TODO TODO TODO - ADD CHECKING FOR APPROPRIATE PERIPHERAL
                 if ((extracted_uuid       == BLE_UUID_RUNNING_SPEED_AND_CADENCE) &&
-                    (m_conn_handle_rscs_c == BLE_CONN_HANDLE_INVALID))
+                    (m_conn_handle_rscs_c == BLE_CONN_HANDLE_INVALID) &&
+                    (0 == memcmp("\n\tForce", type_data.p_data, type_data.data_len))) //the charaters proceding Force are experimentally obtained
                 {
                 /*    do_connect = true;
                     memcpy(&periph_addr_rsc, peer_addr, sizeof(ble_gap_addr_t));
