@@ -391,8 +391,6 @@ static void rscs_c_evt_handler(ble_rscs_c_t * p_rscs_c, ble_rscs_c_evt_t * p_rsc
 
         case BLE_RSCS_C_EVT_RSC_NOTIFICATION:
         {
-            uint32_t        err_code;
-
             force_measurment.force = p_rscs_c_evt->params.rsc.inst_speed;
             force_measurment.bat   = p_rscs_c_evt->params.rsc.inst_cadence;
 
@@ -527,7 +525,7 @@ static void on_ble_central_evt(const ble_evt_t * const p_ble_evt)
             // Verify if any UUID match the Heart rate or Running speed and cadence services.
             for (uint32_t u_index = 0; u_index < (type_data.data_len / UUID16_SIZE); u_index++)
             {
-                bool        do_connect = false;
+                //bool        do_connect = false;
                 uint16_t    extracted_uuid;
 
                 UUID16_EXTRACT(&extracted_uuid, &type_data.p_data[u_index * UUID16_SIZE]);
@@ -538,10 +536,10 @@ static void on_ble_central_evt(const ble_evt_t * const p_ble_evt)
                  *  we can tell which peer has connected and update its respective connection
                  *  handle. */
 // TODO TODO TODO - ADD CHECKING FOR APPROPRIATE PERIPHERAL
-                /*if ((extracted_uuid       == BLE_UUID_RUNNING_SPEED_AND_CADENCE) &&
+                if ((extracted_uuid       == BLE_UUID_RUNNING_SPEED_AND_CADENCE) &&
                     (m_conn_handle_rscs_c == BLE_CONN_HANDLE_INVALID))
                 {
-                    do_connect = true;
+                /*    do_connect = true;
                     memcpy(&periph_addr_rsc, peer_addr, sizeof(ble_gap_addr_t));
                 }
 
@@ -553,7 +551,7 @@ static void on_ble_central_evt(const ble_evt_t * const p_ble_evt)
                     {
                         APPL_LOG("[APPL]: Connection Request Failed, reason %d\r\n", err_code);
                     }
-                //}
+                }
             }
         } break; // BLE_GAP_ADV_REPORT
 
