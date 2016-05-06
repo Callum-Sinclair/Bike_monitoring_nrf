@@ -86,6 +86,10 @@
 #define BRD_LED_PIN                     19
 #define BAT_PIN                         4
 
+#define FORCE_BUF_SIZE                  15000                                       // Size of the force measurement buffer, needs to be this big due to sampling frequency
+static uint16_t force_meas_buffer[FORCE_BUF_SIZE];
+static uint32_t force_num = 0;
+
 typedef enum
 {
     BLE_NO_ADV,                                                                     /**< No advertising running. */
@@ -133,21 +137,8 @@ void force_init(void)
 }
 
 uint16_t force_measure(void)
-{
-    static bool led = false;
+{    
     volatile uint32_t result;
-    if (led)
-    {
-        set_pin(BRD_LED_PIN);
-        led = false;
-    }
-    else
-    {
-        clear_pin(BRD_LED_PIN);
-        led = true;
-    }
-    
-    force_init();
     NRF_ADC->ENABLE = ADC_ENABLE_ENABLE_Enabled;
     NRF_ADC->EVENTS_END = 0;
     NRF_ADC->TASKS_START = 1;
@@ -161,17 +152,40 @@ uint16_t force_measure(void)
 
 /**@brief Function for populating simulated running speed and cadence measurement.
  */
-static void force_measurement(ble_rscs_meas_t * p_measurement)
+static void get_peak_force(ble_rscs_meas_t * p_measurement)
 {
-    uint16_t force = force_measure();
+    static bool led = false;
+    if (led)
+    {
+        set_pin(BRD_LED_PIN);
+        led = false;
+    }
+    else
+    {
+        clear_pin(BRD_LED_PIN);
+        led = true;
+    }
+
     bat_adc_init(BAT_PIN);
     uint8_t battery = battery_measure(BAT_PIN);
+    force_init();
     p_measurement->is_inst_stride_len_present = true;
     p_measurement->is_total_distance_present  = true;
     p_measurement->is_running                 = false;
 
-    p_measurement->inst_speed         = force;
-    p_measurement->inst_cadence       = force;//battery;
+    uint16_t peak_force = 0;
+    
+    for (int32_t i = 0; i < force_num; i++)
+    {
+        if (force_meas_buffer[i] > peak_force)
+        {
+            peak_force = force_meas_buffer[i];
+        }
+    }
+    force_num = 0;
+    
+    p_measurement->inst_speed         = peak_force;
+    p_measurement->inst_cadence       = peak_force;//battery;
     
     p_measurement->inst_stride_length = 0;
     
@@ -197,7 +211,7 @@ static void rsc_meas_timeout_handler(void * p_context)
 
     UNUSED_PARAMETER(p_context);
 
-    force_measurement(&rscs_measurement);
+    get_peak_force(&rscs_measurement);
 
     err_code = ble_rscs_measurement_send(&m_rscs, &rscs_measurement);
     if (
@@ -654,8 +668,12 @@ static void buttons_leds_init(bool * p_erase_bonds)
  */
 static void power_manage(void)
 {
-    uint32_t err_code = sd_app_evt_wait();
-    APP_ERROR_CHECK(err_code);
+    force_meas_buffer[force_num] = force_measure(); //conversion takes ~68us, surrounding code will add an aditional finite time.
+    force_num++;
+    if (force_num == FORCE_BUF_SIZE)
+    {
+        force_num = 0;
+    }
 }
 
 /**@brief Function for application main entry.
