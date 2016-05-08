@@ -86,7 +86,7 @@
 #define BRD_LED_PIN                     19
 #define BAT_PIN                         4
 
-#define FORCE_BUF_SIZE                  15000                                       // Size of the force measurement buffer, needs to be this big due to sampling frequency
+#define FORCE_BUF_SIZE                  4000                                       // Size of the force measurement buffer, needs to be this big due to sampling frequency
 static uint16_t force_meas_buffer[FORCE_BUF_SIZE];
 static uint32_t force_num = 0;
 
@@ -134,6 +134,29 @@ void force_init(void)
                        (ADC_CONFIG_PSEL_AnalogInput5                    << ADC_CONFIG_PSEL_Pos) | \
                        (ADC_CONFIG_EXTREFSEL_None                       << ADC_CONFIG_EXTREFSEL_Pos));
     gpio_pin_out_init(BRD_LED_PIN);
+}
+
+void force_ppi_init(void)
+{
+    NRF_TIMER_Type* ticker_timer = NRF_TIMER2;
+    
+    ticker_timer->MODE = TIMER_MODE_MODE_Timer;
+    ticker_timer->BITMODE = TIMER_BITMODE_BITMODE_32Bit;
+    ticker_timer->PRESCALER = 4; //gives T=0.01ms
+    
+    ticker_timer->CC[0] = 50;
+    ticker_timer->CC[1] = 100; // 1 ms
+    
+    ticker_timer->TASKS_CLEAR = 1;
+    ticker_timer->TASKS_START = 1;
+    
+    ticker_timer->SHORTS = (TIMER_SHORTS_COMPARE1_CLEAR_Enabled << TIMER_SHORTS_COMPARE1_CLEAR_Pos);
+    
+    //PPI setup
+    NRF_PPI->CH[0].EEP = (uint32_t)&(ticker_timer->EVENTS_COMPARE[0]);
+    NRF_PPI->CH[0].TEP = (uint32_t)&(NRF_ADC->TASKS_START);
+    
+    NRF_PPI->CHENSET = 0x1;
 }
 
 uint16_t force_measure(void)
@@ -666,14 +689,22 @@ static void buttons_leds_init(bool * p_erase_bonds)
 
 /**@brief Function for the Power manager.
  */
-static void power_manage(void)
+static void monitor_force(void)
 {
-    force_meas_buffer[force_num] = force_measure(); //conversion takes ~68us, surrounding code will add an aditional finite time.
+    //In PPI, called every 1 ms:
+    //ppi - NRF_ADC->TASKS_START = 1;
+    
+    while (NRF_ADC->EVENTS_END == 0);
+    NRF_ADC->EVENTS_END = 0;
+    NRF_ADC->ENABLE = ADC_ENABLE_ENABLE_Disabled;
+
+    force_meas_buffer[force_num] = NRF_ADC->RESULT;; //conversion takes ~68us, surrounding code will add an aditional finite time.
     force_num++;
     if (force_num == FORCE_BUF_SIZE)
     {
         force_num = 0;
     }
+    NRF_ADC->ENABLE = ADC_ENABLE_ENABLE_Enabled;
 }
 
 /**@brief Function for application main entry.
@@ -707,7 +738,7 @@ int main(void)
     // Enter main loop.
     for (;;)
     {
-        power_manage();
+        monitor_force();
     }
 }
 
