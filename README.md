@@ -42,7 +42,7 @@ are used to communicate between the Hub and Phone.
 
 | Data	        |Data range (all int)	        | min size	| Packaged in|
 | ------------- |------------------------------ | -------   | ---------------|
-| Speed	        | 0-500 (speed in km/h * 10)    | uint16	| cscs measurement, last wheel event time |
+| Speed	        | 0-500 (wheel rpm)             | uint16	| cscs measurement, last wheel event time |
 | Total dist    | 0-65000 (m)	                | uint16	| cscs measurement, cumulative wheel revs |
 | Speed Bat	    | 0-100	                        | uint8	    | (cscs measurement, last crank event time) upper byte |
 | Cadence	    | 0-200	                        | uint8	    | cscs measurement, cumulative crank revs |

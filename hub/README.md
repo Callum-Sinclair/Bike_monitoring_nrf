@@ -23,7 +23,7 @@ The hub sends all the information to the phone using the following packet types
 
 | Data	        |Data range (all int)	        | min size	| Packaged in|
 | ------------- |------------------------------ | -------   | ---------------|
-| Speed	        | 0-500 (speed in km/h * 10)    | uint16	| cscs measurement, last wheel event time |
+| Speed	        | 0-500 (wheel rpm)             | uint16	| cscs measurement, last wheel event time |
 | Total dist    | 0-65000 (m)	                | uint16	| cscs measurement, cumulative wheel revs |
 | Speed Bat	    | 0-100	                        | uint8	    | (cscs measurement, last crank event time) upper byte |
 | Cadence	    | 0-200	                        | uint8	    | cscs measurement, cumulative crank revs |
@@ -42,7 +42,7 @@ The hub recieves data from the modules in the following packet types
 
 | Data	        | Data range (all int)	    | min size	| Packaged in |
 | ------------- | ------------------------- | --------- | ----------- |
-| Speed	        | 0-500 (speed in km/h * 10) | uint16	| rcrs measurement, inst speed |
+| Speed	        | 0-500 (wheel rpm)         | uint16	| rcrs measurement, inst speed |
 | Total dist	| 0-65000 (m)	            | uint16	| rcrs measurement, total distance |
 | Speed Bat	    | 0-100	                    | uint8	    | rcrs measurement, inst cadence |
 | Cadence	    | 0-200	                    | uint8	    | rcrs measurement, inst stride length |
