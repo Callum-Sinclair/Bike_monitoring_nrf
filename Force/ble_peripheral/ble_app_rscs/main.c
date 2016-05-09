@@ -86,7 +86,7 @@
 #define BRD_LED_PIN                     19
 #define BAT_PIN                         4
 
-#define FORCE_BUF_SIZE                  4000                                       // Size of the force measurement buffer, needs to be this big due to sampling frequency
+#define FORCE_BUF_SIZE                  8000                                       // Size of the force measurement buffer, needs to be this big due to sampling frequency
 static uint16_t force_meas_buffer[FORCE_BUF_SIZE];
 static uint32_t force_num = 0;
 
@@ -696,11 +696,11 @@ static void monitor_force(void)
     
     while (NRF_ADC->EVENTS_END == 0);
     NRF_ADC->EVENTS_END = 0;
-    NRF_ADC->ENABLE = ADC_ENABLE_ENABLE_Disabled;
 
     force_meas_buffer[force_num] = NRF_ADC->RESULT;; //conversion takes ~68us, surrounding code will add an aditional finite time.
     force_num++;
-    if (force_num == FORCE_BUF_SIZE)
+    NRF_ADC->ENABLE = ADC_ENABLE_ENABLE_Disabled;
+    if (force_num >= FORCE_BUF_SIZE)
     {
         force_num = 0;
     }
@@ -727,6 +727,7 @@ int main(void)
     conn_params_init();
     
     force_init();
+    force_ppi_init();
     bat_adc_init(BAT_PIN);
 
     // Start execution.
