@@ -170,6 +170,14 @@ static ble_uuid_t m_adv_uuids[] = {{BLE_UUID_HEART_RATE_SERVICE,         BLE_UUI
                                    {BLE_UUID_DEVICE_INFORMATION_SERVICE, BLE_UUID_TYPE_BLE}, 
                                    {BLE_UUID_BATTERY_SERVICE,            BLE_UUID_TYPE_BLE}}; /**< Universally unique service identifiers. */
 
+//I2S/TWI
+NRF_TWIM_Type* i2c = NRF_TWIM0;
+#define I2C_SCL 10
+#define I2C_SDA 11
+#define I2C_RX_BUF_SIZE 10
+#define I2C_TX_BUF_SIZE 10
+uint32_t i2c_rx_buf[I2C_RX_BUF_SIZE];
+uint32_t i2c_tx_buf[I2C_TX_BUF_SIZE];
 
 /**@brief Function to handle asserts in the SoftDevice.
  *
@@ -186,6 +194,33 @@ void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name)
 {
     app_error_handler(0xDEADBEEF, line_num, p_file_name);
 }
+
+/**
+ * @brief I2C/TWI initialization.
+ */
+void i2c_init (void)
+{
+    i2c->PSEL.SCL   = I2C_SCL;
+    i2c->PSEL.SDA   = I2C_SDA;
+    i2c->FREQUENCY  = TWIM_FREQUENCY_FREQUENCY_K100; // 100 kbps
+    i2c->RXD.PTR    = (uint32_t)&i2c_rx_buf[0];
+    i2c->RXD.MAXCNT = I2C_RX_BUF_SIZE;
+    i2c->RXD.LIST   = TWIM_RXD_LIST_LIST_Disabled;
+    i2c->TXD.PTR    = (uint32_t)i2c_tx_buf;
+    i2c->TXD.MAXCNT = I2C_TX_BUF_SIZE;
+    i2c->TXD.LIST   = TWIM_TXD_LIST_LIST_Disabled;
+    i2c->SHORTS     = ((TWIM_SHORTS_LASTTX_STARTRX_Enabled << TWIM_SHORTS_LASTTX_STARTRX_Pos) | \
+                       (TWIM_SHORTS_LASTRX_STOP_Enabled << TWIM_SHORTS_LASTRX_STOP_Pos));
+}
+
+void i2c_tx_rx(uint32_t data_addr, uint32_t tx_addr, uint8_t bytes)
+{
+    i2c->ADDRESS = tx_addr;
+    i2c->TXD.PTR = data_addr;
+    i2c->TXD.MAXCNT = bytes;
+    i2c->TASKS_STARTTX = 1;
+}
+
 
 /**@brief Function for performing battery measurement and updating the Battery Level characteristic
  *        in Battery Service.

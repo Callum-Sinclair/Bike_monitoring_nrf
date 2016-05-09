@@ -1705,6 +1705,13 @@ rf52xxx_uicr.flm))</FlashDriverDll>
           <targetInfo name="nrf52832_xxaa_s132" versionMatchMode="fixed"/>
         </targetInfos>
       </component>
+      <component Cclass="nRF_Drivers" Cgroup="nrf_twim" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha" condition="nrf_twim">
+        <package name="nRF_Drivers" schemaVersion="1.2" supportContact="http://www.nordicsemi.com/About-us/Contact-us" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Drivers/" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo name="flash_s132_nrf52_2.0.0-7.alpha_softdevice"/>
+          <targetInfo name="nrf52832_xxaa_s132"/>
+        </targetInfos>
+      </component>
       <component Cclass="nRF_Drivers" Cgroup="nrf_uart" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha" condition="nrf_uart">
         <package name="nRF_Drivers" schemaVersion="1.2" supportContact="http://www.nordicsemi.com/About-us/Contact-us" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Drivers/" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
         <targetInfos>
