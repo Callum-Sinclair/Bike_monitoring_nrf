@@ -178,6 +178,8 @@ NRF_TWIM_Type* i2c = NRF_TWIM0;
 #define I2C_TX_BUF_SIZE 10
 uint32_t i2c_rx_buf[I2C_RX_BUF_SIZE];
 uint32_t i2c_tx_buf[I2C_TX_BUF_SIZE];
+float hr_vals[5000];
+
 
 /**@brief Function to handle asserts in the SoftDevice.
  *
