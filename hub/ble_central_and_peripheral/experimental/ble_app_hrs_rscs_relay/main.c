@@ -64,6 +64,7 @@
 #include "ble_rscs.h"
 #include "ble_bas.h"
 #include "ble_dis.h"
+#include "ble_cscs.h"
 #include "ble_hrs_c.h"
 #include "ble_rscs_c.h"
 #include "ble_conn_state.h"
@@ -71,7 +72,7 @@
 
 #include "fds.h"
 
-#define CENTRAL_LINK_COUNT          2                                  /**<number of central links used by the application. When changing this number remember to adjust the RAM settings*/
+#define CENTRAL_LINK_COUNT          3                                  /**<number of central links used by the application. When changing this number remember to adjust the RAM settings*/
 #define PERIPHERAL_LINK_COUNT       1                                  /**<number of peripheral links used by the application. When changing this number remember to adjust the RAM settings*/
 
 /* Central related. */
@@ -138,9 +139,11 @@ static const ble_gap_conn_params_t m_connection_param =
 };
 
 static ble_hrs_c_t               m_ble_hrs_c;                                       /**< Main structure used by the Heart rate client module. */
-static ble_rscs_c_t              m_ble_rsc_c;                                       /**< Main structure used by the Running speed and cadence client module. */
+static ble_rscs_c_t              m_ble_rsc_cadence_c;                                       /**< Main structure used by the Running speed and cadence client module. */
+static ble_rscs_c_t              m_ble_rsc_speed_c;                                       /**< Main structure used by the Running speed and cadence client module. */
 static uint16_t                  m_conn_handle_hrs_c  = BLE_CONN_HANDLE_INVALID;    /**< Connection handle for the HRS central application */
-static uint16_t                  m_conn_handle_rscs_c = BLE_CONN_HANDLE_INVALID;    /**< Connection handle for the RSC central application */
+static uint16_t                  m_conn_handle_rscs_cadence_c = BLE_CONN_HANDLE_INVALID;    /**< Connection handle for the RSC central application */
+static uint16_t                  m_conn_handle_rscs_speed_c = BLE_CONN_HANDLE_INVALID;    /**< Connection handle for the RSC central application */
 static ble_db_discovery_t        m_ble_db_discovery_hrs;                            /**< HR service DB structure used by the database discovery module. */
 static ble_db_discovery_t        m_ble_db_discovery_rsc;                            /**< RSC service DB structure used by the database discovery module. */
 
@@ -161,24 +164,18 @@ static ble_db_discovery_t        m_ble_db_discovery_rsc;                        
 static ble_hrs_t    m_hrs;                                                          /**< Main structure for the Heart rate server module. */
 static ble_rscs_t   m_rscs;                                                         /**< Main structure for the Running speed and cadence server module. */
 static ble_bas_t    m_bas;                                                          /**< Structure used to identify the battery service. */
+static ble_cscs_t   m_cscs;                                    /**< Structure used to identify the cycling speed and cadence service. */
+
+static bool         m_rr_interval_enabled = true;              /**< Flag for enabling and disabling the registration of new RR interval measurements (the purpose of disabling this is just to test sending HRM without RR interval data. */
 
 APP_TIMER_DEF(m_battery_timer_id);                                                 /**< Battery timer. */
 
 /**@brief UUIDs which the central applications will scan for, and which will be advertised by the peripherals. */
 static ble_uuid_t m_adv_uuids[] = {{BLE_UUID_HEART_RATE_SERVICE,         BLE_UUID_TYPE_BLE},
                                    {BLE_UUID_RUNNING_SPEED_AND_CADENCE,  BLE_UUID_TYPE_BLE},
+                                   {BLE_UUID_CYCLING_SPEED_AND_CADENCE,  BLE_UUID_TYPE_BLE},
                                    {BLE_UUID_DEVICE_INFORMATION_SERVICE, BLE_UUID_TYPE_BLE}, 
                                    {BLE_UUID_BATTERY_SERVICE,            BLE_UUID_TYPE_BLE}}; /**< Universally unique service identifiers. */
-
-//I2S/TWI
-NRF_TWIM_Type* i2c = NRF_TWIM0;
-#define I2C_SCL 10
-#define I2C_SDA 11
-#define I2C_RX_BUF_SIZE 10
-#define I2C_TX_BUF_SIZE 10
-uint32_t i2c_rx_buf[I2C_RX_BUF_SIZE];
-uint32_t i2c_tx_buf[I2C_TX_BUF_SIZE];
-float hr_vals[5000];
 
 
 /**@brief Function to handle asserts in the SoftDevice.
@@ -196,33 +193,6 @@ void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name)
 {
     app_error_handler(0xDEADBEEF, line_num, p_file_name);
 }
-
-/**
- * @brief I2C/TWI initialization.
- */
-void i2c_init (void)
-{
-    i2c->PSEL.SCL   = I2C_SCL;
-    i2c->PSEL.SDA   = I2C_SDA;
-    i2c->FREQUENCY  = TWIM_FREQUENCY_FREQUENCY_K100; // 100 kbps
-    i2c->RXD.PTR    = (uint32_t)&i2c_rx_buf[0];
-    i2c->RXD.MAXCNT = I2C_RX_BUF_SIZE;
-    i2c->RXD.LIST   = TWIM_RXD_LIST_LIST_Disabled;
-    i2c->TXD.PTR    = (uint32_t)i2c_tx_buf;
-    i2c->TXD.MAXCNT = I2C_TX_BUF_SIZE;
-    i2c->TXD.LIST   = TWIM_TXD_LIST_LIST_Disabled;
-    i2c->SHORTS     = ((TWIM_SHORTS_LASTTX_STARTRX_Enabled << TWIM_SHORTS_LASTTX_STARTRX_Pos) | \
-                       (TWIM_SHORTS_LASTRX_STOP_Enabled << TWIM_SHORTS_LASTRX_STOP_Pos));
-}
-
-void i2c_tx_rx(uint32_t data_addr, uint32_t tx_addr, uint8_t bytes)
-{
-    i2c->ADDRESS = tx_addr;
-    i2c->TXD.PTR = data_addr;
-    i2c->TXD.MAXCNT = bytes;
-    i2c->TASKS_STARTTX = 1;
-}
-
 
 /**@brief Function for performing battery measurement and updating the Battery Level characteristic
  *        in Battery Service.
@@ -579,7 +549,8 @@ static void on_ble_central_evt(const ble_evt_t * const p_ble_evt)
 {
     // The addresses of peers we attempted to connect to.
     static ble_gap_addr_t periph_addr_hrs;
-    static ble_gap_addr_t periph_addr_rsc;
+    static ble_gap_addr_t periph_addr_rsc_cadence;
+    static ble_gap_addr_t periph_addr_rsc_speed;
 
     // For readability.
     const ble_gap_evt_t   * const p_gap_evt = &p_ble_evt->evt.gap_evt;
@@ -610,13 +581,25 @@ static void on_ble_central_evt(const ble_evt_t * const p_ble_evt)
                 err_code = ble_db_discovery_start(&m_ble_db_discovery_hrs, p_gap_evt->conn_handle);
                 APP_ERROR_CHECK(err_code);
             }
-            else if(memcmp(&periph_addr_rsc, peer_addr, sizeof(ble_gap_addr_t)) == 0)
+            else if(memcmp(&periph_addr_rsc_cadence, peer_addr, sizeof(ble_gap_addr_t)) == 0)
             {
                 //NRF_LOG_PRINTF("RSC central connected\r\n");
                 // Reset the peer address we had saved.
-                memset(&periph_addr_rsc, 0, sizeof(ble_gap_addr_t));
+                memset(&periph_addr_rsc_cadence, 0, sizeof(ble_gap_addr_t));
 
-                m_conn_handle_rscs_c = p_gap_evt->conn_handle;
+                m_conn_handle_rscs_cadence_c = p_gap_evt->conn_handle;
+
+                //NRF_LOG_PRINTF("Starting DB discovery for RSCS\r\n");
+                err_code = ble_db_discovery_start(&m_ble_db_discovery_rsc, p_gap_evt->conn_handle);
+                APP_ERROR_CHECK(err_code);
+            }
+            else if(memcmp(&periph_addr_rsc_speed, peer_addr, sizeof(ble_gap_addr_t)) == 0)
+            {
+                //NRF_LOG_PRINTF("RSC central connected\r\n");
+                // Reset the peer address we had saved.
+                memset(&periph_addr_rsc_speed, 0, sizeof(ble_gap_addr_t));
+
+                m_conn_handle_rscs_speed_c = p_gap_evt->conn_handle;
 
                 //NRF_LOG_PRINTF("Starting DB discovery for RSCS\r\n");
                 err_code = ble_db_discovery_start(&m_ble_db_discovery_rsc, p_gap_evt->conn_handle);
@@ -651,12 +634,19 @@ static void on_ble_central_evt(const ble_evt_t * const p_ble_evt)
 
                 m_conn_handle_hrs_c = BLE_CONN_HANDLE_INVALID;
             }
-            else if(p_gap_evt->conn_handle == m_conn_handle_rscs_c)
+            else if(p_gap_evt->conn_handle == m_conn_handle_rscs_cadence_c)
             {
                 //NRF_LOG_PRINTF("RSC central disconnected (reason: %d)\r\n",
                 //       p_gap_evt->params.disconnected.reason);
 
-                m_conn_handle_rscs_c = BLE_CONN_HANDLE_INVALID;
+                m_conn_handle_rscs_cadence_c = BLE_CONN_HANDLE_INVALID;
+            }
+            else if(p_gap_evt->conn_handle == m_conn_handle_rscs_speed_c)
+            {
+                //NRF_LOG_PRINTF("RSC central disconnected (reason: %d)\r\n",
+                //       p_gap_evt->params.disconnected.reason);
+
+                m_conn_handle_rscs_speed_c = BLE_CONN_HANDLE_INVALID;
             }
 
             // Start scanning
@@ -722,10 +712,20 @@ static void on_ble_central_evt(const ble_evt_t * const p_ble_evt)
                     memcpy(&periph_addr_hrs, peer_addr, sizeof(ble_gap_addr_t));
                 }
                 else if ((extracted_uuid       == BLE_UUID_RUNNING_SPEED_AND_CADENCE) &&
-                         (m_conn_handle_rscs_c == BLE_CONN_HANDLE_INVALID))
+                         (m_conn_handle_rscs_cadence_c == BLE_CONN_HANDLE_INVALID) &&
+                         (0 == memcmp("\n\tCadence", type_data.p_data, type_data.data_len))) //the charaters proceding then name are experimentally obtained
+
                 {
                     do_connect = true;
-                    memcpy(&periph_addr_rsc, peer_addr, sizeof(ble_gap_addr_t));
+                    memcpy(&periph_addr_rsc_cadence, peer_addr, sizeof(ble_gap_addr_t));
+                }
+                else if ((extracted_uuid       == BLE_UUID_RUNNING_SPEED_AND_CADENCE) &&
+                         (m_conn_handle_rscs_speed_c == BLE_CONN_HANDLE_INVALID) &&
+                         (0 == memcmp("\n\tSpeed", type_data.p_data, type_data.data_len))) //the charaters proceding then name are experimentally obtained
+
+                {
+                    do_connect = true;
+                    memcpy(&periph_addr_rsc_speed, peer_addr, sizeof(ble_gap_addr_t));
                 }
 
                 if (do_connect)
@@ -867,9 +867,14 @@ static void ble_evt_dispatch(ble_evt_t * p_ble_evt)
             ble_hrs_c_on_ble_evt(&m_ble_hrs_c, p_ble_evt);
             ble_db_discovery_on_ble_evt(&m_ble_db_discovery_hrs, p_ble_evt);
         }
-        else if (conn_handle == m_conn_handle_rscs_c)
+        else if (conn_handle == m_conn_handle_rscs_cadence_c)
         {
-            ble_rscs_c_on_ble_evt(&m_ble_rsc_c, p_ble_evt);
+            ble_rscs_c_on_ble_evt(&m_ble_rsc_cadence_c, p_ble_evt);
+            ble_db_discovery_on_ble_evt(&m_ble_db_discovery_rsc, p_ble_evt);
+        }
+        else if (conn_handle == m_conn_handle_rscs_speed_c)
+        {
+            ble_rscs_c_on_ble_evt(&m_ble_rsc_speed_c, p_ble_evt);
             ble_db_discovery_on_ble_evt(&m_ble_db_discovery_rsc, p_ble_evt);
         }
 
@@ -921,7 +926,9 @@ static void rscs_c_init(void)
 
     rscs_c_init_obj.evt_handler = rscs_c_evt_handler;
 
-    err_code = ble_rscs_c_init(&m_ble_rsc_c, &rscs_c_init_obj);
+    err_code = ble_rscs_c_init(&m_ble_rsc_cadence_c, &rscs_c_init_obj);
+    APP_ERROR_CHECK(err_code);
+    err_code = ble_rscs_c_init(&m_ble_rsc_speed_c, &rscs_c_init_obj);
     APP_ERROR_CHECK(err_code);
 }
 
