@@ -592,6 +592,18 @@ static void on_ble_central_evt(const ble_evt_t * const p_ble_evt)
                 err_code = ble_db_discovery_start(&m_ble_db_discovery_rsc, p_gap_evt->conn_handle);
                 APP_ERROR_CHECK(err_code);
             }
+            else if(memcmp(&periph_addr_rsc_speed, peer_addr, sizeof(ble_gap_addr_t)) == 0)
+            {
+                //NRF_LOG_PRINTF("RSC central connected\r\n");
+                // Reset the peer address we had saved.
+                memset(&periph_addr_rsc_speed, 0, sizeof(ble_gap_addr_t));
+
+                m_conn_handle_rscs_speed_c = p_gap_evt->conn_handle;
+
+                //NRF_LOG_PRINTF("Starting DB discovery for RSCS\r\n");
+                err_code = ble_db_discovery_start(&m_ble_db_discovery_rsc, p_gap_evt->conn_handle);
+                APP_ERROR_CHECK(err_code);
+            }
 
             /** Update LEDs status, and check if we should be looking for more
              *  peripherals to connect to. */
@@ -627,6 +639,13 @@ static void on_ble_central_evt(const ble_evt_t * const p_ble_evt)
                 //       p_gap_evt->params.disconnected.reason);
 
                 m_conn_handle_rscs_cadence_c = BLE_CONN_HANDLE_INVALID;
+            }
+            else if(p_gap_evt->conn_handle == m_conn_handle_rscs_speed_c)
+            {
+                //NRF_LOG_PRINTF("RSC central disconnected (reason: %d)\r\n",
+                //       p_gap_evt->params.disconnected.reason);
+
+                m_conn_handle_rscs_speed_c = BLE_CONN_HANDLE_INVALID;
             }
 
             // Start scanning
@@ -699,14 +718,14 @@ static void on_ble_central_evt(const ble_evt_t * const p_ble_evt)
                     do_connect = true;
                     memcpy(&periph_addr_rsc_cadence, peer_addr, sizeof(ble_gap_addr_t));
                 }
-                /*else if ((extracted_uuid       == BLE_UUID_RUNNING_SPEED_AND_CADENCE) &&
+                else if ((extracted_uuid       == BLE_UUID_RUNNING_SPEED_AND_CADENCE) &&
                          (m_conn_handle_rscs_speed_c == BLE_CONN_HANDLE_INVALID) &&
                          (0 == memcmp("\n\tSpeed", type_data.p_data, type_data.data_len))) //the charaters proceding then name are experimentally obtained
 
                 {
                     do_connect = true;
-                    memcpy(&periph_addr_rsc, peer_addr, sizeof(ble_gap_addr_t));
-                }*/
+                    memcpy(&periph_addr_rsc_speed, peer_addr, sizeof(ble_gap_addr_t));
+                }
 
                 if (do_connect)
                 {
@@ -848,6 +867,11 @@ static void ble_evt_dispatch(ble_evt_t * p_ble_evt)
             ble_db_discovery_on_ble_evt(&m_ble_db_discovery_hrs, p_ble_evt);
         }
         else if (conn_handle == m_conn_handle_rscs_cadence_c)
+        {
+            ble_rscs_c_on_ble_evt(&m_ble_rsc_c, p_ble_evt);
+            ble_db_discovery_on_ble_evt(&m_ble_db_discovery_rsc, p_ble_evt);
+        }
+        else if (conn_handle == m_conn_handle_rscs_speed_c)
         {
             ble_rscs_c_on_ble_evt(&m_ble_rsc_c, p_ble_evt);
             ble_db_discovery_on_ble_evt(&m_ble_db_discovery_rsc, p_ble_evt);
