@@ -1022,7 +1022,7 @@ static void services_init(void)
 
     rscs_init.evt_handler = NULL;
     rscs_init.feature     = BLE_RSCS_FEATURE_INSTANT_STRIDE_LEN_BIT |
-                            BLE_RSCS_FEATURE_WALKING_OR_RUNNING_STATUS_BIT;
+                            BLE_RSCS_FEATURE_TOTAL_DISTANCE_BIT;
 
     // Here the sec level for the Running Speed and Cadence Service can be changed/increased.
     BLE_GAP_CONN_SEC_MODE_SET_OPEN(&rscs_init.rsc_meas_attr_md.cccd_write_perm);
@@ -1104,6 +1104,7 @@ void reed_sw_init(uint32_t pin)
     NRF_PPI->CHENSET = 0xF;
 
 }
+
 
 /** @brief Function to sleep until a BLE event is received by the application.
  */
