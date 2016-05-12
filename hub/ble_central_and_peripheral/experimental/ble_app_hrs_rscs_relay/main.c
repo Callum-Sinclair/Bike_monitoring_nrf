@@ -72,6 +72,8 @@
 
 #include "fds.h"
 
+#define INCLDUE_SPEED 1
+
 #define CENTRAL_LINK_COUNT          3                                  /**<number of central links used by the application. When changing this number remember to adjust the RAM settings*/
 #define PERIPHERAL_LINK_COUNT       1                                  /**<number of peripheral links used by the application. When changing this number remember to adjust the RAM settings*/
 
@@ -142,7 +144,9 @@ static ble_hrs_c_t               m_ble_hrs_c;                                   
 static ble_rscs_c_t              m_ble_rsc_c;                                       /**< Main structure used by the Running speed and cadence client module. */
 static uint16_t                  m_conn_handle_hrs_c  = BLE_CONN_HANDLE_INVALID;    /**< Connection handle for the HRS central application */
 static uint16_t                  m_conn_handle_rscs_cadence_c = BLE_CONN_HANDLE_INVALID;    /**< Connection handle for the RSC central application */
+#ifdef INCLUDE_SPEED
 static uint16_t                  m_conn_handle_rscs_speed_c = BLE_CONN_HANDLE_INVALID;    /**< Connection handle for the RSC central application */
+#endif
 static ble_db_discovery_t        m_ble_db_discovery_hrs;                            /**< HR service DB structure used by the database discovery module. */
 static ble_db_discovery_t        m_ble_db_discovery_rsc;                            /**< RSC service DB structure used by the database discovery module. */
 
@@ -592,6 +596,7 @@ static void on_ble_central_evt(const ble_evt_t * const p_ble_evt)
                 err_code = ble_db_discovery_start(&m_ble_db_discovery_rsc, p_gap_evt->conn_handle);
                 APP_ERROR_CHECK(err_code);
             }
+#ifdef INCLUDE_SPEED
             else if(memcmp(&periph_addr_rsc_speed, peer_addr, sizeof(ble_gap_addr_t)) == 0)
             {
                 //NRF_LOG_PRINTF("RSC central connected\r\n");
@@ -604,7 +609,8 @@ static void on_ble_central_evt(const ble_evt_t * const p_ble_evt)
                 err_code = ble_db_discovery_start(&m_ble_db_discovery_rsc, p_gap_evt->conn_handle);
                 APP_ERROR_CHECK(err_code);
             }
-
+#endif
+            
             /** Update LEDs status, and check if we should be looking for more
              *  peripherals to connect to. */
             LEDS_ON(CENTRAL_CONNECTED_LED);
@@ -640,6 +646,7 @@ static void on_ble_central_evt(const ble_evt_t * const p_ble_evt)
 
                 m_conn_handle_rscs_cadence_c = BLE_CONN_HANDLE_INVALID;
             }
+#ifdef INCLUDE_SPEED
             else if(p_gap_evt->conn_handle == m_conn_handle_rscs_speed_c)
             {
                 //NRF_LOG_PRINTF("RSC central disconnected (reason: %d)\r\n",
@@ -647,7 +654,8 @@ static void on_ble_central_evt(const ble_evt_t * const p_ble_evt)
 
                 m_conn_handle_rscs_speed_c = BLE_CONN_HANDLE_INVALID;
             }
-
+#endif
+            
             // Start scanning
             // scan_start();
 
@@ -710,6 +718,7 @@ static void on_ble_central_evt(const ble_evt_t * const p_ble_evt)
                     do_connect = true;
                     memcpy(&periph_addr_hrs, peer_addr, sizeof(ble_gap_addr_t));
                 }
+#ifdef INCLUDE_SPEED
                 else if ((extracted_uuid       == BLE_UUID_RUNNING_SPEED_AND_CADENCE) &&
                          (m_conn_handle_rscs_cadence_c == BLE_CONN_HANDLE_INVALID) &&
                          (0 == memcmp("\n\tCadence", type_data.p_data, type_data.data_len))) //the charaters proceding then name are experimentally obtained
@@ -726,7 +735,15 @@ static void on_ble_central_evt(const ble_evt_t * const p_ble_evt)
                     do_connect = true;
                     memcpy(&periph_addr_rsc_speed, peer_addr, sizeof(ble_gap_addr_t));
                 }
+#else
+                else if ((extracted_uuid       == BLE_UUID_RUNNING_SPEED_AND_CADENCE) &&
+                         (m_conn_handle_rscs_cadence_c == BLE_CONN_HANDLE_INVALID))
 
+                {
+                    do_connect = true;
+                    memcpy(&periph_addr_rsc_cadence, peer_addr, sizeof(ble_gap_addr_t));
+                }
+#endif
                 if (do_connect)
                 {
                     // Initiate connection.
@@ -871,12 +888,14 @@ static void ble_evt_dispatch(ble_evt_t * p_ble_evt)
             ble_rscs_c_on_ble_evt(&m_ble_rsc_c, p_ble_evt);
             ble_db_discovery_on_ble_evt(&m_ble_db_discovery_rsc, p_ble_evt);
         }
+#ifdef INCLUDE_SPEED
         else if (conn_handle == m_conn_handle_rscs_speed_c)
         {
             ble_rscs_c_on_ble_evt(&m_ble_rsc_c, p_ble_evt);
             ble_db_discovery_on_ble_evt(&m_ble_db_discovery_rsc, p_ble_evt);
         }
-
+#endif
+        
         // If the peer disconnected, we update the connection handles last.
         if (p_ble_evt->header.evt_id == BLE_GAP_EVT_DISCONNECTED)
         {
