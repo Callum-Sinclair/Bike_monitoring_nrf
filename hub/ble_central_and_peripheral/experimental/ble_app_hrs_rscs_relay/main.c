@@ -62,20 +62,20 @@
 #include "ble_db_discovery.h"
 #include "ble_hrs.h"
 #include "ble_rscs.h"
-#include "ble_bas.h"
-#include "ble_dis.h"
-#include "ble_cscs.h"
 #include "ble_hrs_c.h"
 #include "ble_rscs_c.h"
 #include "ble_conn_state.h"
+#include "nrf_log.h"
 #include "fstorage.h"
 
 #include "fds.h"
 
-#define INCLDUE_SPEED 1
-
-#define CENTRAL_LINK_COUNT          3                                  /**<number of central links used by the application. When changing this number remember to adjust the RAM settings*/
+#define CENTRAL_LINK_COUNT          2                                  /**<number of central links used by the application. When changing this number remember to adjust the RAM settings*/
 #define PERIPHERAL_LINK_COUNT       1                                  /**<number of peripheral links used by the application. When changing this number remember to adjust the RAM settings*/
+
+#define APPL_LOG                    app_trace_log                      /**< Macro used to log debug information over UART. */
+#define UART_TX_BUF_SIZE            256                                /**< Size of the UART TX buffer, in bytes. Must be a power of two. */
+#define UART_RX_BUF_SIZE            1                                  /**< Size of the UART RX buffer, in bytes. Must be a power of two. */
 
 /* Central related. */
 
@@ -85,7 +85,6 @@
 #define APP_TIMER_PRESCALER         0                                  /**< Value of the RTC1 PRESCALER register. */
 #define APP_TIMER_MAX_TIMERS        (2+BSP_APP_TIMERS_NUMBER)          /**< Maximum number of timers used by the application. */
 #define APP_TIMER_OP_QUEUE_SIZE     2                                  /**< Size of timer operation queues. */
-#define BATTERY_LEVEL_MEAS_INTERVAL     APP_TIMER_TICKS(2000, APP_TIMER_PRESCALER) /**< Battery level measurement interval (ticks). */
 
 #define SEC_PARAM_BOND              1                                  /**< Perform bonding. */
 #define SEC_PARAM_MITM              0                                  /**< Man In The Middle protection not required. */
@@ -143,10 +142,7 @@ static const ble_gap_conn_params_t m_connection_param =
 static ble_hrs_c_t               m_ble_hrs_c;                                       /**< Main structure used by the Heart rate client module. */
 static ble_rscs_c_t              m_ble_rsc_c;                                       /**< Main structure used by the Running speed and cadence client module. */
 static uint16_t                  m_conn_handle_hrs_c  = BLE_CONN_HANDLE_INVALID;    /**< Connection handle for the HRS central application */
-static uint16_t                  m_conn_handle_rscs_cadence_c = BLE_CONN_HANDLE_INVALID;    /**< Connection handle for the RSC central application */
-#ifdef INCLUDE_SPEED
-static uint16_t                  m_conn_handle_rscs_speed_c = BLE_CONN_HANDLE_INVALID;    /**< Connection handle for the RSC central application */
-#endif
+static uint16_t                  m_conn_handle_rscs_c = BLE_CONN_HANDLE_INVALID;    /**< Connection handle for the RSC central application */
 static ble_db_discovery_t        m_ble_db_discovery_hrs;                            /**< HR service DB structure used by the database discovery module. */
 static ble_db_discovery_t        m_ble_db_discovery_rsc;                            /**< RSC service DB structure used by the database discovery module. */
 
@@ -155,10 +151,10 @@ static ble_db_discovery_t        m_ble_db_discovery_rsc;                        
 #define PERIPHERAL_ADVERTISING_LED       BSP_LED_2_MASK
 #define PERIPHERAL_CONNECTED_LED         BSP_LED_3_MASK
 
-#define DEVICE_NAME                      "Bike_Hub"                                 /**< Name of device used for advertising. */
-#define MANUFACTURER_NAME                "SmartBike"                                /**< Manufacturer. Will be passed to Device Information Service. */
+#define DEVICE_NAME                      "Bike_Hub"                                    /**< Name of device used for advertising. */
+#define MANUFACTURER_NAME                "SmartBike"                      /**< Manufacturer. Will be passed to Device Information Service. */
 #define APP_ADV_INTERVAL                 300                                        /**< The advertising interval (in units of 0.625 ms). This value corresponds to 25 ms. */
-#define APP_ADV_TIMEOUT_IN_SECONDS       600                                        /**< The advertising timeout in units of seconds. */
+#define APP_ADV_TIMEOUT_IN_SECONDS       180                                        /**< The advertising timeout in units of seconds. */
 
 #define FIRST_CONN_PARAMS_UPDATE_DELAY   APP_TIMER_TICKS(5000, APP_TIMER_PRESCALER) /**< Time from initiating event (connect or start of notification) to first time sd_ble_gap_conn_param_update is called (5 seconds). */
 #define NEXT_CONN_PARAMS_UPDATE_DELAY    APP_TIMER_TICKS(30000, APP_TIMER_PRESCALER)/**< Time between each call to sd_ble_gap_conn_param_update after the first call (30 seconds). */
@@ -166,19 +162,10 @@ static ble_db_discovery_t        m_ble_db_discovery_rsc;                        
 
 static ble_hrs_t    m_hrs;                                                          /**< Main structure for the Heart rate server module. */
 static ble_rscs_t   m_rscs;                                                         /**< Main structure for the Running speed and cadence server module. */
-static ble_bas_t    m_bas;                                                          /**< Structure used to identify the battery service. */
-static ble_cscs_t   m_cscs;                                    /**< Structure used to identify the cycling speed and cadence service. */
-
-static bool         m_rr_interval_enabled = true;              /**< Flag for enabling and disabling the registration of new RR interval measurements (the purpose of disabling this is just to test sending HRM without RR interval data. */
-
-APP_TIMER_DEF(m_battery_timer_id);                                                 /**< Battery timer. */
 
 /**@brief UUIDs which the central applications will scan for, and which will be advertised by the peripherals. */
 static ble_uuid_t m_adv_uuids[] = {{BLE_UUID_HEART_RATE_SERVICE,         BLE_UUID_TYPE_BLE},
-                                   {BLE_UUID_RUNNING_SPEED_AND_CADENCE,  BLE_UUID_TYPE_BLE},
-                                   {BLE_UUID_CYCLING_SPEED_AND_CADENCE,  BLE_UUID_TYPE_BLE},
-                                   {BLE_UUID_DEVICE_INFORMATION_SERVICE, BLE_UUID_TYPE_BLE}, 
-                                   {BLE_UUID_BATTERY_SERVICE,            BLE_UUID_TYPE_BLE}}; /**< Universally unique service identifiers. */
+                                   {BLE_UUID_RUNNING_SPEED_AND_CADENCE,  BLE_UUID_TYPE_BLE}};
 
 
 /**@brief Function to handle asserts in the SoftDevice.
@@ -197,40 +184,6 @@ void assert_nrf_callback(uint16_t line_num, const uint8_t * p_file_name)
     app_error_handler(0xDEADBEEF, line_num, p_file_name);
 }
 
-/**@brief Function for performing battery measurement and updating the Battery Level characteristic
- *        in Battery Service.
- */
-static void battery_level_update(void)
-{
-    uint32_t err_code;
-    uint8_t  battery_level;
-
-    battery_level = 75;//battery_measure(BAT_PIN);
-
-    err_code = ble_bas_battery_level_update(&m_bas, battery_level);
-    if ((err_code != NRF_SUCCESS) &&
-        (err_code != NRF_ERROR_INVALID_STATE) &&
-        (err_code != BLE_ERROR_NO_TX_PACKETS) &&
-        (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
-        )
-    {
-        APP_ERROR_HANDLER(err_code);
-    }
-}
-
-/**@brief Function for handling the Battery measurement timer timeout.
- *
- * @details This function will be called each time the battery level measurement timer expires.
- *
- * @param[in] p_context  Pointer used for passing some arbitrary information (context) from the
- *                       app_start_timer() call to the timeout handler.
- */
-static void battery_level_meas_timeout_handler(void * p_context)
-{
-    UNUSED_PARAMETER(p_context);
-    battery_level_update();
-}
-
 
 void uart_error_handle(app_uart_evt_t * p_event)
 {
@@ -242,25 +195,6 @@ void uart_error_handle(app_uart_evt_t * p_event)
     {
         APP_ERROR_HANDLER(p_event->data.error_code);
     }
-}
-
-
-/**@brief Function for the Timer initialization.
- *
- * @details Initializes the timer module. This creates and starts application timers.
- */
-static void timers_init(void)
-{
-    uint32_t err_code;
-
-    // Initialize timer module.
-    APP_TIMER_INIT(APP_TIMER_PRESCALER, APP_TIMER_OP_QUEUE_SIZE, false);
-
-    // Create timers.
-    err_code = app_timer_create(&m_battery_timer_id,
-                                APP_TIMER_MODE_REPEATED,
-                                battery_level_meas_timeout_handler);
-    APP_ERROR_CHECK(err_code);
 }
 
 
@@ -334,10 +268,10 @@ static void scan_start(void)
  */
 static void fds_evt_handler(fds_evt_t const * const p_evt)
 {
-    /*if (p_evt->id == FDS_EVT_GC)
+    if (p_evt->id == FDS_EVT_GC)
     {
-        NRF_LOG_PRINTF("GC completed\n");
-    }*/
+        //NRF_LOG_PRINTF("GC completed\n");
+    }
 }
 
 
@@ -355,10 +289,10 @@ static void pm_evt_handler(pm_evt_t const * p_evt)
             break;
 
         case PM_EVT_LINK_SECURED:
-            /*NRF_LOG_PRINTF("Link secured. Role: %d. conn_handle: %d, Procedure: %d\r\n",
-                           ble_conn_state_role(p_evt->conn_handle),
-                           p_evt->conn_handle,
-                           p_evt->params.link_secured_evt.procedure);*/
+            //NRF_LOG_PRINTF("Link secured. Role: %d. conn_handle: %d, Procedure: %d\r\n",
+              //             ble_conn_state_role(p_evt->conn_handle),
+              //             p_evt->conn_handle,
+              //             p_evt->params.link_secured_evt.procedure);
             break;
 
         case PM_EVT_LINK_SECURE_FAILED:
@@ -495,7 +429,7 @@ static void rscs_c_evt_handler(ble_rscs_c_t * p_rscs_c, ble_rscs_c_evt_t * p_rsc
             uint32_t        err_code;
             ble_rscs_meas_t rscs_measurment;
 
-            //NRF_LOG_PRINTF("Speed      = %d\r\n", p_rscs_c_evt->params.rsc.inst_speed);
+           // NRF_LOG_PRINTF("Speed      = %d\r\n", p_rscs_c_evt->params.rsc.inst_speed);
 
             rscs_measurment.is_running                  = p_rscs_c_evt->params.rsc.is_running;
             rscs_measurment.is_inst_stride_len_present  = p_rscs_c_evt->params.rsc.is_inst_stride_len_present;
@@ -524,18 +458,6 @@ static void rscs_c_evt_handler(ble_rscs_c_t * p_rscs_c, ble_rscs_c_evt_t * p_rsc
 }
 
 
-/**@brief Function for starting application timers.
- */
-static void application_timers_start(void)
-{
-    uint32_t err_code;
-
-    // Start application timers.
-    err_code = app_timer_start(m_battery_timer_id, BATTERY_LEVEL_MEAS_INTERVAL, NULL);
-    APP_ERROR_CHECK(err_code);
-}
-
-
 /**@brief Function for handling BLE Stack events concerning central applications.
  *
  * @details This function keeps the connection handles of central applications up-to-date. It
@@ -552,8 +474,7 @@ static void on_ble_central_evt(const ble_evt_t * const p_ble_evt)
 {
     // The addresses of peers we attempted to connect to.
     static ble_gap_addr_t periph_addr_hrs;
-    static ble_gap_addr_t periph_addr_rsc_cadence;
-    static ble_gap_addr_t periph_addr_rsc_speed;
+    static ble_gap_addr_t periph_addr_rsc;
 
     // For readability.
     const ble_gap_evt_t   * const p_gap_evt = &p_ble_evt->evt.gap_evt;
@@ -584,33 +505,19 @@ static void on_ble_central_evt(const ble_evt_t * const p_ble_evt)
                 err_code = ble_db_discovery_start(&m_ble_db_discovery_hrs, p_gap_evt->conn_handle);
                 APP_ERROR_CHECK(err_code);
             }
-            else if(memcmp(&periph_addr_rsc_cadence, peer_addr, sizeof(ble_gap_addr_t)) == 0)
+            else if(memcmp(&periph_addr_rsc, peer_addr, sizeof(ble_gap_addr_t)) == 0)
             {
                 //NRF_LOG_PRINTF("RSC central connected\r\n");
                 // Reset the peer address we had saved.
-                memset(&periph_addr_rsc_cadence, 0, sizeof(ble_gap_addr_t));
+                memset(&periph_addr_rsc, 0, sizeof(ble_gap_addr_t));
 
-                m_conn_handle_rscs_cadence_c = p_gap_evt->conn_handle;
+                m_conn_handle_rscs_c = p_gap_evt->conn_handle;
 
                 //NRF_LOG_PRINTF("Starting DB discovery for RSCS\r\n");
                 err_code = ble_db_discovery_start(&m_ble_db_discovery_rsc, p_gap_evt->conn_handle);
                 APP_ERROR_CHECK(err_code);
             }
-#ifdef INCLUDE_SPEED
-            else if(memcmp(&periph_addr_rsc_speed, peer_addr, sizeof(ble_gap_addr_t)) == 0)
-            {
-                //NRF_LOG_PRINTF("RSC central connected\r\n");
-                // Reset the peer address we had saved.
-                memset(&periph_addr_rsc_speed, 0, sizeof(ble_gap_addr_t));
 
-                m_conn_handle_rscs_speed_c = p_gap_evt->conn_handle;
-
-                //NRF_LOG_PRINTF("Starting DB discovery for RSCS\r\n");
-                err_code = ble_db_discovery_start(&m_ble_db_discovery_rsc, p_gap_evt->conn_handle);
-                APP_ERROR_CHECK(err_code);
-            }
-#endif
-            
             /** Update LEDs status, and check if we should be looking for more
              *  peripherals to connect to. */
             LEDS_ON(CENTRAL_CONNECTED_LED);
@@ -635,27 +542,18 @@ static void on_ble_central_evt(const ble_evt_t * const p_ble_evt)
             if (p_gap_evt->conn_handle == m_conn_handle_hrs_c)
             {
                 //NRF_LOG_PRINTF("HRS central disconnected (reason: %d)\r\n",
-                //       p_gap_evt->params.disconnected.reason);
+                 //      p_gap_evt->params.disconnected.reason);
 
                 m_conn_handle_hrs_c = BLE_CONN_HANDLE_INVALID;
             }
-            else if(p_gap_evt->conn_handle == m_conn_handle_rscs_cadence_c)
+            else if(p_gap_evt->conn_handle == m_conn_handle_rscs_c)
             {
                 //NRF_LOG_PRINTF("RSC central disconnected (reason: %d)\r\n",
-                //       p_gap_evt->params.disconnected.reason);
+                 //      p_gap_evt->params.disconnected.reason);
 
-                m_conn_handle_rscs_cadence_c = BLE_CONN_HANDLE_INVALID;
+                m_conn_handle_rscs_c = BLE_CONN_HANDLE_INVALID;
             }
-#ifdef INCLUDE_SPEED
-            else if(p_gap_evt->conn_handle == m_conn_handle_rscs_speed_c)
-            {
-                //NRF_LOG_PRINTF("RSC central disconnected (reason: %d)\r\n",
-                //       p_gap_evt->params.disconnected.reason);
 
-                m_conn_handle_rscs_speed_c = BLE_CONN_HANDLE_INVALID;
-            }
-#endif
-            
             // Start scanning
             // scan_start();
 
@@ -718,32 +616,13 @@ static void on_ble_central_evt(const ble_evt_t * const p_ble_evt)
                     do_connect = true;
                     memcpy(&periph_addr_hrs, peer_addr, sizeof(ble_gap_addr_t));
                 }
-#ifdef INCLUDE_SPEED
                 else if ((extracted_uuid       == BLE_UUID_RUNNING_SPEED_AND_CADENCE) &&
-                         (m_conn_handle_rscs_cadence_c == BLE_CONN_HANDLE_INVALID) &&
-                         (0 == memcmp("\n\tCadence", type_data.p_data, type_data.data_len))) //the charaters proceding then name are experimentally obtained
-
+                         (m_conn_handle_rscs_c == BLE_CONN_HANDLE_INVALID))
                 {
                     do_connect = true;
-                    memcpy(&periph_addr_rsc_cadence, peer_addr, sizeof(ble_gap_addr_t));
+                    memcpy(&periph_addr_rsc, peer_addr, sizeof(ble_gap_addr_t));
                 }
-                else if ((extracted_uuid       == BLE_UUID_RUNNING_SPEED_AND_CADENCE) &&
-                         (m_conn_handle_rscs_speed_c == BLE_CONN_HANDLE_INVALID) &&
-                         (0 == memcmp("\n\tSpeed", type_data.p_data, type_data.data_len))) //the charaters proceding then name are experimentally obtained
 
-                {
-                    do_connect = true;
-                    memcpy(&periph_addr_rsc_speed, peer_addr, sizeof(ble_gap_addr_t));
-                }
-#else
-                else if ((extracted_uuid       == BLE_UUID_RUNNING_SPEED_AND_CADENCE) &&
-                         (m_conn_handle_rscs_cadence_c == BLE_CONN_HANDLE_INVALID))
-
-                {
-                    do_connect = true;
-                    memcpy(&periph_addr_rsc_cadence, peer_addr, sizeof(ble_gap_addr_t));
-                }
-#endif
                 if (do_connect)
                 {
                     // Initiate connection.
@@ -759,10 +638,10 @@ static void on_ble_central_evt(const ble_evt_t * const p_ble_evt)
         case BLE_GAP_EVT_TIMEOUT:
         {
             // We have not specified a timeout for scanning, so only connection attemps can timeout.
-            /*if (p_gap_evt->params.timeout.src == BLE_GAP_TIMEOUT_SRC_CONN)
+            if (p_gap_evt->params.timeout.src == BLE_GAP_TIMEOUT_SRC_CONN)
             {
-                APPL_LOG("[APPL]: Connection Request timed out.\r\n");
-            }*/
+                //APPL_LOG("[APPL]: Connection Request timed out.\r\n");
+            }
         } break; // BLE_GAP_EVT_TIMEOUT
 
         case BLE_GAP_EVT_CONN_PARAM_UPDATE_REQUEST:
@@ -883,19 +762,12 @@ static void ble_evt_dispatch(ble_evt_t * p_ble_evt)
             ble_hrs_c_on_ble_evt(&m_ble_hrs_c, p_ble_evt);
             ble_db_discovery_on_ble_evt(&m_ble_db_discovery_hrs, p_ble_evt);
         }
-        else if (conn_handle == m_conn_handle_rscs_cadence_c)
+        else if (conn_handle == m_conn_handle_rscs_c)
         {
             ble_rscs_c_on_ble_evt(&m_ble_rsc_c, p_ble_evt);
             ble_db_discovery_on_ble_evt(&m_ble_db_discovery_rsc, p_ble_evt);
         }
-#ifdef INCLUDE_SPEED
-        else if (conn_handle == m_conn_handle_rscs_speed_c)
-        {
-            ble_rscs_c_on_ble_evt(&m_ble_rsc_c, p_ble_evt);
-            ble_db_discovery_on_ble_evt(&m_ble_db_discovery_rsc, p_ble_evt);
-        }
-#endif
-        
+
         // If the peer disconnected, we update the connection handles last.
         if (p_ble_evt->header.evt_id == BLE_GAP_EVT_DISCONNECTED)
         {
@@ -935,7 +807,7 @@ static void hrs_c_init(void)
 }
 
 
-/**@brief Heart rate collector initialization.
+/**@brief RSC collector initialization.
  */
 static void rscs_c_init(void)
 {
@@ -1120,8 +992,6 @@ static void services_init(void)
     ble_hrs_init_t  hrs_init;
     ble_rscs_init_t rscs_init;
     uint8_t         body_sensor_location;
-    ble_bas_init_t  bas_init;
-    ble_dis_init_t  dis_init;
 
     // Initialize the Heart Rate Service.
     body_sensor_location = BLE_HRS_BODY_SENSOR_LOCATION_FINGER;
@@ -1159,35 +1029,6 @@ static void services_init(void)
     BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS(&rscs_init.rsc_feature_attr_md.write_perm);
 
     err_code = ble_rscs_init(&m_rscs, &rscs_init);
-    APP_ERROR_CHECK(err_code);
-
-    // Initialize Battery Service.
-    memset(&bas_init, 0, sizeof(bas_init));
-
-    // Here the sec level for the Battery Service can be changed/increased.
-    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&bas_init.battery_level_char_attr_md.cccd_write_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&bas_init.battery_level_char_attr_md.read_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS(&bas_init.battery_level_char_attr_md.write_perm);
-
-    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&bas_init.battery_level_report_read_perm);
-
-    bas_init.evt_handler          = NULL;
-    bas_init.support_notification = true;
-    bas_init.p_report_ref         = NULL;
-    bas_init.initial_batt_level   = 100;
-
-    err_code = ble_bas_init(&m_bas, &bas_init);
-    APP_ERROR_CHECK(err_code);
-
-    // Initialize Device Information Service.
-    memset(&dis_init, 0, sizeof(dis_init));
-
-    ble_srv_ascii_to_utf8(&dis_init.manufact_name_str, MANUFACTURER_NAME);
-
-    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&dis_init.dis_attr_md.read_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS(&dis_init.dis_attr_md.write_perm);
-
-    err_code = ble_dis_init(&dis_init);
     APP_ERROR_CHECK(err_code);
 }
 
@@ -1232,12 +1073,11 @@ int main(void)
     ret_code_t err_code;
     bool       erase_bonds;
 
-    //err_code = NRF_LOG_INIT();
-    //APP_ERROR_CHECK(err_code);
+    err_code = NRF_LOG_INIT();
+    APP_ERROR_CHECK(err_code);
 
     //NRF_LOG_PRINTF("Relay Example\r\n");
-    
-    timers_init();
+
     APP_TIMER_INIT(APP_TIMER_PRESCALER, APP_TIMER_OP_QUEUE_SIZE, NULL);
     buttons_leds_init(&erase_bonds);
 
@@ -1267,7 +1107,6 @@ int main(void)
     LEDS_ON(CENTRAL_SCANNING_LED);
 
     // Start advertising.
-    application_timers_start();
     err_code = ble_advertising_start(BLE_ADV_MODE_FAST);
     APP_ERROR_CHECK(err_code);
 
