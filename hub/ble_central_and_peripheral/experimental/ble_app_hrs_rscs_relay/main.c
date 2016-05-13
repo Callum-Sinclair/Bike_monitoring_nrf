@@ -166,6 +166,7 @@ static ble_bas_t  m_bas;                                     /**< Structure used
 static ble_cscs_t m_cscs;                                    /**< Structure used to identify the cycling speed and cadence service. */
 static ble_rscs_t m_rscs;                                    /**< Structure used to identify the running speed and cadence service. */
 static ble_hrs_t  m_hrs;                                     /**< Structure used to identify the heart rate service. */
+static bool                             m_auto_calibration_in_progress = false;            /**< Set when an autocalibration is in progress. */
 
 typedef struct
 {
@@ -289,6 +290,8 @@ static void csc_tx_timeout_handler(void * p_context)
 {
     uint32_t        err_code;
     ble_cscs_meas_t cscs_measurement;
+        static uint16_t event_time            = 0;
+    uint16_t event_time_inc = (1024 * SPEED_AND_CADENCE_MEAS_INTERVAL) / 1000;
 
     UNUSED_PARAMETER(p_context);
     cscs_measurement.is_crank_rev_data_present = true;
@@ -298,7 +301,9 @@ static void csc_tx_timeout_handler(void * p_context)
     cscs_measurement.cumulative_wheel_revs = bike_data.speed_distance;
     cscs_measurement.last_crank_event_time = ((bike_data.speed_bat << 8) + bike_data.cadence_bat);
     cscs_measurement.cumulative_crank_revs = bike_data.cadence_cadence;
-
+    
+    cscs_measurement.last_crank_event_time = event_time + event_time_inc;
+    event_time= event_time + event_time_inc;
     err_code = ble_cscs_measurement_send(&m_cscs, &cscs_measurement);
     if ((err_code != NRF_SUCCESS) &&
         (err_code != NRF_ERROR_INVALID_STATE) &&
@@ -307,6 +312,21 @@ static void csc_tx_timeout_handler(void * p_context)
         )
     {
         APP_ERROR_HANDLER(err_code);
+    }
+    if (m_auto_calibration_in_progress)
+    {
+        err_code = ble_sc_ctrlpt_rsp_send(&(m_cscs.ctrl_pt), BLE_SCPT_SUCCESS);
+        if ((err_code != NRF_SUCCESS) &&
+            (err_code != NRF_ERROR_INVALID_STATE) &&
+            (err_code != BLE_ERROR_NO_TX_PACKETS)
+            )
+        {
+            APP_ERROR_HANDLER(err_code);
+        }
+        if (err_code != BLE_ERROR_NO_TX_PACKETS)
+        {
+            m_auto_calibration_in_progress = false;
+        }
     }
 }
 
@@ -415,6 +435,7 @@ ble_scpt_response_t sc_ctrlpt_event_handler(ble_sc_ctrlpt_t     * p_sc_ctrlpt,
             break;
 
         case BLE_SC_CTRLPT_EVT_START_CALIBRATION:
+            m_auto_calibration_in_progress = true;
             break;
 
         default:
@@ -1259,7 +1280,6 @@ static void services_init(void)
     
     // Initialize Cycling Speed and Cadence Service.
     memset(&cscs_init, 0, sizeof(cscs_init));
-    memset(&rscs_init, 0, sizeof(rscs_init));
 
     cscs_init.evt_handler = NULL;
     cscs_init.feature     = BLE_CSCS_FEATURE_WHEEL_REV_BIT | BLE_CSCS_FEATURE_CRANK_REV_BIT |
