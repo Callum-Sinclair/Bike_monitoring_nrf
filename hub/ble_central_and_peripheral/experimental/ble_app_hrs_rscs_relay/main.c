@@ -291,7 +291,9 @@ static void csc_tx_timeout_handler(void * p_context)
     ble_cscs_meas_t cscs_measurement;
 
     UNUSED_PARAMETER(p_context);
-
+    cscs_measurement.is_crank_rev_data_present = true;
+    cscs_measurement.is_wheel_rev_data_present = true;
+    
     cscs_measurement.last_wheel_event_time = bike_data.speed_speed;
     cscs_measurement.cumulative_wheel_revs = bike_data.speed_distance;
     cscs_measurement.last_crank_event_time = ((bike_data.speed_bat << 8) + bike_data.cadence_bat);
@@ -1242,7 +1244,7 @@ static void services_init(void)
 
     rscs_init.evt_handler = NULL;
     rscs_init.feature     = BLE_RSCS_FEATURE_INSTANT_STRIDE_LEN_BIT |
-                            BLE_RSCS_FEATURE_WALKING_OR_RUNNING_STATUS_BIT;
+                            BLE_RSCS_FEATURE_TOTAL_DISTANCE_BIT;
 
     // Here the sec level for the Running Speed and Cadence Service can be changed/increased.
     BLE_GAP_CONN_SEC_MODE_SET_OPEN(&rscs_init.rsc_meas_attr_md.cccd_write_perm);
