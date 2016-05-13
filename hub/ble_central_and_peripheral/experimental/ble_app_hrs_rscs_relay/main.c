@@ -62,6 +62,8 @@
 #include "ble_db_discovery.h"
 #include "ble_hrs.h"
 #include "ble_rscs.h"
+#include "ble_bas.h"
+#include "ble_cscs.h"
 #include "ble_hrs_c.h"
 #include "ble_rscs_c.h"
 #include "ble_conn_state.h"
@@ -160,12 +162,50 @@ static ble_db_discovery_t        m_ble_db_discovery_rsc;                        
 #define NEXT_CONN_PARAMS_UPDATE_DELAY    APP_TIMER_TICKS(30000, APP_TIMER_PRESCALER)/**< Time between each call to sd_ble_gap_conn_param_update after the first call (30 seconds). */
 #define MAX_CONN_PARAMS_UPDATE_COUNT     3                                          /**< Number of attempts before giving up the connection parameter negotiation. */
 
-static ble_hrs_t    m_hrs;                                                          /**< Main structure for the Heart rate server module. */
-static ble_rscs_t   m_rscs;                                                         /**< Main structure for the Running speed and cadence server module. */
+static ble_bas_t  m_bas;                                     /**< Structure used to identify the battery service. */
+static ble_cscs_t m_cscs;                                    /**< Structure used to identify the cycling speed and cadence service. */
+static ble_rscs_t m_rscs;                                    /**< Structure used to identify the running speed and cadence service. */
+static ble_hrs_t  m_hrs;                                     /**< Structure used to identify the heart rate service. */
+
+typedef struct
+{
+    uint16_t    speed_speed;
+    uint32_t    speed_distance;
+    uint8_t     speed_bat;
+    uint16_t    cadence_cadence;
+    uint8_t     cadence_bat;
+    uint16_t    cadence_power;
+    uint8_t     cadence_power_bat;
+    uint16_t    usr_range;
+    uint32_t    usr_bat;
+    uint8_t     hub_gradient;
+    uint8_t     hub_temp;
+    uint8_t     hub_heart_rate;
+    uint8_t     hub_bat;
+}bike_data_t;
+
+static bike_data_t bike_data;
+
+APP_TIMER_DEF(m_battery_timer_id);                                                 /**< Battery timer. */
+APP_TIMER_DEF(m_csc_tx_timer_id);                                                /**< CSC measurement timer. */
+APP_TIMER_DEF(m_rsc_tx_timer_id);                                                /**< RSC measurement timer. */
+APP_TIMER_DEF(m_heart_rate_tx_timer_id);                                               /**< Heart rate measurement timer. */
+APP_TIMER_DEF(m_rr_tx_timer_id);                                              /**< RR interval timer. */                 /**< RR interval timer. */
+
+#define HEART_RATE_MEAS_INTERVAL         APP_TIMER_TICKS(1000, APP_TIMER_PRESCALER) /**< Heart rate measurement interval (ticks). */
+#define RR_INTERVAL_INTERVAL             APP_TIMER_TICKS(300, APP_TIMER_PRESCALER)  /**< RR interval interval (ticks). */
+#define BATTERY_LEVEL_MEAS_INTERVAL     APP_TIMER_TICKS(2000, APP_TIMER_PRESCALER) /**< Battery level measurement interval (ticks). */
+#define SPEED_AND_CADENCE_MEAS_INTERVAL 1000                                       /**< Speed and cadence measurement interval (milliseconds). */
+static ble_sensor_location_t supported_locations[] = {BLE_SENSOR_LOCATION_FRONT_WHEEL ,
+                                                      BLE_SENSOR_LOCATION_REAR_WHEEL};          /**< supported location for the sensor location. */
+
 
 /**@brief UUIDs which the central applications will scan for, and which will be advertised by the peripherals. */
-static ble_uuid_t m_adv_uuids[] = {{BLE_UUID_HEART_RATE_SERVICE,         BLE_UUID_TYPE_BLE},
-                                   {BLE_UUID_RUNNING_SPEED_AND_CADENCE,  BLE_UUID_TYPE_BLE}};
+static ble_uuid_t m_adv_uuids[] =  {{BLE_UUID_DEVICE_INFORMATION_SERVICE,   BLE_UUID_TYPE_BLE}, \
+                                    {BLE_UUID_RUNNING_SPEED_AND_CADENCE,    BLE_UUID_TYPE_BLE}, \
+                                    {BLE_UUID_HEART_RATE_SERVICE,           BLE_UUID_TYPE_BLE}, \
+                                    {BLE_UUID_BATTERY_SERVICE,              BLE_UUID_TYPE_BLE}, \
+                                    {BLE_UUID_CYCLING_SPEED_AND_CADENCE,    BLE_UUID_TYPE_BLE}}; /**< Universally unique service identifiers. */
 
 
 /**@brief Function to handle asserts in the SoftDevice.
@@ -206,6 +246,182 @@ static void conn_params_error_handler(uint32_t nrf_error)
 {
     APP_ERROR_HANDLER(nrf_error);
 }
+
+// TX FUNCTIONS
+uint8_t measure_bat(void)
+{
+    //TODO - add battery measure
+    return 81;
+}
+
+static void battery_level_update(void)
+{
+    uint32_t err_code;
+    uint8_t  battery_level;
+
+    battery_level = measure_bat();
+
+    err_code = ble_bas_battery_level_update(&m_bas, battery_level);
+    if ((err_code != NRF_SUCCESS) &&
+        (err_code != NRF_ERROR_INVALID_STATE) &&
+        (err_code != BLE_ERROR_NO_TX_PACKETS) &&
+        (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
+        )
+    {
+        APP_ERROR_HANDLER(err_code);
+    }
+}
+
+/**@brief Function for handling the Battery measurement timer timeout.
+ *
+ * @details This function will be called each time the battery level measurement timer expires.
+ *
+ * @param[in] p_context  Pointer used for passing some arbitrary information (context) from the
+ *                       app_start_timer() call to the timeout handler.
+ */
+static void battery_level_meas_timeout_handler(void * p_context)
+{
+    UNUSED_PARAMETER(p_context);
+    battery_level_update();
+}
+
+static void csc_tx_timeout_handler(void * p_context)
+{
+    uint32_t        err_code;
+    ble_cscs_meas_t cscs_measurement;
+
+    UNUSED_PARAMETER(p_context);
+
+    cscs_measurement.last_wheel_event_time = bike_data.speed_speed;
+    cscs_measurement.cumulative_wheel_revs = bike_data.speed_distance;
+    cscs_measurement.last_crank_event_time = ((bike_data.speed_bat << 8) + bike_data.cadence_bat);
+    cscs_measurement.cumulative_crank_revs = bike_data.cadence_cadence;
+
+    err_code = ble_cscs_measurement_send(&m_cscs, &cscs_measurement);
+    if ((err_code != NRF_SUCCESS) &&
+        (err_code != NRF_ERROR_INVALID_STATE) &&
+        (err_code != BLE_ERROR_NO_TX_PACKETS) &&
+        (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
+        )
+    {
+        APP_ERROR_HANDLER(err_code);
+    }
+}
+
+static void rsc_tx_timeout_handler(void * p_context)
+{
+    uint32_t        err_code;
+    ble_rscs_meas_t rscs_measurement;
+
+    UNUSED_PARAMETER(p_context);
+
+    rscs_measurement.is_inst_stride_len_present  = true;
+    rscs_measurement.is_total_distance_present   = true;
+
+    rscs_measurement.inst_speed = bike_data.cadence_power;
+    rscs_measurement.inst_cadence = bike_data.cadence_power_bat;
+    rscs_measurement.inst_stride_length = bike_data.usr_range;
+    rscs_measurement.total_distance = bike_data.usr_bat;
+    
+    err_code = ble_rscs_measurement_send(&m_rscs, &rscs_measurement);
+    if (
+        (err_code != NRF_SUCCESS)
+        &&
+        (err_code != NRF_ERROR_INVALID_STATE)
+        &&
+        (err_code != BLE_ERROR_NO_TX_PACKETS)
+        &&
+        (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
+        )
+    {
+        APP_ERROR_HANDLER(err_code);
+    }
+}
+
+static void heart_rate_tx_timeout_handler(void * p_context)
+{
+    uint32_t        err_code;
+    uint16_t        heart_rate;
+
+    UNUSED_PARAMETER(p_context);
+
+    heart_rate = bike_data.hub_heart_rate;
+
+    err_code = ble_hrs_heart_rate_measurement_send(&m_hrs, heart_rate);
+    if ((err_code != NRF_SUCCESS) &&
+        (err_code != NRF_ERROR_INVALID_STATE) &&
+        (err_code != BLE_ERROR_NO_TX_PACKETS) &&
+        (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
+        )
+    {
+        APP_ERROR_HANDLER(err_code);
+    }
+}
+
+static void rr_tx_timeout_handler(void * p_context)
+{
+    UNUSED_PARAMETER(p_context);
+    uint16_t rr_interval;
+
+    rr_interval = ((bike_data.hub_gradient << 8) + bike_data.hub_temp);
+    ble_hrs_rr_interval_add(&m_hrs, rr_interval);
+}
+
+/**@brief Function for the Timer initialization.
+ *
+ * @details Initializes the timer module. This creates and starts application timers.
+ */
+static void timers_init(void)
+{
+    uint32_t err_code;
+
+    // Initialize timer module.
+    APP_TIMER_INIT(APP_TIMER_PRESCALER, APP_TIMER_OP_QUEUE_SIZE, false);
+
+    // Create timers.
+    err_code = app_timer_create(&m_battery_timer_id,
+                                APP_TIMER_MODE_REPEATED,
+                                battery_level_meas_timeout_handler);
+    APP_ERROR_CHECK(err_code);
+
+    // Create battery timer.
+    err_code = app_timer_create(&m_csc_tx_timer_id,
+                                APP_TIMER_MODE_REPEATED,
+                                csc_tx_timeout_handler);
+    APP_ERROR_CHECK(err_code);
+    err_code = app_timer_create(&m_rsc_tx_timer_id,
+                                APP_TIMER_MODE_REPEATED,
+                                rsc_tx_timeout_handler);
+    APP_ERROR_CHECK(err_code);
+    err_code = app_timer_create(&m_heart_rate_tx_timer_id,
+                                APP_TIMER_MODE_REPEATED,
+                                heart_rate_tx_timeout_handler);
+    APP_ERROR_CHECK(err_code);
+
+    err_code = app_timer_create(&m_rr_tx_timer_id,
+                                APP_TIMER_MODE_REPEATED,
+                                rr_tx_timeout_handler);
+    APP_ERROR_CHECK(err_code);
+}
+
+ble_scpt_response_t sc_ctrlpt_event_handler(ble_sc_ctrlpt_t     * p_sc_ctrlpt,
+                                            ble_sc_ctrlpt_evt_t * p_evt)
+{
+    switch (p_evt->evt_type)
+    {
+        case BLE_SC_CTRLPT_EVT_SET_CUMUL_VALUE:
+            break;
+
+        case BLE_SC_CTRLPT_EVT_START_CALIBRATION:
+            break;
+
+        default:
+            // No implementation needed.
+            break;
+    }
+    return (BLE_SCPT_SUCCESS);
+}
+
 
 
 /**
@@ -378,11 +594,11 @@ static void hrs_c_evt_handler(ble_hrs_c_t * p_hrs_c, ble_hrs_c_evt_t * p_hrs_c_e
 
         case BLE_HRS_C_EVT_HRM_NOTIFICATION:
         {
-            ret_code_t err_code;
+            //ret_code_t err_code;
 
             //NRF_LOG_PRINTF("Heart Rate = %d\r\n", p_hrs_c_evt->params.hrm.hr_value);
 
-            err_code = ble_hrs_heart_rate_measurement_send(&m_hrs, p_hrs_c_evt->params.hrm.hr_value);
+            /*err_code = ble_hrs_heart_rate_measurement_send(&m_hrs, p_hrs_c_evt->params.hrm.hr_value);
             if ((err_code != NRF_SUCCESS) &&
                 (err_code != NRF_ERROR_INVALID_STATE) &&
                 (err_code != BLE_ERROR_NO_TX_PACKETS) &&
@@ -390,7 +606,8 @@ static void hrs_c_evt_handler(ble_hrs_c_t * p_hrs_c, ble_hrs_c_evt_t * p_hrs_c_e
                 )
             {
                 APP_ERROR_HANDLER(err_code);
-            }
+            }*/
+            bike_data.usr_bat = p_hrs_c_evt->params.hrm.hr_value;
         } break; // BLE_HRS_C_EVT_HRM_NOTIFICATION
 
         default:
@@ -426,12 +643,12 @@ static void rscs_c_evt_handler(ble_rscs_c_t * p_rscs_c, ble_rscs_c_evt_t * p_rsc
 
         case BLE_RSCS_C_EVT_RSC_NOTIFICATION:
         {
-            uint32_t        err_code;
-            ble_rscs_meas_t rscs_measurment;
+            //uint32_t        err_code;
+            //ble_rscs_meas_t rscs_measurment;
 
            // NRF_LOG_PRINTF("Speed      = %d\r\n", p_rscs_c_evt->params.rsc.inst_speed);
 
-            rscs_measurment.is_running                  = p_rscs_c_evt->params.rsc.is_running;
+            /*rscs_measurment.is_running                  = p_rscs_c_evt->params.rsc.is_running;
             rscs_measurment.is_inst_stride_len_present  = p_rscs_c_evt->params.rsc.is_inst_stride_len_present;
             rscs_measurment.is_total_distance_present   = p_rscs_c_evt->params.rsc.is_total_distance_present;
 
@@ -448,7 +665,12 @@ static void rscs_c_evt_handler(ble_rscs_c_t * p_rscs_c, ble_rscs_c_evt_t * p_rsc
                 )
             {
                 APP_ERROR_HANDLER(err_code);
-            }
+            }*/
+            bike_data.cadence_cadence   = p_rscs_c_evt->params.rsc.inst_stride_length;
+            bike_data.cadence_power_bat = p_rscs_c_evt->params.rsc.inst_cadence;
+            bike_data.cadence_power     = p_rscs_c_evt->params.rsc.inst_speed;
+            bike_data.cadence_bat       = p_rscs_c_evt->params.rsc.total_distance;
+
         } break; // BLE_RSCS_C_EVT_RSC_NOTIFICATION
 
         default:
@@ -991,6 +1213,8 @@ static void services_init(void)
     uint32_t        err_code;
     ble_hrs_init_t  hrs_init;
     ble_rscs_init_t rscs_init;
+    ble_cscs_init_t cscs_init;
+    ble_bas_init_t  bas_init;
     uint8_t         body_sensor_location;
 
     // Initialize the Heart Rate Service.
@@ -1029,6 +1253,80 @@ static void services_init(void)
     BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS(&rscs_init.rsc_feature_attr_md.write_perm);
 
     err_code = ble_rscs_init(&m_rscs, &rscs_init);
+    APP_ERROR_CHECK(err_code);
+    
+    // Initialize Cycling Speed and Cadence Service.
+    memset(&cscs_init, 0, sizeof(cscs_init));
+    memset(&rscs_init, 0, sizeof(rscs_init));
+
+    cscs_init.evt_handler = NULL;
+    cscs_init.feature     = BLE_CSCS_FEATURE_WHEEL_REV_BIT | BLE_CSCS_FEATURE_CRANK_REV_BIT |
+                            BLE_CSCS_FEATURE_MULTIPLE_SENSORS_BIT;
+
+    // Here the sec level for the Cycling Speed and Cadence Service can be changed/increased.
+    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&cscs_init.csc_meas_attr_md.cccd_write_perm);   // for the measurement characteristic, only the CCCD write permission can be set by the application, others are mandated by service specification
+    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&cscs_init.csc_feature_attr_md.read_perm);      // for the feature characteristic, only the read permission can be set by the application, others are mandated by service specification
+    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&cscs_init.csc_ctrlpt_attr_md.write_perm);      // for the SC control point characteristic, only the write permission and CCCD write can be set by the application, others are mandated by service specification
+    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&cscs_init.csc_ctrlpt_attr_md.cccd_write_perm); // for the SC control point characteristic, only the write permission and CCCD write can be set by the application, others are mandated by service specification
+    
+    cscs_init.ctrplt_supported_functions    = BLE_SRV_SC_CTRLPT_CUM_VAL_OP_SUPPORTED
+                                              |BLE_SRV_SC_CTRLPT_SENSOR_LOCATIONS_OP_SUPPORTED
+                                              |BLE_SRV_SC_CTRLPT_START_CALIB_OP_SUPPORTED;
+    cscs_init.ctrlpt_evt_handler            = sc_ctrlpt_event_handler;
+    cscs_init.list_supported_locations      = supported_locations;
+    cscs_init.size_list_supported_locations = sizeof(supported_locations) / sizeof(ble_sensor_location_t);            
+    
+    ble_sensor_location_t sensor_location = BLE_SENSOR_LOCATION_FRONT_WHEEL;                    // initializes the sensor location to add the sensor location characteristic.
+    cscs_init.sensor_location = &sensor_location;
+    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&cscs_init.csc_sensor_loc_attr_md.read_perm);    // for the sensor location characteristic, only the read permission can be set by the application, others are mendated by service specification
+
+    err_code = ble_cscs_init(&m_cscs, &cscs_init);
+    APP_ERROR_CHECK(err_code);
+    
+    // Initialize Battery Service.
+    memset(&bas_init, 0, sizeof(bas_init));
+
+    // Here the sec level for the Battery Service can be changed/increased.
+    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&bas_init.battery_level_char_attr_md.cccd_write_perm);
+    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&bas_init.battery_level_char_attr_md.read_perm);
+    BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS(&bas_init.battery_level_char_attr_md.write_perm);
+
+    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&bas_init.battery_level_report_read_perm);
+
+    bas_init.evt_handler          = NULL;
+    bas_init.support_notification = true;
+    bas_init.p_report_ref         = NULL;
+    bas_init.initial_batt_level   = 100;
+
+    err_code = ble_bas_init(&m_bas, &bas_init);
+    APP_ERROR_CHECK(err_code);
+}
+
+/**@brief Function for starting application timers.
+ */
+static void application_timers_start(void)
+{
+    uint32_t err_code;
+    uint32_t csc_meas_timer_ticks;
+    uint32_t rsc_meas_timer_ticks;
+
+    // Start application timers.
+    err_code = app_timer_start(m_battery_timer_id, BATTERY_LEVEL_MEAS_INTERVAL, NULL);
+    APP_ERROR_CHECK(err_code);
+
+    csc_meas_timer_ticks = APP_TIMER_TICKS(SPEED_AND_CADENCE_MEAS_INTERVAL, APP_TIMER_PRESCALER);
+
+    err_code = app_timer_start(m_csc_tx_timer_id, csc_meas_timer_ticks, NULL);
+    APP_ERROR_CHECK(err_code);
+
+    rsc_meas_timer_ticks = APP_TIMER_TICKS(SPEED_AND_CADENCE_MEAS_INTERVAL, APP_TIMER_PRESCALER);
+
+    err_code = app_timer_start(m_rsc_tx_timer_id, rsc_meas_timer_ticks, NULL);
+    APP_ERROR_CHECK(err_code);
+    err_code = app_timer_start(m_heart_rate_tx_timer_id, HEART_RATE_MEAS_INTERVAL, NULL);
+    APP_ERROR_CHECK(err_code);
+
+    err_code = app_timer_start(m_rr_tx_timer_id, RR_INTERVAL_INTERVAL, NULL);
     APP_ERROR_CHECK(err_code);
 }
 
@@ -1094,6 +1392,7 @@ int main(void)
     hrs_c_init();
     rscs_c_init();
 
+    timers_init();
     gap_params_init();
     conn_params_init();
     services_init();
@@ -1106,6 +1405,7 @@ int main(void)
     // Turn on the LED to signal scanning.
     LEDS_ON(CENTRAL_SCANNING_LED);
 
+    application_timers_start();
     // Start advertising.
     err_code = ble_advertising_start(BLE_ADV_MODE_FAST);
     APP_ERROR_CHECK(err_code);
