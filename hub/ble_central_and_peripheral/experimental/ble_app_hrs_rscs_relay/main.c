@@ -46,6 +46,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 #include "nordic_common.h"
 #include "softdevice_handler.h"
 #include "peer_manager.h"
@@ -195,7 +196,7 @@ APP_TIMER_DEF(m_rr_tx_timer_id);                                              /*
 
 #define HEART_RATE_MEAS_INTERVAL         APP_TIMER_TICKS(1000, APP_TIMER_PRESCALER) /**< Heart rate measurement interval (ticks). */
 #define RR_INTERVAL_INTERVAL             APP_TIMER_TICKS(300, APP_TIMER_PRESCALER)  /**< RR interval interval (ticks). */
-#define BATTERY_LEVEL_MEAS_INTERVAL     APP_TIMER_TICKS(2000, APP_TIMER_PRESCALER) /**< Battery level measurement interval (ticks). */
+#define BATTERY_LEVEL_MEAS_INTERVAL      APP_TIMER_TICKS(1000, APP_TIMER_PRESCALER) /**< Battery level measurement interval (ticks). */
 #define SPEED_AND_CADENCE_MEAS_INTERVAL 1000                                       /**< Speed and cadence measurement interval (milliseconds). */
 static ble_sensor_location_t supported_locations[] = {BLE_SENSOR_LOCATION_FRONT_WHEEL ,
                                                       BLE_SENSOR_LOCATION_REAR_WHEEL};          /**< supported location for the sensor location. */
@@ -209,6 +210,368 @@ static ble_uuid_t m_adv_uuids[] =  {{BLE_UUID_DEVICE_INFORMATION_SERVICE,   BLE_
                                     {BLE_UUID_CYCLING_SPEED_AND_CADENCE,    BLE_UUID_TYPE_BLE}}; /**< Universally unique service identifiers. */
 
 
+//I2S/TWI
+NRF_TWIM_Type* i2c = NRF_TWIM0;
+#define I2C_SCL 11
+#define I2C_SDA 12
+#define I2C_RX_BUF_SIZE 20
+#define I2C_TX_BUF_SIZE 20
+uint32_t i2c_rx_buf[I2C_RX_BUF_SIZE];
+uint32_t i2c_tx_buf[I2C_TX_BUF_SIZE];
+#define ADXL345_RA_DEVID            0x00
+#define ADXL345_RA_RESERVED1        0x01
+#define ADXL345_RA_THRESH_TAP       0x1D
+#define ADXL345_RA_OFSX             0x1E
+#define ADXL345_RA_OFSY             0x1F
+#define ADXL345_RA_OFSZ             0x20
+#define ADXL345_RA_DUR              0x21
+#define ADXL345_RA_LATENT           0x22
+#define ADXL345_RA_WINDOW           0x23
+#define ADXL345_RA_THRESH_ACT       0x24
+#define ADXL345_RA_THRESH_INACT     0x25
+#define ADXL345_RA_TIME_INACT       0x26
+#define ADXL345_RA_ACT_INACT_CTL    0x27
+#define ADXL345_RA_THRESH_FF        0x28
+#define ADXL345_RA_TIME_FF          0x29
+#define ADXL345_RA_TAP_AXES         0x2A
+#define ADXL345_RA_ACT_TAP_STATUS   0x2B
+#define ADXL345_RA_BW_RATE          0x2C
+#define ADXL345_RA_POWER_CTL        0x2D
+#define ADXL345_RA_INT_ENABLE       0x2E
+#define ADXL345_RA_INT_MAP          0x2F
+#define ADXL345_RA_INT_SOURCE       0x30
+#define ADXL345_RA_DATA_FORMAT      0x31
+#define ADXL345_RA_DATAX0           0x32
+#define ADXL345_RA_DATAX1           0x33
+#define ADXL345_RA_DATAY0           0x34
+#define ADXL345_RA_DATAY1           0x35
+#define ADXL345_RA_DATAZ0           0x36
+#define ADXL345_RA_DATAZ1           0x37
+#define ADXL345_RA_FIFO_CTL         0x38
+#define ADXL345_RA_FIFO_STATUS      0x39
+
+#define ADXL345_AIC_ACT_AC_BIT      7
+#define ADXL345_AIC_ACT_X_BIT       6
+#define ADXL345_AIC_ACT_Y_BIT       5
+#define ADXL345_AIC_ACT_Z_BIT       4
+#define ADXL345_AIC_INACT_AC_BIT    3
+#define ADXL345_AIC_INACT_X_BIT     2
+#define ADXL345_AIC_INACT_Y_BIT     1
+#define ADXL345_AIC_INACT_Z_BIT     0
+
+#define ADXL345_TAPAXIS_SUP_BIT     3
+#define ADXL345_TAPAXIS_X_BIT       2
+#define ADXL345_TAPAXIS_Y_BIT       1
+#define ADXL345_TAPAXIS_Z_BIT       0
+
+#define ADXL345_TAPSTAT_ACTX_BIT    6
+#define ADXL345_TAPSTAT_ACTY_BIT    5
+#define ADXL345_TAPSTAT_ACTZ_BIT    4
+#define ADXL345_TAPSTAT_ASLEEP_BIT  3
+#define ADXL345_TAPSTAT_TAPX_BIT    2
+#define ADXL345_TAPSTAT_TAPY_BIT    1
+#define ADXL345_TAPSTAT_TAPZ_BIT    0
+
+#define ADXL345_BW_LOWPOWER_BIT     4
+#define ADXL345_BW_RATE_BIT         3
+#define ADXL345_BW_RATE_LENGTH      4
+
+#define ADXL345_RATE_3200           0xF
+#define ADXL345_RATE_1600           0xE
+#define ADXL345_RATE_800            0xD
+#define ADXL345_RATE_400            0xC
+#define ADXL345_RATE_200            0xB
+#define ADXL345_RATE_100            0xA
+#define ADXL345_RATE_50             9
+#define ADXL345_RATE_25             8
+#define ADXL345_RATE_12P5           7
+#define ADXL345_RATE_6P25           6
+#define ADXL345_RATE_3P13           5
+#define ADXL345_RATE_1P56           4
+#define ADXL345_RATE_0P78           3
+#define ADXL345_RATE_0P39           2
+#define ADXL345_RATE_0P20           1
+#define ADXL345_RATE_0P10           0
+
+#define ADXL345_PCTL_LINK_BIT       5
+#define ADXL345_PCTL_AUTOSLEEP_BIT  4
+#define ADXL345_PCTL_MEASURE_BIT    3
+#define ADXL345_PCTL_SLEEP_BIT      2
+#define ADXL345_PCTL_WAKEUP_BIT     1
+#define ADXL345_PCTL_WAKEUP_LENGTH  2
+
+#define ADXL345_WAKEUP_8HZ          0
+#define ADXL345_WAKEUP_4HZ          1
+#define ADXL345_WAKEUP_2HZ          2
+#define ADXL345_WAKEUP_1HZ          3
+
+#define ADXL345_RANGE_2G            0
+#define ADXL345_RANGE_4G            1
+#define ADXL345_RANGE_8G            2
+#define ADXL345_RANGE_16G           3
+
+typedef struct
+{
+    int16_t x;
+    int16_t y;
+    int16_t z;
+}xyz_t;
+
+// Temp defines
+#define BMP085_ULTRALOWPOWER 0
+#define BMP085_STANDARD      1
+#define BMP085_HIGHRES       2
+#define BMP085_ULTRAHIGHRES  3
+#define BMP085_CAL_AC1           0xAA  // R   Calibration data (16 bits)
+#define BMP085_CAL_AC2           0xAC  // R   Calibration data (16 bits)
+#define BMP085_CAL_AC3           0xAE  // R   Calibration data (16 bits)    
+#define BMP085_CAL_AC4           0xB0  // R   Calibration data (16 bits)
+#define BMP085_CAL_AC5           0xB2  // R   Calibration data (16 bits)
+#define BMP085_CAL_AC6           0xB4  // R   Calibration data (16 bits)
+#define BMP085_CAL_B1            0xB6  // R   Calibration data (16 bits)
+#define BMP085_CAL_B2            0xB8  // R   Calibration data (16 bits)
+#define BMP085_CAL_MB            0xBA  // R   Calibration data (16 bits)
+#define BMP085_CAL_MC            0xBC  // R   Calibration data (16 bits)
+#define BMP085_CAL_MD            0xBE  // R   Calibration data (16 bits)
+
+#define BMP085_CONTROL           0xF4 
+#define BMP085_TEMPDATA          0xF6
+#define BMP085_PRESSUREDATA      0xF6
+#define BMP085_READTEMPCMD       0x2E
+#define BMP085_READPRESSURECMD   0x34
+// Temp calibration data
+typedef struct
+{
+    int16_t  ac1;
+    int16_t  ac2;
+    int16_t  ac3;
+    uint16_t ac4;
+    uint16_t ac5;
+    uint16_t ac6;
+    int16_t  b1;
+    int16_t  b2;
+    int16_t  mb;
+    int16_t  mc;
+    int16_t  md;
+}temp_calib_data_t;
+
+static temp_calib_data_t temp_calib_data;
+
+
+#define TEMP_ADDRESS 0x77  // I2C address of BMP085
+#define ACCEL_ADDRESS 0x53  // Accelerometor device address
+/**
+ * @brief I2C/TWI initialization.
+ */
+void i2c_init (void)
+{
+    i2c->PSEL.SCL   = I2C_SCL;
+    i2c->PSEL.SDA   = I2C_SDA;
+    i2c->FREQUENCY  = TWIM_FREQUENCY_FREQUENCY_K250; // 100 kbps
+    i2c->RXD.PTR    = (uint32_t)&i2c_rx_buf[0];
+    i2c->RXD.MAXCNT = I2C_RX_BUF_SIZE;
+    i2c->RXD.LIST   = TWIM_RXD_LIST_LIST_Disabled;
+    i2c->TXD.PTR    = (uint32_t)i2c_tx_buf;
+    i2c->TXD.MAXCNT = I2C_TX_BUF_SIZE;
+    i2c->TXD.LIST   = TWIM_TXD_LIST_LIST_Disabled;
+    i2c->ENABLE     = TWIM_ENABLE_ENABLE_Enabled;
+}
+
+void i2c_tx_rx(uint32_t tx_addr, uint8_t* data_tx_addr, uint8_t tx_bytes, uint8_t* data_rx_addr, uint8_t rx_bytes)
+{
+    i2c->EVENTS_LASTRX = 0;
+    i2c->SHORTS     = ((TWIM_SHORTS_LASTTX_STARTRX_Enabled << TWIM_SHORTS_LASTTX_STARTRX_Pos) | \
+                       (TWIM_SHORTS_LASTRX_STOP_Enabled << TWIM_SHORTS_LASTRX_STOP_Pos));
+    i2c->ADDRESS = tx_addr;
+    i2c->TXD.PTR = (uint32_t)data_tx_addr;
+    i2c->TXD.MAXCNT = tx_bytes;
+    i2c->RXD.MAXCNT = rx_bytes;
+    i2c->RXD.PTR    = (uint32_t)data_rx_addr;
+    i2c->TASKS_STARTTX = 1;
+    while (i2c->EVENTS_LASTRX == 0);
+}
+
+void i2c_tx(uint32_t tx_addr, uint8_t* data_tx_addr, uint8_t tx_bytes)
+{
+    i2c->EVENTS_LASTTX = 0;
+    i2c->SHORTS  = TWIM_SHORTS_LASTTX_STOP_Enabled << TWIM_SHORTS_LASTTX_STOP_Pos;
+    i2c->ADDRESS = tx_addr;
+    i2c->TXD.PTR = (uint32_t)data_tx_addr;
+    i2c->TXD.MAXCNT = tx_bytes;
+    i2c->TASKS_STARTTX = 1;
+    while (i2c->EVENTS_LASTTX == 0);
+}
+
+void accel_i2c_init(void)
+{
+    uint8_t tx_vals[20] = {0};
+    uint8_t rx_vals[20] = {0};
+    
+    tx_vals[0] = ADXL345_RA_DATA_FORMAT;
+    tx_vals[1] = ADXL345_RANGE_2G;
+    i2c_tx(ACCEL_ADDRESS, tx_vals, 2);
+    
+    tx_vals[0] = ADXL345_RA_POWER_CTL;
+    tx_vals[1] = 0x08;
+    i2c_tx(ACCEL_ADDRESS, tx_vals, 2);
+#ifdef DEBUG
+    printf("initialised %d\n", i2c->TXD.AMOUNT);
+#endif
+
+    tx_vals[0] = ADXL345_RA_POWER_CTL;
+    i2c_tx_rx(ACCEL_ADDRESS, tx_vals, 1, rx_vals, 2);
+#ifdef DEBUG
+    printf("Power Crtl read: 0x%x 0x%x\n", rx_vals[0], rx_vals[1]);
+    printf("got %d bytes\n", i2c->RXD.AMOUNT);
+#endif
+}
+
+void accel_get_dev_id(void)
+{
+    uint8_t tx_vals[2] = {ADXL345_RA_DEVID};
+    uint8_t rx_vals[20] = {0};
+    i2c_tx_rx(ACCEL_ADDRESS, tx_vals, 1, rx_vals, 2);
+#ifdef DEBUG
+    printf("Dev ID: %d\n", rx_vals[0]);
+    printf("got %d bytes\n", i2c->RXD.AMOUNT);
+#endif
+}
+
+void accel_get_xyz(xyz_t* xyz)
+{
+    uint8_t tx_vals[2] = {ADXL345_RA_DATAX0};
+    uint8_t rx_vals[20] = {0};
+    i2c_tx_rx(ACCEL_ADDRESS, tx_vals, 1, rx_vals, 6);
+#ifdef DEBUG
+    printf("Raw data X0: %d %d %d %d %d %d \n", rx_vals[0], rx_vals[1], rx_vals[2], rx_vals[3], rx_vals[4], rx_vals[5]);
+#endif
+    xyz->x = (rx_vals[1]<<8) + rx_vals[0];
+    xyz->y = (rx_vals[3]<<8) + rx_vals[2];
+    xyz->z = (rx_vals[5]<<8) + rx_vals[4];
+#ifdef DEBUG
+    printf("Data:\n X = %d Y = %d Z = %d\n\n", xyz->x, xyz->y, xyz->z);
+#endif
+}
+
+
+uint8_t grad_read(void)
+{
+    xyz_t xyz;
+    float gradient;
+    accel_get_xyz(&xyz);
+    gradient  = atan2((float)(0 - xyz.y), (float)xyz.z) * 180 / 3.14159;
+#ifdef DEBUG
+    printf("Data:\n X = %d Y = %d Z = %d\n\n", xyz.x, xyz.y, xyz.z);
+#endif
+    //printf("Gradient: %f\n\n", gradient);
+    return (uint8_t)(gradient + 50);
+}
+
+void temp_i2c_init(void)
+{
+    uint8_t tx_vals[20] = {0};
+    uint8_t rx_vals[20] = {0};
+    
+    tx_vals[0] = BMP085_CAL_AC1;
+    i2c_tx_rx(TEMP_ADDRESS, tx_vals, 1, rx_vals, 2);
+    temp_calib_data.ac1 = (int16_t)((rx_vals[0] << 8) + rx_vals[1]);
+
+    tx_vals[0] = BMP085_CAL_AC2;
+    i2c_tx_rx(TEMP_ADDRESS, tx_vals, 1, rx_vals, 2);
+    temp_calib_data.ac2 = (int16_t)((rx_vals[0] << 8) + rx_vals[1]);
+
+    tx_vals[0] = BMP085_CAL_AC3;
+    i2c_tx_rx(TEMP_ADDRESS, tx_vals, 1, rx_vals, 2);
+    temp_calib_data.ac3 = (int16_t)((rx_vals[0] << 8) + rx_vals[1]);
+
+    tx_vals[0] = BMP085_CAL_AC4;
+    i2c_tx_rx(TEMP_ADDRESS, tx_vals, 1, rx_vals, 2);
+    temp_calib_data.ac4 = (rx_vals[0] << 8) + rx_vals[1];
+
+    tx_vals[0] = BMP085_CAL_AC5;
+    i2c_tx_rx(TEMP_ADDRESS, tx_vals, 1, rx_vals, 2);
+    temp_calib_data.ac5 = (rx_vals[0] << 8) + rx_vals[1];
+
+    tx_vals[0] = BMP085_CAL_AC6;
+    i2c_tx_rx(TEMP_ADDRESS, tx_vals, 1, rx_vals, 2);
+    temp_calib_data.ac6 = (int16_t)((rx_vals[0] << 8) + rx_vals[1]);
+
+    tx_vals[0] = BMP085_CAL_B1;
+    i2c_tx_rx(TEMP_ADDRESS, tx_vals, 1, rx_vals, 2);
+    temp_calib_data.b1 = (int16_t)((rx_vals[0] << 8) + rx_vals[1]);
+
+    tx_vals[0] = BMP085_CAL_B2;
+    i2c_tx_rx(TEMP_ADDRESS, tx_vals, 1, rx_vals, 2);
+    temp_calib_data.b2 = (int16_t)((rx_vals[0] << 8) + rx_vals[1]);
+
+    tx_vals[0] = BMP085_CAL_MB;
+    i2c_tx_rx(TEMP_ADDRESS, tx_vals, 1, rx_vals, 2);
+    temp_calib_data.mb = (int16_t)((rx_vals[0] << 8) + rx_vals[1]);
+
+    tx_vals[0] = BMP085_CAL_MC;
+    i2c_tx_rx(TEMP_ADDRESS, tx_vals, 1, rx_vals, 2);
+    temp_calib_data.mc = (int16_t)((rx_vals[0] << 8) + rx_vals[1]);
+
+    tx_vals[0] = BMP085_CAL_MD;
+    i2c_tx_rx(TEMP_ADDRESS, tx_vals, 1, rx_vals, 2);
+    temp_calib_data.md = (int16_t)((rx_vals[0] << 8) + rx_vals[1]);
+
+#ifdef DEBUG
+    printf("ac: %i, %i, %i, %i, %i, %i \n", temp_calib_data.ac1, temp_calib_data.ac2, temp_calib_data.ac3, temp_calib_data.ac4, temp_calib_data.ac5, temp_calib_data.ac6);
+    printf("b: %i, %i, m: %i, %i, %i\n", temp_calib_data.b1, temp_calib_data.b1, temp_calib_data.mb, temp_calib_data.mc, temp_calib_data.md);
+#endif
+}
+
+int32_t temp_convert(int32_t raw)
+{
+    int32_t temp = 0;
+    uint16_t ac6 = 23153;
+    uint16_t ac5 = 32757;
+    int16_t  mc  = -8711;
+    int16_t  md  = 2868;
+#ifdef DEBUG
+    printf("ac5: %i, ac6: %i\n", temp_calib_data.ac5, temp_calib_data.ac6);
+#endif
+    float x1a = (raw - (int32_t)temp_calib_data.ac6); 
+    float x1b = (float)temp_calib_data.ac5 / 32768;
+    int32_t x1  = (int32_t)(x1a * x1b);
+#ifdef DEBUG
+    printf("x1a %f, x1b %f, x1c %d", x1a, x1b, x1);
+#endif
+    int32_t x2 = ((int32_t)temp_calib_data.mc << 11) / (x1 + (int32_t)temp_calib_data.md);
+    //int32_t x1 = (raw - (int32_t)ac6) * (int32_t)ac5 >> 15;
+    //int32_t x2 = ((int32_t)mc << 11) / (x1 + (int32_t)md);
+    int32_t b5 = x1 + x2;
+#ifdef DEBUG
+    printf("X1 = %d\n", x1);
+    printf("X2 = %d\n", x2);
+    printf("B5 = %d\n", b5);
+#endif
+    temp = (b5 + 8) >> 4;
+    return temp;
+}
+
+uint8_t temp_read(void)
+{
+    uint8_t tx_vals[20] = {0};
+    uint8_t rx_vals[20] = {0};
+    
+    tx_vals[0] = BMP085_CONTROL;
+    tx_vals[1] = BMP085_READTEMPCMD;
+    i2c_tx(TEMP_ADDRESS, tx_vals, 2);
+    
+    nrf_delay_ms(10);
+    
+    tx_vals[0] = BMP085_TEMPDATA;
+    i2c_tx_rx(TEMP_ADDRESS, tx_vals, 1, rx_vals, 2);
+#ifdef DEBUG
+    printf("Temp raw read: 0x%x 0x%x, %d\n", rx_vals[0], rx_vals[1], (rx_vals[0]<<8) + rx_vals[1]);
+#endif
+    int32_t temp = temp_convert(23420);
+    //printf("Actual Temp: %d.%d\'C\n", temp/10, temp%10);
+    return (uint8_t)(temp + 50);
+}
+                                    
 /**@brief Function to handle asserts in the SoftDevice.
  *
  * @details This function will be called in case of an assert in the SoftDevice.
@@ -260,7 +623,7 @@ static void battery_level_update(void)
     uint32_t err_code;
     uint8_t  battery_level;
 
-    battery_level = measure_bat();
+    battery_level = 75;//measure_bat();
 
     err_code = ble_bas_battery_level_update(&m_bas, battery_level);
     if ((err_code != NRF_SUCCESS) &&
@@ -302,7 +665,7 @@ static void csc_tx_timeout_handler(void * p_context)
     cscs_measurement.last_crank_event_time = ((bike_data.speed_bat << 8) + bike_data.cadence_bat);
     cscs_measurement.cumulative_crank_revs = bike_data.cadence_cadence;
     
-    cscs_measurement.last_crank_event_time = event_time + event_time_inc;
+    cscs_measurement.last_crank_event_time = 0;// event_time + event_time_inc;
     event_time= event_time + event_time_inc;
     err_code = ble_cscs_measurement_send(&m_cscs, &cscs_measurement);
     if ((err_code != NRF_SUCCESS) &&
@@ -385,6 +748,8 @@ static void rr_tx_timeout_handler(void * p_context)
     UNUSED_PARAMETER(p_context);
     uint16_t rr_interval;
 
+    bike_data.hub_gradient = grad_read();
+    bike_data.hub_temp     = temp_read();
     rr_interval = ((bike_data.hub_gradient << 8) + bike_data.hub_temp);
     ble_hrs_rr_interval_add(&m_hrs, rr_interval);
 }
@@ -992,6 +1357,8 @@ static void ble_evt_dispatch(ble_evt_t * p_ble_evt)
         // Dispatch to peripheral applications.
         ble_hrs_on_ble_evt (&m_hrs, p_ble_evt);
         ble_rscs_on_ble_evt(&m_rscs, p_ble_evt);
+        ble_cscs_on_ble_evt(&m_cscs, p_ble_evt);
+        ble_bas_on_ble_evt(&m_bas, p_ble_evt);
     }
     else if ((role == BLE_GAP_ROLE_CENTRAL) || (p_ble_evt->header.evt_id == BLE_GAP_EVT_ADV_REPORT))
     {
@@ -1345,6 +1712,7 @@ static void application_timers_start(void)
 
     err_code = app_timer_start(m_rsc_tx_timer_id, rsc_meas_timer_ticks, NULL);
     APP_ERROR_CHECK(err_code);
+    
     err_code = app_timer_start(m_heart_rate_tx_timer_id, HEART_RATE_MEAS_INTERVAL, NULL);
     APP_ERROR_CHECK(err_code);
 
@@ -1395,6 +1763,10 @@ int main(void)
 
     err_code = NRF_LOG_INIT();
     APP_ERROR_CHECK(err_code);
+
+    i2c_init();
+	temp_i2c_init();	
+    accel_i2c_init();
 
     //NRF_LOG_PRINTF("Relay Example\r\n");
 
