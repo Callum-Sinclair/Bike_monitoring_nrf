@@ -127,8 +127,8 @@ static void scan_start(void);
 NRF_TWIM_Type* i2c = NRF_TWIM0;
 #define I2C_SCL 18
 #define I2C_SDA 17
-#define I2C_RX_BUF_SIZE 10
-#define I2C_TX_BUF_SIZE 10
+#define I2C_RX_BUF_SIZE 20
+#define I2C_TX_BUF_SIZE 20
 uint32_t i2c_rx_buf[I2C_RX_BUF_SIZE];
 uint32_t i2c_tx_buf[I2C_TX_BUF_SIZE];
 #define ADXL345_RA_DEVID            0x00
@@ -265,7 +265,7 @@ void i2c_init (void)
 {
     i2c->PSEL.SCL   = I2C_SCL;
     i2c->PSEL.SDA   = I2C_SDA;
-    i2c->FREQUENCY  = TWIM_FREQUENCY_FREQUENCY_K100; // 100 kbps
+    i2c->FREQUENCY  = TWIM_FREQUENCY_FREQUENCY_K250; // 100 kbps
     i2c->RXD.PTR    = (uint32_t)&i2c_rx_buf[0];
     i2c->RXD.MAXCNT = I2C_RX_BUF_SIZE;
     i2c->RXD.LIST   = TWIM_RXD_LIST_LIST_Disabled;
@@ -277,37 +277,54 @@ void i2c_init (void)
 
 void i2c_tx_rx(uint32_t tx_addr, uint16_t* data_tx_addr, uint8_t tx_bytes, uint16_t* data_rx_addr, uint8_t rx_bytes)
 {
-    //i2c->SHORTS     = ((TWIM_SHORTS_LASTTX_STARTRX_Enabled << TWIM_SHORTS_LASTTX_STARTRX_Pos) | \
-    //                   (TWIM_SHORTS_LASTRX_STOP_Enabled << TWIM_SHORTS_LASTRX_STOP_Pos));
+    i2c->EVENTS_LASTRX = 0;
+    i2c->SHORTS     = ((TWIM_SHORTS_LASTTX_STARTRX_Enabled << TWIM_SHORTS_LASTTX_STARTRX_Pos) | \
+                       (TWIM_SHORTS_LASTRX_STOP_Enabled << TWIM_SHORTS_LASTRX_STOP_Pos));
     i2c->ADDRESS = tx_addr;
     i2c->TXD.PTR = (uint32_t)data_tx_addr;
     i2c->TXD.MAXCNT = tx_bytes;
     i2c->RXD.MAXCNT = rx_bytes;
     i2c->RXD.PTR    = (uint32_t)data_rx_addr;
     i2c->TASKS_STARTTX = 1;
+    while (i2c->EVENTS_LASTRX == 0);
 }
 
 void i2c_tx(uint32_t tx_addr, uint16_t* data_tx_addr, uint8_t tx_bytes)
 {
-    //i2c->SHORTS  = TWIM_SHORTS_LASTTX_SUSPEND_Enabled << TWIM_SHORTS_LASTTX_SUSPEND_Pos;
+    i2c->EVENTS_LASTTX = 0;
+    i2c->SHORTS  = 0;//TWIM_SHORTS_LASTTX_SUSPEND_Enabled << TWIM_SHORTS_LASTTX_SUSPEND_Pos;
     i2c->ADDRESS = tx_addr;
     i2c->TXD.PTR = (uint32_t)data_tx_addr;
     i2c->TXD.MAXCNT = tx_bytes;
     i2c->TASKS_STARTTX = 1;
+    while (i2c->EVENTS_LASTTX == 0);
 }
 
 void accel_i2c_init(void)
 {
     uint16_t tx_vals[] = {ADXL345_RA_POWER_CTL, 0x08};
-    uint16_t rx_vals[10] = {0};
-    i2c->EVENTS_LASTTX = 0;
+    uint16_t rx_vals[20] = {0};
     i2c_tx(ACCEL_ADDRESS, tx_vals, 2);
-    tx_vals[0] = ADXL345_RA_DATAX0;
-    i2c->EVENTS_LASTTX = 0;
     printf("started\n");
-    i2c_tx_rx(ACCEL_ADDRESS, tx_vals, 1, rx_vals, 6);
-    while (i2c->EVENTS_LASTTX == 0);
+    tx_vals[0] = ADXL345_RA_DEVID;
+    i2c_tx_rx(ACCEL_ADDRESS, tx_vals, 1, rx_vals, 20);
     printf("%d, %d, %d, %d, %d, %d\n", rx_vals[0], rx_vals[1], rx_vals[2], rx_vals[3], rx_vals[4], rx_vals[5]);
+    printf("got %d\n", i2c->RXD.AMOUNT);
+}
+
+void accel_get_dev_id(void)
+{
+    uint16_t tx_vals[] = {ADXL345_RA_DEVID};
+    uint16_t rx_vals[20] = {0};
+    i2c_tx_rx(ACCEL_ADDRESS, tx_vals, 1, rx_vals, 20);
+    printf("%d, %d, %d, %d, %d, %d\n", rx_vals[0], rx_vals[1], rx_vals[2], rx_vals[3], rx_vals[4], rx_vals[5]);
+    printf("got %d\n", i2c->RXD.AMOUNT);
+}
+
+void accel_i2c_test(void)
+{
+    accel_i2c_init();
+    //accel_get_dev_id();
 }
 
 /**@brief Function for asserts in the SoftDevice.
@@ -1087,7 +1104,7 @@ int main(void)
     //db_discovery_init();
     //rscs_c_init();
     i2c_init();
-	accel_i2c_init();  
+	accel_i2c_test();  
 		
 
     // Start scanning for peripherals and initiate connection
