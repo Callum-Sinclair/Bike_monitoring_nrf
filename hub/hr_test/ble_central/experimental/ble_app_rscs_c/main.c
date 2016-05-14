@@ -126,8 +126,8 @@ static void scan_start(void);
 
 //I2S/TWI
 NRF_TWIM_Type* i2c = NRF_TWIM0;
-#define I2C_SCL 18
-#define I2C_SDA 17
+#define I2C_SCL 11
+#define I2C_SDA 12
 #define I2C_RX_BUF_SIZE 20
 #define I2C_TX_BUF_SIZE 20
 uint32_t i2c_rx_buf[I2C_RX_BUF_SIZE];
@@ -1142,7 +1142,7 @@ static void uart_init(void)
         CTS_PIN_NUMBER,
         APP_UART_FLOW_CONTROL_ENABLED,
         false,
-           UART_BAUDRATE_BAUDRATE_Baud9600
+           UART_BAUDRATE_BAUDRATE_Baud250000
        };
 
     APP_UART_FIFO_INIT(&comm_params,
@@ -1187,32 +1187,113 @@ static void hr_poll(void)
     while (NRF_SAADC->EVENTS_STARTED == 0);
     printf("tock \n");
     NRF_SAADC->EVENTS_STARTED = 0;
-    /*if (hr_buf_num == 0)
+    static uint8_t buffer_count = 0;
+    static uint8_t hr_buf[60];
+    if (hr_buf_num == 0)
     {
         NRF_SAADC->RESULT.PTR = (uint32_t)hr_vals1;
         hr_buf_num = 1;
+        /*for (uint32_t i = 0; i < HR_BUFF_SIZE; i++)
+        {
+            printf("%d\n", hr_vals1[i] * hr_vals1[i] * hr_vals0[i]);
+            nrf_delay_us(500);
+        }*/
+        float average = 0;
+        uint32_t peak = 0;
         for (uint32_t i = 0; i < HR_BUFF_SIZE; i++)
         {
-            printf("%d\n", hr_vals1[i] * hr_vals1[i]);
-            nrf_delay_us(1000);
+            average = ((average * i) + hr_vals1[i]) / (i + 1);
+            if (hr_vals1[i] > peak)
+            {
+                peak = hr_vals1[i];
+            }
+        }
+        uint32_t th = (uint32_t)average + ((peak - average) / 2);
+        bool over_th = false;
+        uint16_t hb_count = 0;
+        for (uint32_t i = 0; i < HR_BUFF_SIZE; i++)
+        {
+            if ((hr_vals1[i] > th) && !over_th)
+            {
+                hb_count ++;
+                over_th = true;
+            }
+            if ((hr_vals1[i] < th) && over_th)
+            {
+                over_th = false;
+            }
+        }
+        printf("hb_count = %d, pulse = %d\n", hb_count, hb_count * 6);
+        if ((hb_count > 8) && (hb_count < 30))
+            hr_buf[buffer_count] = hb_count;
+        else if (buffer_count > 0)
+        {
+            hr_buf[buffer_count] = hr_buf[buffer_count - 1];
+        }
+        else
+        {
+            hr_buf[buffer_count] = 13;
         }
     }
     else
     {
         NRF_SAADC->RESULT.PTR = (uint32_t)hr_vals0;
         hr_buf_num = 0;
+        /*for (uint32_t i = 0; i < HR_BUFF_SIZE; i++)
+        {
+            printf("%d\n", hr_vals0[i] * hr_vals0[i] * hr_vals0[i]);
+            nrf_delay_us(1000);
+        }*/
+        float average = 0;
+        uint32_t peak = 0;
         for (uint32_t i = 0; i < HR_BUFF_SIZE; i++)
         {
-            printf("%d\n", hr_vals0[i] * hr_vals0[i]);
-            nrf_delay_us(1000);
+            average = ((average * i) + hr_vals0[i]) / (i + 1);
+            if (hr_vals0[i] > peak)
+            {
+                peak = hr_vals0[i];
+            }
         }
-    }*/
+        uint32_t th = (uint32_t)average + ((peak - average) / 2);
+        bool over_th = false;
+        uint16_t hb_count = 0;
+        for (uint32_t i = 0; i < HR_BUFF_SIZE; i++)
+        {
+            if ((hr_vals0[i] > th) && !over_th)
+            {
+                hb_count ++;
+                over_th = true;
+            }
+            if ((hr_vals0[i] < th) && over_th)
+            {
+                over_th = false;
+            }
+        }
+        printf("hb_count = %d, pulse = %d\n", hb_count, hb_count * 6);
+        if ((hb_count > 8) && (hb_count < 30))
+            hr_buf[buffer_count] = hb_count;
+        else if (buffer_count > 0)
+        {
+            hr_buf[buffer_count] = hr_buf[buffer_count - 1];
+        }
+        else
+        {
+            hr_buf[buffer_count] = 13;
+        }
+    }
+    uint16_t last_40;
+    if (buffer_count > 4)
+    {
+        last_40 = hr_buf[buffer_count] + hr_buf[buffer_count - 1] + hr_buf[buffer_count - 2] + hr_buf[buffer_count - 3];
+    }
+    printf("\n\nHR %d    (total %d)", (uint16_t)((float)last_40 / 4.0 * 6.0), last_40);
+    buffer_count++;
 }
 
 
 void hr_adc_init()
 {
-    NRF_SAADC->CH[0].PSELP = SAADC_CH_PSELN_PSELN_AnalogInput0;
+    NRF_SAADC->CH[0].PSELP = SAADC_CH_PSELN_PSELN_AnalogInput7;
     NRF_SAADC->CH[0].PSELN = SAADC_CH_PSELN_PSELN_NC;
     NRF_SAADC->CH[0].CONFIG = ((SAADC_CH_CONFIG_RESP_Bypass << SAADC_CH_CONFIG_RESP_Pos) | \
                                (SAADC_CH_CONFIG_RESN_Bypass << SAADC_CH_CONFIG_RESN_Pos) |\
@@ -1236,7 +1317,7 @@ void hr_adc_init()
     ticker_timer->PRESCALER = 4; //gives T=0.001ms
     
     ticker_timer->CC[0] = 50;
-    ticker_timer->CC[1] = 8000; // 4 ms
+    ticker_timer->CC[1] = 4000; // 4 ms
     
     ticker_timer->TASKS_CLEAR = 1;
     ticker_timer->TASKS_START = 1;
@@ -1266,13 +1347,13 @@ int main(void)
     //buttons_leds_init(&erase_bonds);
     uart_init();
     printf("\n\n\nRunning Speed collector example\r\n");
-    //hr_adc_init();
+    hr_adc_init();
     //ble_stack_init();
     //device_manager_init(erase_bonds);
     //db_discovery_init();
     //rscs_c_init();
-    i2c_init();
-	//accel_i2c_test();
+    
+    /*i2c_init();
 	temp_i2c_init();	
     nrf_delay_ms(5);
     while(1)
@@ -1281,7 +1362,7 @@ int main(void)
         nrf_delay_ms(5);
         grad_read();
         nrf_delay_ms(1000);
-    }
+    }*/
 
     // Start scanning for peripherals and initiate connection
     // with devices that advertise Running Speed and Cadence UUID.
@@ -1289,7 +1370,7 @@ int main(void)
     
     for (;;)
     {
-        //hr_poll();
+        hr_poll();
         
     }
 }
