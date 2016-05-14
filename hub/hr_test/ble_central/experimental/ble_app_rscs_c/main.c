@@ -1193,11 +1193,13 @@ static void hr_poll(void)
     {
         NRF_SAADC->RESULT.PTR = (uint32_t)hr_vals1;
         hr_buf_num = 1;
-        /*for (uint32_t i = 0; i < HR_BUFF_SIZE; i++)
+#ifdef ECG_GRAPH
+        for (uint32_t i = 0; i < HR_BUFF_SIZE; i++)
         {
             printf("%d\n", hr_vals1[i] * hr_vals1[i] * hr_vals0[i]);
             nrf_delay_us(500);
-        }*/
+        }
+#else
         float average = 0;
         uint32_t peak = 0;
         for (uint32_t i = 0; i < HR_BUFF_SIZE; i++)
@@ -1234,16 +1236,20 @@ static void hr_poll(void)
         {
             hr_buf[buffer_count] = 13;
         }
+#endif
     }
     else
     {
         NRF_SAADC->RESULT.PTR = (uint32_t)hr_vals0;
         hr_buf_num = 0;
-        /*for (uint32_t i = 0; i < HR_BUFF_SIZE; i++)
+#ifdef ECG_GRAPH
+        for (uint32_t i = 0; i < HR_BUFF_SIZE; i++)
         {
             printf("%d\n", hr_vals0[i] * hr_vals0[i] * hr_vals0[i]);
             nrf_delay_us(1000);
-        }*/
+        }
+    }
+#else
         float average = 0;
         uint32_t peak = 0;
         for (uint32_t i = 0; i < HR_BUFF_SIZE; i++)
@@ -1288,12 +1294,13 @@ static void hr_poll(void)
     }
     printf("\n\nHR %d    (total %d)", (uint16_t)((float)last_40 / 4.0 * 6.0), last_40);
     buffer_count++;
+#endif
 }
 
 
 void hr_adc_init()
 {
-    NRF_SAADC->CH[0].PSELP = SAADC_CH_PSELN_PSELN_AnalogInput7;
+    NRF_SAADC->CH[0].PSELP = SAADC_CH_PSELN_PSELN_AnalogInput6;
     NRF_SAADC->CH[0].PSELN = SAADC_CH_PSELN_PSELN_NC;
     NRF_SAADC->CH[0].CONFIG = ((SAADC_CH_CONFIG_RESP_Bypass << SAADC_CH_CONFIG_RESP_Pos) | \
                                (SAADC_CH_CONFIG_RESN_Bypass << SAADC_CH_CONFIG_RESN_Pos) |\
@@ -1337,7 +1344,7 @@ void hr_adc_init()
     NRF_SAADC->ENABLE = SAADC_ENABLE_ENABLE_Enabled;
     NRF_SAADC->TASKS_START = 1;
 }
-
+#define HR_TEST
 int main(void)
 {
     bool erase_bonds;
@@ -1347,14 +1354,24 @@ int main(void)
     //buttons_leds_init(&erase_bonds);
     uart_init();
     printf("\n\n\nRunning Speed collector example\r\n");
+#ifdef HR_TEST
+    printf("\n\n\nHR Test\r\n");
     hr_adc_init();
+    while(1)
+    {
+        hr_poll();
+    }
+#endif
     //ble_stack_init();
     //device_manager_init(erase_bonds);
     //db_discovery_init();
     //rscs_c_init();
     
-    /*i2c_init();
+#ifdef I2C_TEST
+    printf("\n\n\nI2C Test\r\n");
+    i2c_init();
 	temp_i2c_init();	
+    accel_i2c_init();
     nrf_delay_ms(5);
     while(1)
     {
@@ -1362,7 +1379,8 @@ int main(void)
         nrf_delay_ms(5);
         grad_read();
         nrf_delay_ms(1000);
-    }*/
+    }
+#endif
 
     // Start scanning for peripherals and initiate connection
     // with devices that advertise Running Speed and Cadence UUID.
@@ -1370,8 +1388,7 @@ int main(void)
     
     for (;;)
     {
-        hr_poll();
-        
+        printf("\n\n\ndefine either HR_TEST or I2C_TEST\r\n");
     }
 }
 
