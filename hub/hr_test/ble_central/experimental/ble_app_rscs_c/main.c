@@ -410,21 +410,28 @@ void temp_i2c_init(void)
     temp_calib_data.md = (int16_t)((rx_vals[0] << 8) + rx_vals[1]);
     
     printf("ac: %i, %i, %i, %i, %i, %i \n", temp_calib_data.ac1, temp_calib_data.ac2, temp_calib_data.ac3, temp_calib_data.ac4, temp_calib_data.ac5, temp_calib_data.ac6);
-    printf("b: %i, %i, m: %i, %i, %i", temp_calib_data.b1, temp_calib_data.b1, temp_calib_data.mb, temp_calib_data.mc, temp_calib_data.md);
+    printf("b: %i, %i, m: %i, %i, %i\n", temp_calib_data.b1, temp_calib_data.b1, temp_calib_data.mb, temp_calib_data.mc, temp_calib_data.md);
 }
 
-int16_t temp_convert(int16_t raw)
+int32_t temp_convert(int32_t raw)
 {
-    int16_t temp = 0;
+    int32_t temp = 0;
     uint16_t ac6 = 23153;
     uint16_t ac5 = 32757;
     int16_t  mc  = -8711;
     int16_t  md  = 2868;
-    int32_t x1 = (raw - temp_calib_data.ac6) * (temp_calib_data.ac5 >> 15);
-    int32_t x2 = (temp_calib_data.mc << 11) / (x1 + temp_calib_data.md);
-    //int32_t x1 = (raw - ac6) * (ac5 >> 15);
-    //int32_t x2 = (mc << 11) / (x1 + md);
+    printf("ac5: %i, ac6: %i\n", temp_calib_data.ac5, temp_calib_data.ac6);
+    float x1a = (raw - (int32_t)temp_calib_data.ac6); 
+    float x1b = (float)temp_calib_data.ac5 / 32768;
+    int32_t x1  = (int32_t)(x1a * x1b);
+    printf("x1a %f, x1b %f, x1c %d", x1a, x1b, x1);
+    int32_t x2 = ((int32_t)temp_calib_data.mc << 11) / (x1 + (int32_t)temp_calib_data.md);
+    //int32_t x1 = (raw - (int32_t)ac6) * (int32_t)ac5 >> 15;
+    //int32_t x2 = ((int32_t)mc << 11) / (x1 + (int32_t)md);
     int32_t b5 = x1 + x2;
+    printf("X1 = %d\n", x1);
+    printf("X2 = %d\n", x2);
+    printf("B5 = %d\n", b5);
     temp = (b5 + 8) >> 4;
     return temp;
 }
@@ -438,13 +445,13 @@ void temp_read(void)
     tx_vals[1] = BMP085_READTEMPCMD;
     i2c_tx(TEMP_ADDRESS, tx_vals, 2);
     
-    nrf_delay_ms(5);
+    nrf_delay_ms(10);
     
     tx_vals[0] = BMP085_TEMPDATA;
     i2c_tx_rx(TEMP_ADDRESS, tx_vals, 1, rx_vals, 2);
-    printf("Temp raw read: 0x%x 0x%x\n", rx_vals[0], rx_vals[1]);
-    int16_t temp = temp_convert((rx_vals[0]<<8) + rx_vals[1]);
-    printf("Actual Temp: %d.%d\'C", temp/10, temp%10);
+    printf("Temp raw read: 0x%x 0x%x, %d\n", rx_vals[0], rx_vals[1], (rx_vals[0]<<8) + rx_vals[1]);
+    int32_t temp = temp_convert(23420);
+    printf("Actual Temp: %d.%d\'C\n", temp/10, temp%10);
 }
 
 /**@brief Function for asserts in the SoftDevice.
@@ -1227,6 +1234,7 @@ int main(void)
 	//accel_i2c_test();  
 	temp_i2c_init();	
     temp_read();
+    
 
     // Start scanning for peripherals and initiate connection
     // with devices that advertise Running Speed and Cadence UUID.
