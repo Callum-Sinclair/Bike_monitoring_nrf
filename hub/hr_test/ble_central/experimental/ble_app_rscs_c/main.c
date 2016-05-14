@@ -189,22 +189,22 @@ uint32_t i2c_tx_buf[I2C_TX_BUF_SIZE];
 #define ADXL345_BW_RATE_BIT         3
 #define ADXL345_BW_RATE_LENGTH      4
 
-#define ADXL345_RATE_3200           0b1111
-#define ADXL345_RATE_1600           0b1110
-#define ADXL345_RATE_800            0b1101
-#define ADXL345_RATE_400            0b1100
-#define ADXL345_RATE_200            0b1011
-#define ADXL345_RATE_100            0b1010
-#define ADXL345_RATE_50             0b1001
-#define ADXL345_RATE_25             0b1000
-#define ADXL345_RATE_12P5           0b0111
-#define ADXL345_RATE_6P25           0b0110
-#define ADXL345_RATE_3P13           0b0101
-#define ADXL345_RATE_1P56           0b0100
-#define ADXL345_RATE_0P78           0b0011
-#define ADXL345_RATE_0P39           0b0010
-#define ADXL345_RATE_0P20           0b0001
-#define ADXL345_RATE_0P10           0b0000
+#define ADXL345_RATE_3200           0xF
+#define ADXL345_RATE_1600           0xE
+#define ADXL345_RATE_800            0xD
+#define ADXL345_RATE_400            0xC
+#define ADXL345_RATE_200            0xB
+#define ADXL345_RATE_100            0xA
+#define ADXL345_RATE_50             9
+#define ADXL345_RATE_25             8
+#define ADXL345_RATE_12P5           7
+#define ADXL345_RATE_6P25           6
+#define ADXL345_RATE_3P13           5
+#define ADXL345_RATE_1P56           4
+#define ADXL345_RATE_0P78           3
+#define ADXL345_RATE_0P39           2
+#define ADXL345_RATE_0P20           1
+#define ADXL345_RATE_0P10           0
 
 #define ADXL345_PCTL_LINK_BIT       5
 #define ADXL345_PCTL_AUTOSLEEP_BIT  4
@@ -213,10 +213,10 @@ uint32_t i2c_tx_buf[I2C_TX_BUF_SIZE];
 #define ADXL345_PCTL_WAKEUP_BIT     1
 #define ADXL345_PCTL_WAKEUP_LENGTH  2
 
-#define ADXL345_WAKEUP_8HZ          0b00
-#define ADXL345_WAKEUP_4HZ          0b01
-#define ADXL345_WAKEUP_2HZ          0b10
-#define ADXL345_WAKEUP_1HZ          0b11
+#define ADXL345_WAKEUP_8HZ          0
+#define ADXL345_WAKEUP_4HZ          1
+#define ADXL345_WAKEUP_2HZ          2
+#define ADXL345_WAKEUP_1HZ          3
 
 #define ADXL345_INT_DATA_READY_BIT  7
 #define ADXL345_INT_SINGLE_TAP_BIT  6
@@ -235,10 +235,10 @@ uint32_t i2c_tx_buf[I2C_TX_BUF_SIZE];
 #define ADXL345_FORMAT_RANGE_BIT    1
 #define ADXL345_FORMAT_RANGE_LENGTH 2
 
-#define ADXL345_RANGE_2G            0b00
-#define ADXL345_RANGE_4G            0b01
-#define ADXL345_RANGE_8G            0b10
-#define ADXL345_RANGE_16G           0b11
+#define ADXL345_RANGE_2G            0
+#define ADXL345_RANGE_4G            1
+#define ADXL345_RANGE_8G            2
+#define ADXL345_RANGE_16G           3
 
 #define ADXL345_FIFO_MODE_BIT       7
 #define ADXL345_FIFO_MODE_LENGTH    2
@@ -246,10 +246,10 @@ uint32_t i2c_tx_buf[I2C_TX_BUF_SIZE];
 #define ADXL345_FIFO_SAMPLES_BIT    4
 #define ADXL345_FIFO_SAMPLES_LENGTH 5
 
-#define ADXL345_FIFO_MODE_BYPASS    0b00
-#define ADXL345_FIFO_MODE_FIFO      0b01
-#define ADXL345_FIFO_MODE_STREAM    0b10
-#define ADXL345_FIFO_MODE_TRIGGER   0b11
+#define ADXL345_FIFO_MODE_BYPASS    0
+#define ADXL345_FIFO_MODE_FIFO      1
+#define ADXL345_FIFO_MODE_STREAM    2
+#define ADXL345_FIFO_MODE_TRIGGER   3
 
 #define ADXL345_FIFOSTAT_TRIGGER_BIT        7
 #define ADXL345_FIFOSTAT_LENGTH_BIT         5
@@ -292,7 +292,7 @@ void i2c_tx_rx(uint32_t tx_addr, uint16_t* data_tx_addr, uint8_t tx_bytes, uint1
 void i2c_tx(uint32_t tx_addr, uint16_t* data_tx_addr, uint8_t tx_bytes)
 {
     i2c->EVENTS_LASTTX = 0;
-    i2c->SHORTS  = 0;//TWIM_SHORTS_LASTTX_SUSPEND_Enabled << TWIM_SHORTS_LASTTX_SUSPEND_Pos;
+    i2c->SHORTS  = TWIM_SHORTS_LASTTX_STOP_Enabled << TWIM_SHORTS_LASTTX_STOP_Pos;
     i2c->ADDRESS = tx_addr;
     i2c->TXD.PTR = (uint32_t)data_tx_addr;
     i2c->TXD.MAXCNT = tx_bytes;
@@ -302,29 +302,42 @@ void i2c_tx(uint32_t tx_addr, uint16_t* data_tx_addr, uint8_t tx_bytes)
 
 void accel_i2c_init(void)
 {
-    uint16_t tx_vals[] = {ADXL345_RA_POWER_CTL, 0x08};
+    uint16_t tx_vals[20] = {0};
     uint16_t rx_vals[20] = {0};
+    
+    tx_vals[0] = ADXL345_RA_DATA_FORMAT;
+    tx_vals[1] = ADXL345_RANGE_2G;
     i2c_tx(ACCEL_ADDRESS, tx_vals, 2);
-    printf("started\n");
-    tx_vals[0] = ADXL345_RA_DEVID;
-    i2c_tx_rx(ACCEL_ADDRESS, tx_vals, 1, rx_vals, 20);
-    printf("%d, %d, %d, %d, %d, %d\n", rx_vals[0], rx_vals[1], rx_vals[2], rx_vals[3], rx_vals[4], rx_vals[5]);
-    printf("got %d\n", i2c->RXD.AMOUNT);
+    
+    tx_vals[0] = ADXL345_RA_POWER_CTL;
+    tx_vals[1] = 0x08;
+    i2c_tx(ACCEL_ADDRESS, tx_vals, 2);
+    printf("initialised\n");
 }
 
 void accel_get_dev_id(void)
 {
-    uint16_t tx_vals[] = {ADXL345_RA_DEVID};
+    uint16_t tx_vals[2] = {ADXL345_RA_DEVID};
     uint16_t rx_vals[20] = {0};
-    i2c_tx_rx(ACCEL_ADDRESS, tx_vals, 1, rx_vals, 20);
-    printf("%d, %d, %d, %d, %d, %d\n", rx_vals[0], rx_vals[1], rx_vals[2], rx_vals[3], rx_vals[4], rx_vals[5]);
-    printf("got %d\n", i2c->RXD.AMOUNT);
+    i2c_tx_rx(ACCEL_ADDRESS, tx_vals, 1, rx_vals, 2);
+    printf("Dev ID: %d\n", rx_vals[0]);
+    printf("got %d bytes\n", i2c->RXD.AMOUNT);
+}
+
+void accel_get_xyz(void)
+{
+    uint16_t tx_vals[2] = {ADXL345_RA_DATAX0};
+    uint16_t rx_vals[20] = {0};
+    i2c_tx_rx(ACCEL_ADDRESS, tx_vals, 1, rx_vals, 6);
+    printf("Data X0: %d %d %d %d %d %d \n", rx_vals[0], rx_vals[1], rx_vals[2], rx_vals[3], rx_vals[4], rx_vals[5]);
+    printf("got %d bytes\n", i2c->RXD.AMOUNT);
 }
 
 void accel_i2c_test(void)
 {
     accel_i2c_init();
-    //accel_get_dev_id();
+    accel_get_dev_id();
+    accel_get_xyz();
 }
 
 /**@brief Function for asserts in the SoftDevice.
