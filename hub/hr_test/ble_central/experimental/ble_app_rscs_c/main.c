@@ -16,6 +16,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 #include "nordic_common.h"
 #include "nrf_sdm.h"
 #include "ble.h"
@@ -223,6 +224,13 @@ uint32_t i2c_tx_buf[I2C_TX_BUF_SIZE];
 #define ADXL345_RANGE_8G            2
 #define ADXL345_RANGE_16G           3
 
+typedef struct
+{
+    int16_t x;
+    int16_t y;
+    int16_t z;
+}xyz_t;
+
 // Temp defines
 #define BMP085_ULTRALOWPOWER 0
 #define BMP085_STANDARD      1
@@ -320,12 +328,16 @@ void accel_i2c_init(void)
     tx_vals[0] = ADXL345_RA_POWER_CTL;
     tx_vals[1] = 0x08;
     i2c_tx(ACCEL_ADDRESS, tx_vals, 2);
+#ifdef DEBUG
     printf("initialised %d\n", i2c->TXD.AMOUNT);
+#endif
 
     tx_vals[0] = ADXL345_RA_POWER_CTL;
     i2c_tx_rx(ACCEL_ADDRESS, tx_vals, 1, rx_vals, 2);
+#ifdef DEBUG
     printf("Power Crtl read: 0x%x 0x%x\n", rx_vals[0], rx_vals[1]);
     printf("got %d bytes\n", i2c->RXD.AMOUNT);
+#endif
 }
 
 void accel_get_dev_id(void)
@@ -333,20 +345,39 @@ void accel_get_dev_id(void)
     uint8_t tx_vals[2] = {ADXL345_RA_DEVID};
     uint8_t rx_vals[20] = {0};
     i2c_tx_rx(ACCEL_ADDRESS, tx_vals, 1, rx_vals, 2);
+#ifdef DEBUG
     printf("Dev ID: %d\n", rx_vals[0]);
     printf("got %d bytes\n", i2c->RXD.AMOUNT);
+#endif
 }
 
-void accel_get_xyz(void)
+void accel_get_xyz(xyz_t* xyz)
 {
     uint8_t tx_vals[2] = {ADXL345_RA_DATAX0};
     uint8_t rx_vals[20] = {0};
     i2c_tx_rx(ACCEL_ADDRESS, tx_vals, 1, rx_vals, 6);
+#ifdef DEBUG
     printf("Raw data X0: %d %d %d %d %d %d \n", rx_vals[0], rx_vals[1], rx_vals[2], rx_vals[3], rx_vals[4], rx_vals[5]);
-    uint16_t x_data = (rx_vals[1]<<8) + rx_vals[0];
-    uint16_t y_data = (rx_vals[3]<<8) + rx_vals[2];
-    uint16_t z_data = (rx_vals[5]<<8) + rx_vals[4];
-    printf("Data:\n X = %d Y = %d Z = %d\n\n", x_data, y_data, z_data);
+#endif
+    xyz->x = (rx_vals[1]<<8) + rx_vals[0];
+    xyz->y = (rx_vals[3]<<8) + rx_vals[2];
+    xyz->z = (rx_vals[5]<<8) + rx_vals[4];
+#ifdef DEBUG
+    printf("Data:\n X = %d Y = %d Z = %d\n\n", xyz->x, xyz->y, xyz->z);
+#endif
+}
+
+
+void grad_read(void)
+{
+    xyz_t xyz;
+    float gradient;
+    accel_get_xyz(&xyz);
+    gradient  = atan2((float)(0 - xyz.y), (float)xyz.z) * 180 / 3.14159;
+#ifdef DEBUG
+    printf("Data:\n X = %d Y = %d Z = %d\n\n", xyz.x, xyz.y, xyz.z);
+#endif
+    printf("Gradient: %f\n\n", gradient);
 }
 
 void accel_i2c_test(void)
@@ -355,7 +386,7 @@ void accel_i2c_test(void)
     accel_get_dev_id();
     while(1)
     {
-        accel_get_xyz();
+        //accel_get_xyz();
         nrf_delay_ms(500);
     }
 }
@@ -408,9 +439,11 @@ void temp_i2c_init(void)
     tx_vals[0] = BMP085_CAL_MD;
     i2c_tx_rx(TEMP_ADDRESS, tx_vals, 1, rx_vals, 2);
     temp_calib_data.md = (int16_t)((rx_vals[0] << 8) + rx_vals[1]);
-    
+
+#ifdef DEBUG
     printf("ac: %i, %i, %i, %i, %i, %i \n", temp_calib_data.ac1, temp_calib_data.ac2, temp_calib_data.ac3, temp_calib_data.ac4, temp_calib_data.ac5, temp_calib_data.ac6);
     printf("b: %i, %i, m: %i, %i, %i\n", temp_calib_data.b1, temp_calib_data.b1, temp_calib_data.mb, temp_calib_data.mc, temp_calib_data.md);
+#endif
 }
 
 int32_t temp_convert(int32_t raw)
@@ -420,18 +453,24 @@ int32_t temp_convert(int32_t raw)
     uint16_t ac5 = 32757;
     int16_t  mc  = -8711;
     int16_t  md  = 2868;
+#ifdef DEBUG
     printf("ac5: %i, ac6: %i\n", temp_calib_data.ac5, temp_calib_data.ac6);
+#endif
     float x1a = (raw - (int32_t)temp_calib_data.ac6); 
     float x1b = (float)temp_calib_data.ac5 / 32768;
     int32_t x1  = (int32_t)(x1a * x1b);
+#ifdef DEBUG
     printf("x1a %f, x1b %f, x1c %d", x1a, x1b, x1);
+#endif
     int32_t x2 = ((int32_t)temp_calib_data.mc << 11) / (x1 + (int32_t)temp_calib_data.md);
     //int32_t x1 = (raw - (int32_t)ac6) * (int32_t)ac5 >> 15;
     //int32_t x2 = ((int32_t)mc << 11) / (x1 + (int32_t)md);
     int32_t b5 = x1 + x2;
+#ifdef DEBUG
     printf("X1 = %d\n", x1);
     printf("X2 = %d\n", x2);
     printf("B5 = %d\n", b5);
+#endif
     temp = (b5 + 8) >> 4;
     return temp;
 }
@@ -449,7 +488,9 @@ void temp_read(void)
     
     tx_vals[0] = BMP085_TEMPDATA;
     i2c_tx_rx(TEMP_ADDRESS, tx_vals, 1, rx_vals, 2);
+#ifdef DEBUG
     printf("Temp raw read: 0x%x 0x%x, %d\n", rx_vals[0], rx_vals[1], (rx_vals[0]<<8) + rx_vals[1]);
+#endif
     int32_t temp = temp_convert(23420);
     printf("Actual Temp: %d.%d\'C\n", temp/10, temp%10);
 }
@@ -1231,10 +1272,16 @@ int main(void)
     //db_discovery_init();
     //rscs_c_init();
     i2c_init();
-	//accel_i2c_test();  
+	//accel_i2c_test();
 	temp_i2c_init();	
-    temp_read();
-    
+    nrf_delay_ms(5);
+    while(1)
+    {
+        temp_read();
+        nrf_delay_ms(5);
+        grad_read();
+        nrf_delay_ms(1000);
+    }
 
     // Start scanning for peripherals and initiate connection
     // with devices that advertise Running Speed and Cadence UUID.
