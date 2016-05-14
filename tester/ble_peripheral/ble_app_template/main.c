@@ -321,9 +321,12 @@ static void csc_sim_measurement(ble_cscs_meas_t * p_measurement)
     crank_rev_degrees     %= DEGREES_PER_REVOLUTION;
 
     p_measurement->cumulative_crank_revs = cumulative_crank_revs;
-    p_measurement->last_crank_event_time = 0x8597;
+    p_measurement->last_crank_event_time =
+        event_time + (event_time_inc * (degrees_per_sec - crank_rev_degrees) / degrees_per_sec);
+
     event_time += event_time_inc;
 }
+
 
 
 /**@brief Function for handling the Cycling Speed and Cadence measurement timer timeouts.
