@@ -218,42 +218,50 @@ uint32_t i2c_tx_buf[I2C_TX_BUF_SIZE];
 #define ADXL345_WAKEUP_2HZ          2
 #define ADXL345_WAKEUP_1HZ          3
 
-#define ADXL345_INT_DATA_READY_BIT  7
-#define ADXL345_INT_SINGLE_TAP_BIT  6
-#define ADXL345_INT_DOUBLE_TAP_BIT  5
-#define ADXL345_INT_ACTIVITY_BIT    4
-#define ADXL345_INT_INACTIVITY_BIT  3
-#define ADXL345_INT_FREE_FALL_BIT   2
-#define ADXL345_INT_WATERMARK_BIT   1
-#define ADXL345_INT_OVERRUN_BIT     0
-
-#define ADXL345_FORMAT_SELFTEST_BIT 7
-#define ADXL345_FORMAT_SPIMODE_BIT  6
-#define ADXL345_FORMAT_INTMODE_BIT  5
-#define ADXL345_FORMAT_FULL_RES_BIT 3
-#define ADXL345_FORMAT_JUSTIFY_BIT  2
-#define ADXL345_FORMAT_RANGE_BIT    1
-#define ADXL345_FORMAT_RANGE_LENGTH 2
-
 #define ADXL345_RANGE_2G            0
 #define ADXL345_RANGE_4G            1
 #define ADXL345_RANGE_8G            2
 #define ADXL345_RANGE_16G           3
 
-#define ADXL345_FIFO_MODE_BIT       7
-#define ADXL345_FIFO_MODE_LENGTH    2
-#define ADXL345_FIFO_TRIGGER_BIT    5
-#define ADXL345_FIFO_SAMPLES_BIT    4
-#define ADXL345_FIFO_SAMPLES_LENGTH 5
+// Temp defines
+#define BMP085_ULTRALOWPOWER 0
+#define BMP085_STANDARD      1
+#define BMP085_HIGHRES       2
+#define BMP085_ULTRAHIGHRES  3
+#define BMP085_CAL_AC1           0xAA  // R   Calibration data (16 bits)
+#define BMP085_CAL_AC2           0xAC  // R   Calibration data (16 bits)
+#define BMP085_CAL_AC3           0xAE  // R   Calibration data (16 bits)    
+#define BMP085_CAL_AC4           0xB0  // R   Calibration data (16 bits)
+#define BMP085_CAL_AC5           0xB2  // R   Calibration data (16 bits)
+#define BMP085_CAL_AC6           0xB4  // R   Calibration data (16 bits)
+#define BMP085_CAL_B1            0xB6  // R   Calibration data (16 bits)
+#define BMP085_CAL_B2            0xB8  // R   Calibration data (16 bits)
+#define BMP085_CAL_MB            0xBA  // R   Calibration data (16 bits)
+#define BMP085_CAL_MC            0xBC  // R   Calibration data (16 bits)
+#define BMP085_CAL_MD            0xBE  // R   Calibration data (16 bits)
 
-#define ADXL345_FIFO_MODE_BYPASS    0
-#define ADXL345_FIFO_MODE_FIFO      1
-#define ADXL345_FIFO_MODE_STREAM    2
-#define ADXL345_FIFO_MODE_TRIGGER   3
+#define BMP085_CONTROL           0xF4 
+#define BMP085_TEMPDATA          0xF6
+#define BMP085_PRESSUREDATA      0xF6
+#define BMP085_READTEMPCMD       0x2E
+#define BMP085_READPRESSURECMD   0x34
+// Temp calibration data
+typedef struct
+{
+    int16_t  ac1;
+    int16_t  ac2;
+    int16_t  ac3;
+    uint16_t ac4;
+    uint16_t ac5;
+    uint16_t ac6;
+    int16_t  b1;
+    int16_t  b2;
+    int16_t  mb;
+    int16_t  mc;
+    int16_t  md;
+}temp_calib_data_t;
 
-#define ADXL345_FIFOSTAT_TRIGGER_BIT        7
-#define ADXL345_FIFOSTAT_LENGTH_BIT         5
-#define ADXL345_FIFOSTAT_LENGTH_LENGTH      6
+static temp_calib_data_t temp_calib_data;
 
 
 #define TEMP_ADDRESS 0x77  // I2C address of BMP085
@@ -275,7 +283,7 @@ void i2c_init (void)
     i2c->ENABLE     = TWIM_ENABLE_ENABLE_Enabled;
 }
 
-void i2c_tx_rx(uint32_t tx_addr, uint16_t* data_tx_addr, uint8_t tx_bytes, uint16_t* data_rx_addr, uint8_t rx_bytes)
+void i2c_tx_rx(uint32_t tx_addr, uint8_t* data_tx_addr, uint8_t tx_bytes, uint8_t* data_rx_addr, uint8_t rx_bytes)
 {
     i2c->EVENTS_LASTRX = 0;
     i2c->SHORTS     = ((TWIM_SHORTS_LASTTX_STARTRX_Enabled << TWIM_SHORTS_LASTTX_STARTRX_Pos) | \
@@ -289,7 +297,7 @@ void i2c_tx_rx(uint32_t tx_addr, uint16_t* data_tx_addr, uint8_t tx_bytes, uint1
     while (i2c->EVENTS_LASTRX == 0);
 }
 
-void i2c_tx(uint32_t tx_addr, uint16_t* data_tx_addr, uint8_t tx_bytes)
+void i2c_tx(uint32_t tx_addr, uint8_t* data_tx_addr, uint8_t tx_bytes)
 {
     i2c->EVENTS_LASTTX = 0;
     i2c->SHORTS  = TWIM_SHORTS_LASTTX_STOP_Enabled << TWIM_SHORTS_LASTTX_STOP_Pos;
@@ -302,8 +310,8 @@ void i2c_tx(uint32_t tx_addr, uint16_t* data_tx_addr, uint8_t tx_bytes)
 
 void accel_i2c_init(void)
 {
-    uint16_t tx_vals[20] = {0};
-    uint16_t rx_vals[20] = {0};
+    uint8_t tx_vals[20] = {0};
+    uint8_t rx_vals[20] = {0};
     
     tx_vals[0] = ADXL345_RA_DATA_FORMAT;
     tx_vals[1] = ADXL345_RANGE_2G;
@@ -312,13 +320,18 @@ void accel_i2c_init(void)
     tx_vals[0] = ADXL345_RA_POWER_CTL;
     tx_vals[1] = 0x08;
     i2c_tx(ACCEL_ADDRESS, tx_vals, 2);
-    printf("initialised\n");
+    printf("initialised %d\n", i2c->TXD.AMOUNT);
+
+    tx_vals[0] = ADXL345_RA_POWER_CTL;
+    i2c_tx_rx(ACCEL_ADDRESS, tx_vals, 1, rx_vals, 2);
+    printf("Power Crtl read: 0x%x 0x%x\n", rx_vals[0], rx_vals[1]);
+    printf("got %d bytes\n", i2c->RXD.AMOUNT);
 }
 
 void accel_get_dev_id(void)
 {
-    uint16_t tx_vals[2] = {ADXL345_RA_DEVID};
-    uint16_t rx_vals[20] = {0};
+    uint8_t tx_vals[2] = {ADXL345_RA_DEVID};
+    uint8_t rx_vals[20] = {0};
     i2c_tx_rx(ACCEL_ADDRESS, tx_vals, 1, rx_vals, 2);
     printf("Dev ID: %d\n", rx_vals[0]);
     printf("got %d bytes\n", i2c->RXD.AMOUNT);
@@ -326,18 +339,112 @@ void accel_get_dev_id(void)
 
 void accel_get_xyz(void)
 {
-    uint16_t tx_vals[2] = {ADXL345_RA_DATAX0};
-    uint16_t rx_vals[20] = {0};
+    uint8_t tx_vals[2] = {ADXL345_RA_DATAX0};
+    uint8_t rx_vals[20] = {0};
     i2c_tx_rx(ACCEL_ADDRESS, tx_vals, 1, rx_vals, 6);
-    printf("Data X0: %d %d %d %d %d %d \n", rx_vals[0], rx_vals[1], rx_vals[2], rx_vals[3], rx_vals[4], rx_vals[5]);
-    printf("got %d bytes\n", i2c->RXD.AMOUNT);
+    printf("Raw data X0: %d %d %d %d %d %d \n", rx_vals[0], rx_vals[1], rx_vals[2], rx_vals[3], rx_vals[4], rx_vals[5]);
+    uint16_t x_data = (rx_vals[1]<<8) + rx_vals[0];
+    uint16_t y_data = (rx_vals[3]<<8) + rx_vals[2];
+    uint16_t z_data = (rx_vals[5]<<8) + rx_vals[4];
+    printf("Data:\n X = %d Y = %d Z = %d\n\n", x_data, y_data, z_data);
 }
 
 void accel_i2c_test(void)
 {
     accel_i2c_init();
     accel_get_dev_id();
-    accel_get_xyz();
+    while(1)
+    {
+        accel_get_xyz();
+        nrf_delay_ms(500);
+    }
+}
+
+void temp_i2c_init(void)
+{
+    uint8_t tx_vals[20] = {0};
+    uint8_t rx_vals[20] = {0};
+    
+    tx_vals[0] = BMP085_CAL_AC1;
+    i2c_tx_rx(TEMP_ADDRESS, tx_vals, 1, rx_vals, 2);
+    temp_calib_data.ac1 = (int16_t)((rx_vals[0] << 8) + rx_vals[1]);
+
+    tx_vals[0] = BMP085_CAL_AC2;
+    i2c_tx_rx(TEMP_ADDRESS, tx_vals, 1, rx_vals, 2);
+    temp_calib_data.ac2 = (int16_t)((rx_vals[0] << 8) + rx_vals[1]);
+
+    tx_vals[0] = BMP085_CAL_AC3;
+    i2c_tx_rx(TEMP_ADDRESS, tx_vals, 1, rx_vals, 2);
+    temp_calib_data.ac3 = (int16_t)((rx_vals[0] << 8) + rx_vals[1]);
+
+    tx_vals[0] = BMP085_CAL_AC4;
+    i2c_tx_rx(TEMP_ADDRESS, tx_vals, 1, rx_vals, 2);
+    temp_calib_data.ac4 = (rx_vals[0] << 8) + rx_vals[1];
+
+    tx_vals[0] = BMP085_CAL_AC5;
+    i2c_tx_rx(TEMP_ADDRESS, tx_vals, 1, rx_vals, 2);
+    temp_calib_data.ac5 = (rx_vals[0] << 8) + rx_vals[1];
+
+    tx_vals[0] = BMP085_CAL_AC6;
+    i2c_tx_rx(TEMP_ADDRESS, tx_vals, 1, rx_vals, 2);
+    temp_calib_data.ac6 = (int16_t)((rx_vals[0] << 8) + rx_vals[1]);
+
+    tx_vals[0] = BMP085_CAL_B1;
+    i2c_tx_rx(TEMP_ADDRESS, tx_vals, 1, rx_vals, 2);
+    temp_calib_data.b1 = (int16_t)((rx_vals[0] << 8) + rx_vals[1]);
+
+    tx_vals[0] = BMP085_CAL_B2;
+    i2c_tx_rx(TEMP_ADDRESS, tx_vals, 1, rx_vals, 2);
+    temp_calib_data.b2 = (int16_t)((rx_vals[0] << 8) + rx_vals[1]);
+
+    tx_vals[0] = BMP085_CAL_MB;
+    i2c_tx_rx(TEMP_ADDRESS, tx_vals, 1, rx_vals, 2);
+    temp_calib_data.mb = (int16_t)((rx_vals[0] << 8) + rx_vals[1]);
+
+    tx_vals[0] = BMP085_CAL_MC;
+    i2c_tx_rx(TEMP_ADDRESS, tx_vals, 1, rx_vals, 2);
+    temp_calib_data.mc = (int16_t)((rx_vals[0] << 8) + rx_vals[1]);
+
+    tx_vals[0] = BMP085_CAL_MD;
+    i2c_tx_rx(TEMP_ADDRESS, tx_vals, 1, rx_vals, 2);
+    temp_calib_data.md = (int16_t)((rx_vals[0] << 8) + rx_vals[1]);
+    
+    printf("ac: %i, %i, %i, %i, %i, %i \n", temp_calib_data.ac1, temp_calib_data.ac2, temp_calib_data.ac3, temp_calib_data.ac4, temp_calib_data.ac5, temp_calib_data.ac6);
+    printf("b: %i, %i, m: %i, %i, %i", temp_calib_data.b1, temp_calib_data.b1, temp_calib_data.mb, temp_calib_data.mc, temp_calib_data.md);
+}
+
+int16_t temp_convert(int16_t raw)
+{
+    int16_t temp = 0;
+    uint16_t ac6 = 23153;
+    uint16_t ac5 = 32757;
+    int16_t  mc  = -8711;
+    int16_t  md  = 2868;
+    int32_t x1 = (raw - temp_calib_data.ac6) * (temp_calib_data.ac5 >> 15);
+    int32_t x2 = (temp_calib_data.mc << 11) / (x1 + temp_calib_data.md);
+    //int32_t x1 = (raw - ac6) * (ac5 >> 15);
+    //int32_t x2 = (mc << 11) / (x1 + md);
+    int32_t b5 = x1 + x2;
+    temp = (b5 + 8) >> 4;
+    return temp;
+}
+
+void temp_read(void)
+{
+    uint8_t tx_vals[20] = {0};
+    uint8_t rx_vals[20] = {0};
+    
+    tx_vals[0] = BMP085_CONTROL;
+    tx_vals[1] = BMP085_READTEMPCMD;
+    i2c_tx(TEMP_ADDRESS, tx_vals, 2);
+    
+    nrf_delay_ms(5);
+    
+    tx_vals[0] = BMP085_TEMPDATA;
+    i2c_tx_rx(TEMP_ADDRESS, tx_vals, 1, rx_vals, 2);
+    printf("Temp raw read: 0x%x 0x%x\n", rx_vals[0], rx_vals[1]);
+    int16_t temp = temp_convert((rx_vals[0]<<8) + rx_vals[1]);
+    printf("Actual Temp: %d.%d\'C", temp/10, temp%10);
 }
 
 /**@brief Function for asserts in the SoftDevice.
@@ -1110,15 +1217,16 @@ int main(void)
     //APP_TIMER_INIT(APP_TIMER_PRESCALER, APP_TIMER_OP_QUEUE_SIZE, NULL);
     //buttons_leds_init(&erase_bonds);
     uart_init();
-    printf("Running Speed collector example\r\n");
+    printf("\n\n\nRunning Speed collector example\r\n");
     //hr_adc_init();
     //ble_stack_init();
     //device_manager_init(erase_bonds);
     //db_discovery_init();
     //rscs_c_init();
     i2c_init();
-	accel_i2c_test();  
-		
+	//accel_i2c_test();  
+	temp_i2c_init();	
+    temp_read();
 
     // Start scanning for peripherals and initiate connection
     // with devices that advertise Running Speed and Cadence UUID.
