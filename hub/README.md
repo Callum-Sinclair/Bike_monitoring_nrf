@@ -43,11 +43,11 @@ The hub recieves data from the modules in the following packet types
 | Data	        | Data range (all int)	    | size  	| Packaged in |
 | ------------- | ------------------------- | --------- | ----------- |
 | Speed	        | 0-500 (wheel rpm)         | uint16	| rcrs measurement, inst speed |
-| Total dist	| 0-65000 (m)	            | uint32	| rcrs measurement, total distance |
-| Speed Bat	    | 0-100	                    | uint8	    | rcrs measurement, inst cadence |
-| Cadence	    | 0-200	                    | uint16    | rcrs measurement, inst stride length |
-| Cadence bat	| 0-100	                    | uint32    | rcrs measurement, total distance |
-| Power	        | 0-1000	                | uint16	| rcrs measurement, inst speed |
+| Total dist	| 0-65000 (m)	            | uint32*   | (rcrs measurement, total distance) upper 3 bytes |
+| Speed Bat	    | 0-100	                    | uint8	    | (rcrs measurement, inst stride length) upper byte |
+| Cadence	    | 0-200	                    | uint16    | rcrs measurement, inst cadence |
+| Cadence bat	| 0-100	                    | uint32    | rcrs measurement, inst stride length) lower byte |
+| Power	        | 0-1000	                | uint16	| (rcrs measurement, total distance) lowest byte |
 | Power bat	    | 0-100	                    | uint8	    | rcrs measurement, inst cadence |
 | USR	        | 0-250 (meters*10)	        | uint8     | hrs measurment, heart rate measurement value |
 | USR bat	    | 0-100	                    | uint16    | hrs measurment, heart RR-interval |
