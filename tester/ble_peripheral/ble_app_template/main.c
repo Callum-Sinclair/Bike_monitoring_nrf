@@ -284,47 +284,14 @@ static void battery_level_meas_timeout_handler(void * p_context)
  */
 static void csc_sim_measurement(ble_cscs_meas_t * p_measurement)
 {
-    static uint16_t cumulative_crank_revs = 0;
-    static uint16_t event_time            = 0;
-    static uint16_t wheel_revolution_mm   = 0;
-    static uint16_t crank_rev_degrees     = 0;
-
-    uint16_t mm_per_sec;
-    uint16_t degrees_per_sec;
-    uint16_t event_time_inc;
-
-    // Per specification event time is in 1/1024th's of a second.
-    event_time_inc = (1024 * SPEED_AND_CADENCE_MEAS_INTERVAL) / 1000;
-
-    // Calculate simulated wheel revolution values.
     p_measurement->is_wheel_rev_data_present = true;
-
-    mm_per_sec = KPH_TO_MM_PER_SEC * sensorsim_measure(&m_speed_kph_sim_state,
-                                                           &m_speed_kph_sim_cfg);
-
-    wheel_revolution_mm     += mm_per_sec * SPEED_AND_CADENCE_MEAS_INTERVAL / 1000;
-    m_cumulative_wheel_revs += wheel_revolution_mm / WHEEL_CIRCUMFERENCE_MM;
-    wheel_revolution_mm     %= WHEEL_CIRCUMFERENCE_MM;
-
-    p_measurement->cumulative_wheel_revs = m_cumulative_wheel_revs;
-    p_measurement->last_wheel_event_time =
-        event_time + (event_time_inc * (mm_per_sec - wheel_revolution_mm) / mm_per_sec);
-
-    // Calculate simulated cadence values.
     p_measurement->is_crank_rev_data_present = true;
 
-    degrees_per_sec = RPM_TO_DEGREES_PER_SEC * sensorsim_measure(&m_crank_rpm_sim_state,
-                                                                     &m_crank_rpm_sim_cfg);
 
-    crank_rev_degrees     += degrees_per_sec * SPEED_AND_CADENCE_MEAS_INTERVAL / 1000;
-    cumulative_crank_revs += crank_rev_degrees / DEGREES_PER_REVOLUTION;
-    crank_rev_degrees     %= DEGREES_PER_REVOLUTION;
-
-    p_measurement->cumulative_crank_revs = cumulative_crank_revs;
-    p_measurement->last_crank_event_time =
-        event_time + (event_time_inc * (degrees_per_sec - crank_rev_degrees) / degrees_per_sec);
-
-    event_time += event_time_inc;
+    p_measurement->cumulative_wheel_revs = 0;
+    p_measurement->last_wheel_event_time = 0;
+    p_measurement->cumulative_crank_revs = 0;//cumulative_crank_revs;
+    p_measurement->last_crank_event_time = 0x1020;//event_time + (event_time_inc * (degrees_per_sec - crank_rev_degrees) / degrees_per_sec);
 }
 
 
@@ -388,7 +355,7 @@ static void rsc_sim_measurement(ble_rscs_meas_t * p_measurement)
     p_measurement->inst_stride_length = sensorsim_measure(&m_cadence_stl_sim_state,
                                                               &m_cadence_stl_sim_cfg);
     
-    p_measurement->total_distance = 0x75;
+    p_measurement->total_distance = 0x10204050;
 
     if (p_measurement->inst_speed > (uint32_t)(MIN_RUNNING_SPEED * 256))
     {
