@@ -908,7 +908,7 @@ static void tx_timeout_handler(void * p_context)
     rscs_measurement.inst_cadence               = cadence;
     rscs_measurement.inst_speed                 = speed_data.speed;// * cadence * CRANK_RADIUS * 0.5;
     rscs_measurement.inst_stride_length         = (speed_data.bat << 8) + battery_measure(BAT_PIN);
-    rscs_measurement.total_distance             = (speed_data.distance & 0xFFFFFF00) + force_measurment.force;
+    rscs_measurement.total_distance             = (speed_data.distance << 8) + force_measurment.force;
     
     err_code = ble_rscs_measurement_send(&m_rscs, &rscs_measurement);
     

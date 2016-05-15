@@ -1096,13 +1096,25 @@ static void rscs_c_evt_handler(ble_rscs_c_t * p_rscs_c, ble_rscs_c_evt_t * p_rsc
             {
                 APP_ERROR_HANDLER(err_code);
             }*/
+            static uint32_t disatnce_adder = 0;
+            static bool     distance_nearly_full = false;
             bike_data.speed_speed       = p_rscs_c_evt->params.rsc.inst_speed;
             bike_data.cadence_cadence   = p_rscs_c_evt->params.rsc.inst_cadence;
             bike_data.cadence_bat       = (p_rscs_c_evt->params.rsc.inst_stride_length) & 0x00FF;            
             bike_data.speed_bat         = ((p_rscs_c_evt->params.rsc.inst_stride_length & 0xFF00) >> 8);
-            bike_data.speed_distance    = p_rscs_c_evt->params.rsc.total_distance & 0xFFFFFF00;
+            bike_data.speed_distance    = (p_rscs_c_evt->params.rsc.total_distance & 0xFFFFFF00) >> 8;
             bike_data.cadence_power     = (p_rscs_c_evt->params.rsc.total_distance & 0xFF);
-
+            
+            if (((bike_data.speed_distance & 0x00800000) == 0) && (distance_nearly_full == true))
+            {
+                disatnce_adder += 0x01000000;
+            }
+            if (bike_data.speed_distance & 0x00800000)
+            {
+                distance_nearly_full = true;
+            }
+            bike_data.speed_distance = bike_data.speed_distance + disatnce_adder;
+            
         } break; // BLE_RSCS_C_EVT_RSC_NOTIFICATION
 
         default:
