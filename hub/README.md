@@ -49,5 +49,5 @@ The hub recieves data from the modules in the following packet types
 | Cadence bat	| 0-100	                    | uint32    | rcrs measurement, total distance |
 | Power	        | 0-1000	                | uint16	| rcrs measurement, inst speed |
 | Power bat	    | 0-100	                    | uint8	    | rcrs measurement, inst cadence |
-| USR	        | 0-250 (meters*10)	        | uint16    | hrs measurment, RR-interval |
-| USR bat	    | 0-100	                    | uint8	    | hrs measurment, heart rate measurement value |
+| USR	        | 0-250 (meters*10)	        | uint8     | hrs measurment, heart rate measurement value |
+| USR bat	    | 0-100	                    | uint16    | hrs measurment, heart RR-interval |
