@@ -1036,7 +1036,8 @@ static void hrs_c_evt_handler(ble_hrs_c_t * p_hrs_c, ble_hrs_c_evt_t * p_hrs_c_e
             {
                 APP_ERROR_HANDLER(err_code);
             }*/
-            bike_data.usr_bat = p_hrs_c_evt->params.hrm.hr_value;
+            bike_data.usr_bat = 88;
+            bike_data.usr_range = p_hrs_c_evt->params.hrm.hr_value;
         } break; // BLE_HRS_C_EVT_HRM_NOTIFICATION
 
         default:
