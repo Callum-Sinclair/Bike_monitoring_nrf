@@ -149,10 +149,10 @@ void force_ppi_init(void)
     
     ticker_timer->MODE = TIMER_MODE_MODE_Timer;
     ticker_timer->BITMODE = TIMER_BITMODE_BITMODE_32Bit;
-    ticker_timer->PRESCALER = 4; //gives T=0.01ms
+    ticker_timer->PRESCALER = 4; //gives T=0.001ms
     
     ticker_timer->CC[0] = 50;
-    ticker_timer->CC[1] = 100; // 1 ms
+    ticker_timer->CC[1] = 1000; // 1 ms
     
     ticker_timer->TASKS_CLEAR = 1;
     ticker_timer->TASKS_START = 1;
@@ -226,7 +226,7 @@ static void heart_rate_meas_timeout_handler(void * p_context)
 
     UNUSED_PARAMETER(p_context);
 
-    heart_rate = force_measure();//battery_measure(BAT_PIN);
+    heart_rate = get_peak_force();//battery_measure(BAT_PIN);
 
     err_code = ble_hrs_heart_rate_measurement_send(&m_hrs, heart_rate);
     if ((err_code != NRF_SUCCESS) &&
@@ -724,10 +724,22 @@ static void advertising_init(void)
 
 /**@brief Function for the Power manager.
  */
-static void power_manage(void)
+static void monitor_force(void)
 {
-    uint32_t err_code = sd_app_evt_wait();
-    APP_ERROR_CHECK(err_code);
+    //In PPI, called every 1 ms:
+    //ppi - NRF_ADC->TASKS_START = 1;
+    
+    while (NRF_ADC->EVENTS_END == 0);
+    NRF_ADC->EVENTS_END = 0;
+
+    force_meas_buffer[force_num] = NRF_ADC->RESULT;; //conversion takes ~68us, surrounding code will add an aditional finite time.
+    force_num++;
+    NRF_ADC->ENABLE = ADC_ENABLE_ENABLE_Disabled;
+    if (force_num >= FORCE_BUF_SIZE)
+    {
+        force_num = 0;
+    }
+    NRF_ADC->ENABLE = ADC_ENABLE_ENABLE_Enabled;
 }
 
 
@@ -761,6 +773,6 @@ int main(void)
     // Enter main loop.
     for (;;)
     {
-        power_manage();
+        monitor_force();
     }
 }

@@ -623,8 +623,8 @@ static void on_ble_central_evt(const ble_evt_t * const p_ble_evt)
                     memcpy(&periph_addr_rsc, peer_addr, sizeof(ble_gap_addr_t));
                 }
                 else if ((extracted_uuid      == BLE_UUID_HEART_RATE_SERVICE) &&
-                    (m_conn_handle_hrs_c == BLE_CONN_HANDLE_INVALID)) //&&
-                    //(0 == memcmp("\n\tUSR", type_data.p_data, type_data.data_len))) //the charaters proceding Force are experimentally obtained
+                    (m_conn_handle_hrs_c == BLE_CONN_HANDLE_INVALID) &&
+                    (0 == memcmp("\r\n\tForce", type_data.p_data, type_data.data_len))) //the charaters proceding Force are experimentally obtained
                 {
                     do_connect = true;
                     memcpy(&periph_addr_hrs, peer_addr, sizeof(ble_gap_addr_t));
@@ -970,7 +970,7 @@ static void cadence_measure(uint16_t * cadence)
     }
     if (still_counter > 200)
     {
-        NRF_POWER->SYSTEMOFF = 1;
+        //NRF_POWER->SYSTEMOFF = 1;
     }
     rot_counter_last = rotation_counter->CC[0];
     

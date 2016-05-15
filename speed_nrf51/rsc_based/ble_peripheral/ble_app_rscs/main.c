@@ -367,7 +367,7 @@ static void cadence_measure(uint16_t * cadence, uint32_t * total)
     }
     if (still_counter > 200)
     {
-        NRF_POWER->SYSTEMOFF = 1;
+        //NRF_POWER->SYSTEMOFF = 1;
     }
     rot_counter_last = rotation_counter->CC[0];
     
