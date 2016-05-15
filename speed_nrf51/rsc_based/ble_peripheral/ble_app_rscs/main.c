@@ -78,7 +78,7 @@
 #define PERIPHERAL_ADVERTISING_LED       BSP_LED_2_MASK
 #define PERIPHERAL_CONNECTED_LED         BSP_LED_3_MASK
 
-#define DEVICE_NAME                      "Cadence"                                  /**< Name of device. Will be included in the advertising data. */
+#define DEVICE_NAME                      "Speed"                                  /**< Name of device. Will be included in the advertising data. */
 #define MANUFACTURER_NAME                "NordicSemiconductor"                      /**< Manufacturer. Will be passed to Device Information Service. */
 #define APP_ADV_INTERVAL                 300                                        /**< The advertising interval (in units of 0.625 ms). This value corresponds to 25 ms. */
 #define APP_ADV_TIMEOUT_IN_SECONDS       180                                        /**< The advertising timeout in units of seconds. */
@@ -321,7 +321,7 @@ static void buttons_leds_init(bool * p_erase_bonds)
 #define CADENCE_COUNT_ARRAY_SIZE 6
 /**@brief Function for populating simulated cycling speed and cadence measurements.
  */
-static void cadence_measure(uint16_t * cadence)
+static void cadence_measure(uint16_t * cadence, uint32_t * total)
 {
     /*static uint16_t i = 50;
     i++;
@@ -334,6 +334,7 @@ static void cadence_measure(uint16_t * cadence)
 
     int32_t cadence_calc = 0;
     
+    *total = rotation_counter->CC[0] / 2;
     cadence_tracker[count_num] = rotation_counter->CC[0] / 2; //each pass of the magnet causes two increments
     // get the average cadence in the last 5 s
     if (count_num == CADENCE_COUNT_ARRAY_SIZE - 1)
@@ -385,7 +386,8 @@ static void tx_timeout_handler(void * p_context)
     UNUSED_PARAMETER(p_context);
     
     uint16_t speed = 0;
-    cadence_measure(&speed);
+    uint32_t distance = 0;
+    cadence_measure(&speed, &distance);
     
     ble_rscs_meas_t rscs_measurement;
     
@@ -397,7 +399,7 @@ static void tx_timeout_handler(void * p_context)
 //TODO TODO TODO - enable force-power equation;
     rscs_measurement.inst_speed                 = speed;// * cadence * CRANK_RADIUS * 0.5;
     rscs_measurement.inst_stride_length         = battery_measure(BAT_PIN);
-    rscs_measurement.total_distance             = 0;
+    rscs_measurement.total_distance             = distance;
     
     rscs_measurement.inst_cadence = 0;
     

@@ -170,6 +170,14 @@ static struct force_t{
     uint16_t force;
     uint8_t  bat;
 }force_measurment;
+
+static struct speed_t
+{
+    uint16_t speed;
+    uint32_t distance;
+    uint8_t  bat;
+}speed_data;
+
 APP_TIMER_DEF(m_tx_timer_id);                                                /**< CSC measurement timer. */
 
 // Cadence related
@@ -391,8 +399,9 @@ static void rscs_c_evt_handler(ble_rscs_c_t * p_rscs_c, ble_rscs_c_evt_t * p_rsc
 
         case BLE_RSCS_C_EVT_RSC_NOTIFICATION:
         {
-            force_measurment.force = p_rscs_c_evt->params.rsc.inst_speed;
-            force_measurment.bat   = p_rscs_c_evt->params.rsc.inst_cadence;
+            speed_data.speed    = p_rscs_c_evt->params.rsc.inst_speed;
+            speed_data.distance = p_rscs_c_evt->params.rsc.total_distance;
+            speed_data.bat      = p_rscs_c_evt->params.rsc.inst_stride_length;
 
         } break; // BLE_RSCS_C_EVT_RSC_NOTIFICATION
 
@@ -538,7 +547,7 @@ static void on_ble_central_evt(const ble_evt_t * const p_ble_evt)
 // TODO TODO TODO - ADD CHECKING FOR APPROPRIATE PERIPHERAL
                 if ((extracted_uuid       == BLE_UUID_RUNNING_SPEED_AND_CADENCE) &&
                     (m_conn_handle_rscs_c == BLE_CONN_HANDLE_INVALID) &&
-                    (0 == memcmp("\n\tForce", type_data.p_data, type_data.data_len))) //the charaters proceding Force are experimentally obtained
+                    (0 == memcmp("\n\tSpeed", type_data.p_data, type_data.data_len))) //the charaters proceding Force are experimentally obtained
                 {
                 /*    do_connect = true;
                     memcpy(&periph_addr_rsc, peer_addr, sizeof(ble_gap_addr_t));
@@ -893,13 +902,13 @@ static void tx_timeout_handler(void * p_context)
     rscs_measurement.is_running                 = false;
     rscs_measurement.is_total_distance_present  = true;
     
-    rscs_measurement.inst_cadence = force_measurment.bat;
 //TODO TODO TODO - enable force-power equation;
-    rscs_measurement.inst_speed                 = force_measurment.force;// * cadence * CRANK_RADIUS * 0.5;
-    rscs_measurement.inst_stride_length         = cadence;
-    rscs_measurement.total_distance             = battery_measure(BAT_PIN);
+    uint8_t power = force_measurment.force;// * cadence * CRANK_RADIUS * 0.5;
     
-    rscs_measurement.inst_cadence = force_measurment.bat;
+    rscs_measurement.inst_cadence               = cadence;
+    rscs_measurement.inst_speed                 = speed_data.speed;// * cadence * CRANK_RADIUS * 0.5;
+    rscs_measurement.inst_stride_length         = (speed_data.bat << 8) + battery_measure(BAT_PIN);
+    rscs_measurement.total_distance             = (speed_data.distance & 0xFFFFFF00) + force_measurment.force;
     
     err_code = ble_rscs_measurement_send(&m_rscs, &rscs_measurement);
     
