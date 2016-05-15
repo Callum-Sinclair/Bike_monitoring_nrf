@@ -105,7 +105,7 @@ static volatile bool                m_whitelist_temporarily_disabled = false; /*
 
 static bool                         m_memory_access_in_progress = false; /**< Flag to keep track of ongoing operations on persistent memory. */
 
-#define HR_BUFF_SIZE 2500
+#define HR_BUFF_SIZE 1250
 int16_t hr_vals0[HR_BUFF_SIZE];
 int16_t hr_vals1[HR_BUFF_SIZE];
 
@@ -1324,7 +1324,7 @@ void hr_adc_init()
     ticker_timer->PRESCALER = 4; //gives T=0.001ms
     
     ticker_timer->CC[0] = 50;
-    ticker_timer->CC[1] = 4000; // 4 ms
+    ticker_timer->CC[1] = 8000; // 4 ms
     
     ticker_timer->TASKS_CLEAR = 1;
     ticker_timer->TASKS_START = 1;
