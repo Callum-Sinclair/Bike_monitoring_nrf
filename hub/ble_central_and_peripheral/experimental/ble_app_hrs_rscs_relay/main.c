@@ -70,7 +70,6 @@
 #include "ble_conn_state.h"
 #include "nrf_log.h"
 #include "fstorage.h"
-#include "nrf_delay.h"
 
 #include "fds.h"
 
@@ -194,6 +193,9 @@ APP_TIMER_DEF(m_csc_tx_timer_id);                                               
 APP_TIMER_DEF(m_rsc_tx_timer_id);                                                /**< RSC measurement timer. */
 APP_TIMER_DEF(m_heart_rate_tx_timer_id);                                               /**< Heart rate measurement timer. */
 APP_TIMER_DEF(m_rr_tx_timer_id);                                              /**< RR interval timer. */                 /**< RR interval timer. */
+APP_TIMER_DEF(m_i2c_read_timer_id);                                              /**< RR interval timer. */                 /**< RR interval timer. */
+
+#define TEMP_TIMER NRF_TIMER4
 
 #define HEART_RATE_MEAS_INTERVAL         APP_TIMER_TICKS(1000, APP_TIMER_PRESCALER) /**< Heart rate measurement interval (ticks). */
 #define RR_INTERVAL_INTERVAL             APP_TIMER_TICKS(300, APP_TIMER_PRESCALER)  /**< RR interval interval (ticks). */
@@ -210,9 +212,6 @@ static ble_uuid_t m_adv_uuids[] =  {{BLE_UUID_DEVICE_INFORMATION_SERVICE,   BLE_
                                     {BLE_UUID_BATTERY_SERVICE,              BLE_UUID_TYPE_BLE}, \
                                     {BLE_UUID_CYCLING_SPEED_AND_CADENCE,    BLE_UUID_TYPE_BLE}}; /**< Universally unique service identifiers. */
 
-#define HR_BUFF_SIZE 2500
-int16_t hr_vals0[HR_BUFF_SIZE];
-int16_t hr_vals1[HR_BUFF_SIZE];
 
 //I2S/TWI
 NRF_TWIM_Type* i2c = NRF_TWIM0;
@@ -529,6 +528,10 @@ void temp_i2c_init(void)
 int32_t temp_convert(int32_t raw)
 {
     int32_t temp = 0;
+    uint16_t ac6 = 23153;
+    uint16_t ac5 = 32757;
+    int16_t  mc  = -8711;
+    int16_t  md  = 2868;
 #ifdef DEBUG
     printf("ac5: %i, ac6: %i\n", temp_calib_data.ac5, temp_calib_data.ac6);
 #endif
@@ -551,6 +554,31 @@ int32_t temp_convert(int32_t raw)
     return temp;
 }
 
+void temp_timer_start(void)
+{
+    TEMP_TIMER->MODE = TIMER_MODE_MODE_Timer;
+    TEMP_TIMER->BITMODE = TIMER_BITMODE_BITMODE_32Bit;
+    TEMP_TIMER->PRESCALER = 4; //gives T=0.001ms
+    TEMP_TIMER->SHORTS = ((TIMER_SHORTS_COMPARE1_CLEAR_Enabled << TIMER_SHORTS_COMPARE1_CLEAR_Pos) | \
+                          (TIMER_SHORTS_COMPARE1_STOP_Enabled << TIMER_SHORTS_COMPARE1_STOP_Pos));
+    
+    TEMP_TIMER->CC[0] = 500;   // 5 ms
+    TEMP_TIMER->CC[1] = 501;   // 5 ms
+    
+    TEMP_TIMER->TASKS_CLEAR = 1;
+    TEMP_TIMER->TASKS_START = 1;
+}
+
+bool temp_timer_running()
+{
+    if (TEMP_TIMER->EVENTS_COMPARE[0])
+    {
+        TEMP_TIMER->EVENTS_COMPARE[0] = 0;
+        return true;
+    }
+    return false;
+}
+
 uint8_t temp_read(void)
 {
     uint8_t tx_vals[20] = {0};
@@ -560,7 +588,8 @@ uint8_t temp_read(void)
     tx_vals[1] = BMP085_READTEMPCMD;
     i2c_tx(TEMP_ADDRESS, tx_vals, 2);
     
-    nrf_delay_ms(10);
+    temp_timer_start();
+    while(temp_timer_running());
     
     tx_vals[0] = BMP085_TEMPDATA;
     i2c_tx_rx(TEMP_ADDRESS, tx_vals, 1, rx_vals, 2);
@@ -572,165 +601,6 @@ uint8_t temp_read(void)
     return (uint8_t)(temp + 50);
 }
              
-
-
-void hr_adc_init()
-{
-    NRF_SAADC->CH[0].PSELP = SAADC_CH_PSELN_PSELN_AnalogInput7;
-    NRF_SAADC->CH[0].PSELN = SAADC_CH_PSELN_PSELN_NC;
-    NRF_SAADC->CH[0].CONFIG = ((SAADC_CH_CONFIG_RESP_Bypass << SAADC_CH_CONFIG_RESP_Pos) | \
-                               (SAADC_CH_CONFIG_RESN_Bypass << SAADC_CH_CONFIG_RESN_Pos) |\
-                               (SAADC_CH_CONFIG_GAIN_Gain1_4 << SAADC_CH_CONFIG_GAIN_Pos) | \
-                               (SAADC_CH_CONFIG_REFSEL_VDD1_4 << SAADC_CH_CONFIG_GAIN_Pos) | \
-                               (SAADC_CH_CONFIG_TACQ_5us << SAADC_CH_CONFIG_TACQ_Pos) | \
-                               (SAADC_CH_CONFIG_MODE_SE << SAADC_CH_CONFIG_MODE_Pos));
-    NRF_SAADC->RESOLUTION = SAADC_RESOLUTION_VAL_10bit;
-    NRF_SAADC->OVERSAMPLE = SAADC_OVERSAMPLE_OVERSAMPLE_Bypass;
-    NRF_SAADC->SAMPLERATE = ((2047 << SAADC_SAMPLERATE_CC_Pos) | \
-                             (SAADC_SAMPLERATE_MODE_Timers << SAADC_SAMPLERATE_CC_Pos));
-    
-    NRF_SAADC->RESULT.PTR = (uint32_t)hr_vals0;
-    NRF_SAADC->RESULT.MAXCNT = HR_BUFF_SIZE;
-        
-    
-    NRF_TIMER_Type* ticker_timer = NRF_TIMER4;
-    
-    ticker_timer->MODE = TIMER_MODE_MODE_Timer;
-    ticker_timer->BITMODE = TIMER_BITMODE_BITMODE_32Bit;
-    ticker_timer->PRESCALER = 4; //gives T=0.001ms
-    
-    ticker_timer->CC[0] = 50;
-    ticker_timer->CC[1] = 4000; // 4 ms
-    
-    ticker_timer->TASKS_CLEAR = 1;
-    ticker_timer->TASKS_START = 1;
-    
-    ticker_timer->SHORTS = (TIMER_SHORTS_COMPARE1_CLEAR_Enabled << TIMER_SHORTS_COMPARE1_CLEAR_Pos);
-    
-    //PPI setup
-    NRF_PPI->CH[0].EEP = (uint32_t)&(ticker_timer->EVENTS_COMPARE[0]);
-    NRF_PPI->CH[0].TEP = (uint32_t)&(NRF_SAADC->TASKS_SAMPLE);
-    
-    NRF_PPI->CH[1].EEP = (uint32_t)&(NRF_SAADC->EVENTS_END);
-    NRF_PPI->CH[1].TEP = (uint32_t)&(NRF_SAADC->TASKS_START);
-    
-    NRF_PPI->CHENSET = 0x3;
-    
-    
-    NRF_SAADC->ENABLE = SAADC_ENABLE_ENABLE_Enabled;
-    NRF_SAADC->TASKS_START = 1;
-}
-
-static void hr_poll(void)
-{
-    static uint8_t hr_buf_num;
-    while (NRF_SAADC->EVENTS_STARTED == 0);
-    NRF_SAADC->EVENTS_STARTED = 0;
-    static uint8_t buffer_count = 0;
-    static uint8_t hr_buf[60];
-    if (hr_buf_num == 0)
-    {
-        NRF_SAADC->RESULT.PTR = (uint32_t)hr_vals1;
-        hr_buf_num = 1;
-        /*for (uint32_t i = 0; i < HR_BUFF_SIZE; i++)
-        {
-            printf("%d\n", hr_vals1[i] * hr_vals1[i] * hr_vals0[i]);
-            nrf_delay_us(500);
-        }*/
-        float average = 0;
-        uint32_t peak = 0;
-        for (uint32_t i = 0; i < HR_BUFF_SIZE; i++)
-        {
-            average = ((average * i) + hr_vals1[i]) / (i + 1);
-            if (hr_vals1[i] > peak)
-            {
-                peak = hr_vals1[i];
-            }
-        }
-        uint32_t th = (uint32_t)average + ((peak - average) / 2);
-        bool over_th = false;
-        uint16_t hb_count = 0;
-        for (uint32_t i = 0; i < HR_BUFF_SIZE; i++)
-        {
-            if ((hr_vals1[i] > th) && !over_th)
-            {
-                hb_count ++;
-                over_th = true;
-            }
-            if ((hr_vals1[i] < th) && over_th)
-            {
-                over_th = false;
-            }
-        }
-        //printf("hb_count = %d, pulse = %d\n", hb_count, hb_count * 6);
-        if ((hb_count > 8) && (hb_count < 30))
-            hr_buf[buffer_count] = hb_count;
-        else if (buffer_count > 0)
-        {
-            hr_buf[buffer_count] = hr_buf[buffer_count - 1];
-        }
-        else
-        {
-            hr_buf[buffer_count] = 13;
-        }
-    }
-    else
-    {
-        /*NRF_SAADC->RESULT.PTR = (uint32_t)hr_vals0;
-        hr_buf_num = 0;
-        for (uint32_t i = 0; i < HR_BUFF_SIZE; i++)
-        {
-            printf("%d\n", hr_vals0[i] * hr_vals0[i] * hr_vals0[i]);
-            nrf_delay_us(1000);
-        }
-    }*/
-        float average = 0;
-        uint32_t peak = 0;
-        for (uint32_t i = 0; i < HR_BUFF_SIZE; i++)
-        {
-            average = ((average * i) + hr_vals0[i]) / (i + 1);
-            if (hr_vals0[i] > peak)
-            {
-                peak = hr_vals0[i];
-            }
-        }
-        uint32_t th = (uint32_t)average + ((peak - average) / 2);
-        bool over_th = false;
-        uint16_t hb_count = 0;
-        for (uint32_t i = 0; i < HR_BUFF_SIZE; i++)
-        {
-            if ((hr_vals0[i] > th) && !over_th)
-            {
-                hb_count ++;
-                over_th = true;
-            }
-            if ((hr_vals0[i] < th) && over_th)
-            {
-                over_th = false;
-            }
-        }
-        //printf("hb_count = %d, pulse = %d\n", hb_count, hb_count * 6);
-        if ((hb_count > 8) && (hb_count < 30))
-            hr_buf[buffer_count] = hb_count;
-        else if (buffer_count > 0)
-        {
-            hr_buf[buffer_count] = hr_buf[buffer_count - 1];
-        }
-        else
-        {
-            hr_buf[buffer_count] = 13;
-        }
-    }
-    uint16_t last_40;
-    if (buffer_count > 4)
-    {
-        last_40 = hr_buf[buffer_count] + hr_buf[buffer_count - 1] + hr_buf[buffer_count - 2] + hr_buf[buffer_count - 3];
-    }
-    //printf("\n\nHR %d    (total %d)", (uint16_t)((float)last_40 / 4.0 * 6.0), last_40);
-    buffer_count++;
-    bike_data.hub_heart_rate = (uint16_t)((float)last_40 / (float)4 * (float)6);
-}
-
 
 /**@brief Function to handle asserts in the SoftDevice.
  *
@@ -820,8 +690,6 @@ static void csc_tx_timeout_handler(void * p_context)
     cscs_measurement.is_crank_rev_data_present = true;
     cscs_measurement.is_wheel_rev_data_present = true;
     
-    bike_data.speed_bat = 22;
-    
     cscs_measurement.last_wheel_event_time = bike_data.speed_speed;
     cscs_measurement.cumulative_wheel_revs = bike_data.speed_distance;
     cscs_measurement.last_crank_event_time = ((bike_data.speed_bat << 8) + bike_data.cadence_bat);
@@ -910,11 +778,17 @@ static void rr_tx_timeout_handler(void * p_context)
     UNUSED_PARAMETER(p_context);
     uint16_t rr_interval;
 
-    bike_data.hub_gradient = grad_read();
-    bike_data.hub_temp     = temp_read();
     rr_interval = ((bike_data.hub_gradient << 8) + bike_data.hub_temp);
     ble_hrs_rr_interval_add(&m_hrs, rr_interval);
 }
+
+static void i2c_read_timout_handler(void * p_context)
+{
+    UNUSED_PARAMETER(p_context);
+    bike_data.hub_gradient = grad_read();
+    bike_data.hub_temp     = temp_read();
+}
+
 
 /**@brief Function for the Timer initialization.
  *
@@ -950,6 +824,11 @@ static void timers_init(void)
     err_code = app_timer_create(&m_rr_tx_timer_id,
                                 APP_TIMER_MODE_REPEATED,
                                 rr_tx_timeout_handler);
+    APP_ERROR_CHECK(err_code);
+    
+    err_code = app_timer_create(&m_i2c_read_timer_id,
+                                APP_TIMER_MODE_REPEATED,
+                                i2c_read_timout_handler);
     APP_ERROR_CHECK(err_code);
 }
 
@@ -1157,7 +1036,7 @@ static void hrs_c_evt_handler(ble_hrs_c_t * p_hrs_c, ble_hrs_c_evt_t * p_hrs_c_e
             {
                 APP_ERROR_HANDLER(err_code);
             }*/
-            bike_data.usr_bat = 85;//p_hrs_c_evt->params.hrm.hr_value;
+            bike_data.usr_bat = p_hrs_c_evt->params.hrm.hr_value;
         } break; // BLE_HRS_C_EVT_HRM_NOTIFICATION
 
         default:
@@ -1219,7 +1098,7 @@ static void rscs_c_evt_handler(ble_rscs_c_t * p_rscs_c, ble_rscs_c_evt_t * p_rsc
             bike_data.cadence_cadence   = p_rscs_c_evt->params.rsc.inst_stride_length;
             bike_data.cadence_power_bat = p_rscs_c_evt->params.rsc.inst_cadence;
             bike_data.cadence_power     = p_rscs_c_evt->params.rsc.inst_speed;
-            bike_data.cadence_bat       = 55;//p_rscs_c_evt->params.rsc.total_distance;
+            bike_data.cadence_bat       = p_rscs_c_evt->params.rsc.total_distance;
 
         } break; // BLE_RSCS_C_EVT_RSC_NOTIFICATION
 
@@ -1880,6 +1759,9 @@ static void application_timers_start(void)
 
     err_code = app_timer_start(m_rr_tx_timer_id, RR_INTERVAL_INTERVAL, NULL);
     APP_ERROR_CHECK(err_code);
+    
+    err_code = app_timer_start(m_i2c_read_timer_id, RR_INTERVAL_INTERVAL, NULL);
+    APP_ERROR_CHECK(err_code);
 }
 
 
@@ -1953,11 +1835,6 @@ int main(void)
     conn_params_init();
     services_init();
     advertising_init();
-    
-    bike_data.cadence_bat = 55;
-    bike_data.hub_bat = 97;
-    bike_data.speed_bat = 97;
-    bike_data.usr_bat = 97;
 
     /** Start scanning for peripherals and initiate connection to devices which
      *  advertise Heart Rate or Running speed and cadence UUIDs. */
