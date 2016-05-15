@@ -51,8 +51,8 @@ are used to communicate between the Hub and Phone.
 | Power bat	    | 0-100	                        | uint8	    | rcrs measurement, inst cadence |
 | USR	        | 0-250 (meters*10)	            | uint16    | rcrs measurement, inst stride length |
 | USR bat	    | 0-100	                        | uint32    | rcrs measurement, total distance |
+| Hub Bat	    | 0-100	                        | uint32*   | (rcrs measurement, total distance) second byte |
 | Gradient	    | 0-100 (degrees +50)	        | uint16*   | (hrs measurment, RR-interval) upper byte |
 | Temp	        | 0-120 (degrees +50)	        | uint16*   | (hrs measurment, RR-interval) lower byte |
 | Heart Rate	| 0-250	                        | uint8	    | hrs measurment, heart rate measurement value |
-| Hub Bat	    | 0-100	                        | uint8	    | Battery service |
 | Device info	| -	                            | -	        | Device Information Service |
