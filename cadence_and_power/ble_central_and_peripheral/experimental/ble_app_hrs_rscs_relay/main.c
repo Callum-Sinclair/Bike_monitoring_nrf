@@ -155,7 +155,7 @@ static ble_db_discovery_t        m_ble_db_discovery_rsc;                        
 #define DEVICE_NAME                      "Cadence"                                  /**< Name of device. Will be included in the advertising data. */
 #define MANUFACTURER_NAME                "NordicSemiconductor"                      /**< Manufacturer. Will be passed to Device Information Service. */
 #define APP_ADV_INTERVAL                 300                                        /**< The advertising interval (in units of 0.625 ms). This value corresponds to 25 ms. */
-#define APP_ADV_TIMEOUT_IN_SECONDS       180                                        /**< The advertising timeout in units of seconds. */
+#define APP_ADV_TIMEOUT_IN_SECONDS       600000                                     /**< The advertising timeout in units of seconds. */
 
 #define FIRST_CONN_PARAMS_UPDATE_DELAY   APP_TIMER_TICKS(5000, APP_TIMER_PRESCALER) /**< Time from initiating event (connect or start of notification) to first time sd_ble_gap_conn_param_update is called (5 seconds). */
 #define NEXT_CONN_PARAMS_UPDATE_DELAY    APP_TIMER_TICKS(30000, APP_TIMER_PRESCALER)/**< Time between each call to sd_ble_gap_conn_param_update after the first call (30 seconds). */
@@ -998,7 +998,7 @@ static void tx_timeout_handler(void * p_context)
     rscs_measurement.is_total_distance_present  = true;
     
 //TODO TODO TODO - enable force-power equation;
-    uint8_t power = force_measurment.force;// * cadence * CRANK_RADIUS * 0.5;
+    uint8_t power = ((float)force_measurment.force * (float)cadence * 3.1415 * 13.5 / (60.0 * 50.0));
     
     rscs_measurement.inst_cadence               = cadence;
     rscs_measurement.inst_speed                 = speed_data.speed;// * cadence * CRANK_RADIUS * 0.5;

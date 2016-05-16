@@ -735,7 +735,7 @@ static void rsc_tx_timeout_handler(void * p_context)
     rscs_measurement.inst_speed = bike_data.cadence_power;
     rscs_measurement.inst_cadence = bike_data.cadence_power_bat;
     rscs_measurement.inst_stride_length = bike_data.usr_range;
-    rscs_measurement.total_distance = bike_data.usr_bat;
+    rscs_measurement.total_distance = bike_data.usr_bat + (95 << 8);
     
     err_code = ble_rscs_measurement_send(&m_rscs, &rscs_measurement);
     if (
@@ -1103,6 +1103,7 @@ static void rscs_c_evt_handler(ble_rscs_c_t * p_rscs_c, ble_rscs_c_evt_t * p_rsc
             bike_data.speed_bat         = ((p_rscs_c_evt->params.rsc.inst_stride_length & 0xFF00) >> 8);
             bike_data.speed_distance    = (p_rscs_c_evt->params.rsc.total_distance & 0xFFFFFF00) >> 8;
             bike_data.cadence_power     = (p_rscs_c_evt->params.rsc.total_distance & 0xFF);
+            bike_data.cadence_power_bat = 87;
             
             if (((bike_data.speed_distance & 0x00800000) == 0) && (distance_nearly_full == true))
             {
