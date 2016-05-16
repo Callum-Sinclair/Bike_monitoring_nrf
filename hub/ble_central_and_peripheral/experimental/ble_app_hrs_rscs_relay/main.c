@@ -1863,6 +1863,7 @@ static void hr_poll(void)
 {
     //printf("new\n");
     static uint8_t hr_buf_num;
+    static uint8_t bad_data_count;
     while (NRF_SAADC->EVENTS_STARTED == 0);
     //printf("tock \n");
     NRF_SAADC->EVENTS_STARTED = 0;
@@ -1898,10 +1899,14 @@ static void hr_poll(void)
         }
         //printf("hb_count = %d, pulse = %d\n", hb_count, hb_count * 6);
         if ((hb_count > 8) && (hb_count < 30))
+        {
             hr_buf[buffer_count] = hb_count;
+            bad_data_count = 0;
+        }
         else if (buffer_count > 0)
         {
             hr_buf[buffer_count] = hr_buf[buffer_count - 1];
+            bad_data_count ++;
         }
         else
         {
@@ -1939,10 +1944,14 @@ static void hr_poll(void)
         }
         printf("hb_count = %d, pulse = %d\n", hb_count, hb_count * 6);
         if ((hb_count > 8) && (hb_count < 30))
+        {
             hr_buf[buffer_count] = hb_count;
+            bad_data_count = 0;
+        }
         else if (buffer_count > 0)
         {
             hr_buf[buffer_count] = hr_buf[buffer_count - 1];
+            bad_data_count ++;
         }
         else
         {
@@ -1955,7 +1964,14 @@ static void hr_poll(void)
         last_40 = hr_buf[buffer_count] + hr_buf[buffer_count - 1] + hr_buf[buffer_count - 2] + hr_buf[buffer_count - 3];
     }
     //printf("\n\nHR %d    (total %d)", (uint16_t)((float)last_40 / 4.0 * 6.0), last_40);
-    bike_data.hub_heart_rate =  (uint16_t)((float)last_40 / 4.0 * 6.0);
+    if (bad_data_count < 4)
+    {
+        bike_data.hub_heart_rate =  (uint16_t)((float)last_40 / 4.0 * 6.0);
+    }
+    else
+    {
+        bike_data.hub_heart_rate = 0;
+    }
     buffer_count++;
 }
 
