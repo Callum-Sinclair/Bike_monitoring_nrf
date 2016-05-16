@@ -1780,6 +1780,11 @@ static void application_timers_start(void)
 }
 
 
+#define HR_BUFF_SIZE 1250
+int16_t hr_vals0[HR_BUFF_SIZE];
+int16_t hr_vals1[HR_BUFF_SIZE];
+
+
 /**@brief Function for initializing the Advertising functionality.
  */
 static void advertising_init(void)
@@ -1804,6 +1809,174 @@ static void advertising_init(void)
     err_code = ble_advertising_init(&advdata, NULL, &options, on_adv_evt, NULL);
     APP_ERROR_CHECK(err_code);
 }
+
+void hr_adc_init()
+{
+    NRF_SAADC->CH[0].PSELP = SAADC_CH_PSELN_PSELN_AnalogInput6;
+    NRF_SAADC->CH[0].PSELN = SAADC_CH_PSELN_PSELN_NC;
+    NRF_SAADC->CH[0].CONFIG = ((SAADC_CH_CONFIG_RESP_Bypass << SAADC_CH_CONFIG_RESP_Pos) | \
+                               (SAADC_CH_CONFIG_RESN_Bypass << SAADC_CH_CONFIG_RESN_Pos) |\
+                               (SAADC_CH_CONFIG_GAIN_Gain1_4 << SAADC_CH_CONFIG_GAIN_Pos) | \
+                               (SAADC_CH_CONFIG_REFSEL_VDD1_4 << SAADC_CH_CONFIG_GAIN_Pos) | \
+                               (SAADC_CH_CONFIG_TACQ_5us << SAADC_CH_CONFIG_TACQ_Pos) | \
+                               (SAADC_CH_CONFIG_MODE_SE << SAADC_CH_CONFIG_MODE_Pos));
+    NRF_SAADC->RESOLUTION = SAADC_RESOLUTION_VAL_10bit;
+    NRF_SAADC->OVERSAMPLE = SAADC_OVERSAMPLE_OVERSAMPLE_Bypass;
+    NRF_SAADC->SAMPLERATE = ((2047 << SAADC_SAMPLERATE_CC_Pos) | \
+                             (SAADC_SAMPLERATE_MODE_Timers << SAADC_SAMPLERATE_CC_Pos));
+    
+    NRF_SAADC->RESULT.PTR = (uint32_t)hr_vals0;
+    NRF_SAADC->RESULT.MAXCNT = HR_BUFF_SIZE;
+        
+    
+    NRF_TIMER_Type* ticker_timer = NRF_TIMER4;
+    
+    ticker_timer->MODE = TIMER_MODE_MODE_Timer;
+    ticker_timer->BITMODE = TIMER_BITMODE_BITMODE_32Bit;
+    ticker_timer->PRESCALER = 4; //gives T=0.001ms
+    
+    ticker_timer->CC[0] = 50;
+    ticker_timer->CC[1] = 8000; // 4 ms
+    
+    ticker_timer->TASKS_CLEAR = 1;
+    ticker_timer->TASKS_START = 1;
+    
+    ticker_timer->SHORTS = (TIMER_SHORTS_COMPARE1_CLEAR_Enabled << TIMER_SHORTS_COMPARE1_CLEAR_Pos);
+    
+    //PPI setup
+    NRF_PPI->CH[0].EEP = (uint32_t)&(ticker_timer->EVENTS_COMPARE[0]);
+    NRF_PPI->CH[0].TEP = (uint32_t)&(NRF_SAADC->TASKS_SAMPLE);
+    
+    NRF_PPI->CH[1].EEP = (uint32_t)&(NRF_SAADC->EVENTS_END);
+    NRF_PPI->CH[1].TEP = (uint32_t)&(NRF_SAADC->TASKS_START);
+    
+    NRF_PPI->CHENSET = 0x3;
+    
+    
+    NRF_SAADC->ENABLE = SAADC_ENABLE_ENABLE_Enabled;
+    NRF_SAADC->TASKS_START = 1;
+}
+
+/** @brief Function for the Power manager.
+ */
+static void hr_poll(void)
+{
+    //printf("new\n");
+    static uint8_t hr_buf_num;
+    while (NRF_SAADC->EVENTS_STARTED == 0);
+    //printf("tock \n");
+    NRF_SAADC->EVENTS_STARTED = 0;
+    static uint8_t buffer_count = 0;
+    static uint8_t hr_buf[60];
+    if (hr_buf_num == 0)
+    {
+        NRF_SAADC->RESULT.PTR = (uint32_t)hr_vals1;
+        hr_buf_num = 1;
+#ifdef ECG_GRAPH
+        for (uint32_t i = 0; i < HR_BUFF_SIZE; i++)
+        {
+            printf("%d\n", hr_vals1[i] * hr_vals1[i] * hr_vals0[i]);
+            nrf_delay_us(500);
+        }
+#else
+        float average = 0;
+        uint32_t peak = 0;
+        for (uint32_t i = 0; i < HR_BUFF_SIZE; i++)
+        {
+            average = ((average * i) + hr_vals1[i]) / (i + 1);
+            if (hr_vals1[i] > peak)
+            {
+                peak = hr_vals1[i];
+            }
+        }
+        uint32_t th = (uint32_t)average + ((peak - average) / 2);
+        bool over_th = false;
+        uint16_t hb_count = 0;
+        for (uint32_t i = 0; i < HR_BUFF_SIZE; i++)
+        {
+            if ((hr_vals1[i] > th) && !over_th)
+            {
+                hb_count ++;
+                over_th = true;
+            }
+            if ((hr_vals1[i] < th) && over_th)
+            {
+                over_th = false;
+            }
+        }
+        //printf("hb_count = %d, pulse = %d\n", hb_count, hb_count * 6);
+        if ((hb_count > 8) && (hb_count < 30))
+            hr_buf[buffer_count] = hb_count;
+        else if (buffer_count > 0)
+        {
+            hr_buf[buffer_count] = hr_buf[buffer_count - 1];
+        }
+        else
+        {
+            hr_buf[buffer_count] = 13;
+        }
+#endif
+    }
+    else
+    {
+        NRF_SAADC->RESULT.PTR = (uint32_t)hr_vals0;
+        hr_buf_num = 0;
+#ifdef ECG_GRAPH
+        for (uint32_t i = 0; i < HR_BUFF_SIZE; i++)
+        {
+            printf("%d\n", hr_vals0[i] * hr_vals0[i] * hr_vals0[i]);
+            nrf_delay_us(1000);
+        }
+    }
+#else
+        float average = 0;
+        uint32_t peak = 0;
+        for (uint32_t i = 0; i < HR_BUFF_SIZE; i++)
+        {
+            average = ((average * i) + hr_vals0[i]) / (i + 1);
+            if (hr_vals0[i] > peak)
+            {
+                peak = hr_vals0[i];
+            }
+        }
+        uint32_t th = (uint32_t)average + ((peak - average) / 2);
+        bool over_th = false;
+        uint16_t hb_count = 0;
+        for (uint32_t i = 0; i < HR_BUFF_SIZE; i++)
+        {
+            if ((hr_vals0[i] > th) && !over_th)
+            {
+                hb_count ++;
+                over_th = true;
+            }
+            if ((hr_vals0[i] < th) && over_th)
+            {
+                over_th = false;
+            }
+        }
+        printf("hb_count = %d, pulse = %d\n", hb_count, hb_count * 6);
+        if ((hb_count > 8) && (hb_count < 30))
+            hr_buf[buffer_count] = hb_count;
+        else if (buffer_count > 0)
+        {
+            hr_buf[buffer_count] = hr_buf[buffer_count - 1];
+        }
+        else
+        {
+            hr_buf[buffer_count] = 13;
+        }
+    }
+    uint16_t last_40;
+    if (buffer_count > 4)
+    {
+        last_40 = hr_buf[buffer_count] + hr_buf[buffer_count - 1] + hr_buf[buffer_count - 2] + hr_buf[buffer_count - 3];
+    }
+    //printf("\n\nHR %d    (total %d)", (uint16_t)((float)last_40 / 4.0 * 6.0), last_40);
+    buffer_count++;
+    bike_data.hub_heart_rate =  (uint16_t)((float)last_40 / 4.0 * 6.0);
+#endif
+}
+
 
 
 /** @brief Function to sleep until a BLE event is received by the application.
@@ -1862,10 +2035,12 @@ int main(void)
     // Start advertising.
     err_code = ble_advertising_start(BLE_ADV_MODE_FAST);
     APP_ERROR_CHECK(err_code);
+    hr_adc_init();
 
     for (;;)
     {
         // Wait for BLE events.
-        power_manage();
+        //power_manage();
+        hr_poll();
     }
 }
