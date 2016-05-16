@@ -695,7 +695,6 @@ static void csc_tx_timeout_handler(void * p_context)
     cscs_measurement.last_crank_event_time = ((bike_data.speed_bat << 8) + bike_data.cadence_bat);
     cscs_measurement.cumulative_crank_revs = bike_data.cadence_cadence;
     
-    cscs_measurement.last_crank_event_time = 0;// event_time + event_time_inc;
     event_time= event_time + event_time_inc;
     err_code = ble_cscs_measurement_send(&m_cscs, &cscs_measurement);
     if ((err_code != NRF_SUCCESS) &&
@@ -1781,8 +1780,9 @@ static void application_timers_start(void)
 
 
 #define HR_BUFF_SIZE 1250
-int16_t hr_vals0[HR_BUFF_SIZE];
-int16_t hr_vals1[HR_BUFF_SIZE];
+static int16_t hr_vals0[HR_BUFF_SIZE];
+static int16_t hr_vals1[HR_BUFF_SIZE];
+static uint8_t buffer_count = 0;
 
 
 /**@brief Function for initializing the Advertising functionality.
@@ -1829,7 +1829,7 @@ void hr_adc_init()
     NRF_SAADC->RESULT.MAXCNT = HR_BUFF_SIZE;
         
     
-    NRF_TIMER_Type* ticker_timer = NRF_TIMER4;
+    NRF_TIMER_Type* ticker_timer = NRF_TIMER3;
     
     ticker_timer->MODE = TIMER_MODE_MODE_Timer;
     ticker_timer->BITMODE = TIMER_BITMODE_BITMODE_32Bit;
@@ -1866,19 +1866,11 @@ static void hr_poll(void)
     while (NRF_SAADC->EVENTS_STARTED == 0);
     //printf("tock \n");
     NRF_SAADC->EVENTS_STARTED = 0;
-    static uint8_t buffer_count = 0;
     static uint8_t hr_buf[60];
     if (hr_buf_num == 0)
     {
         NRF_SAADC->RESULT.PTR = (uint32_t)hr_vals1;
         hr_buf_num = 1;
-#ifdef ECG_GRAPH
-        for (uint32_t i = 0; i < HR_BUFF_SIZE; i++)
-        {
-            printf("%d\n", hr_vals1[i] * hr_vals1[i] * hr_vals0[i]);
-            nrf_delay_us(500);
-        }
-#else
         float average = 0;
         uint32_t peak = 0;
         for (uint32_t i = 0; i < HR_BUFF_SIZE; i++)
@@ -1915,20 +1907,11 @@ static void hr_poll(void)
         {
             hr_buf[buffer_count] = 13;
         }
-#endif
     }
     else
     {
         NRF_SAADC->RESULT.PTR = (uint32_t)hr_vals0;
         hr_buf_num = 0;
-#ifdef ECG_GRAPH
-        for (uint32_t i = 0; i < HR_BUFF_SIZE; i++)
-        {
-            printf("%d\n", hr_vals0[i] * hr_vals0[i] * hr_vals0[i]);
-            nrf_delay_us(1000);
-        }
-    }
-#else
         float average = 0;
         uint32_t peak = 0;
         for (uint32_t i = 0; i < HR_BUFF_SIZE; i++)
@@ -1972,9 +1955,8 @@ static void hr_poll(void)
         last_40 = hr_buf[buffer_count] + hr_buf[buffer_count - 1] + hr_buf[buffer_count - 2] + hr_buf[buffer_count - 3];
     }
     //printf("\n\nHR %d    (total %d)", (uint16_t)((float)last_40 / 4.0 * 6.0), last_40);
-    buffer_count++;
     bike_data.hub_heart_rate =  (uint16_t)((float)last_40 / 4.0 * 6.0);
-#endif
+    buffer_count++;
 }
 
 
