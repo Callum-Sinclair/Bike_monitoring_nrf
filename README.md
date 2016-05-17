@@ -11,7 +11,7 @@ A complete bike monitoring system including the following modules:
 
 Each module will be run using an nRF51 chip, interfacing with a hub (nRF52), which will communicate with an andriod smartphone using BLE.
 
-This repo contains all code for the sensors and hub, our app is available on bitbucket: https://bitbucket.org/account/signin/?next=/lukacstomi91/smartbike/commits/branch/master
+This repo contains all code for the sensors and hub, our app is available on bitbucket: https://bitbucket.org/lukacstomi91/smartbike/commits/branch/master
 
 This project is being undertaken as part of my Electronics and Electrical Engineering MEng degree at the University of Glasgow, along with 3 others.
 
