@@ -5,17 +5,18 @@
 
   <Header>### uVision Project, (C) Keil Software</Header>
 
-  <Targets>    
+  <Targets>
     <Target>
       <TargetName>nrf51422_xxac_s130</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
+      <pCCUsed>5060183::V5.06 update 2 (build 183)::ARMCC</pCCUsed>
       <TargetOption>
         <TargetCommonOption>
           <Device>nRF51422_xxAC</Device>
           <Vendor>Nordic Semiconductor</Vendor>
-          <PackID>NordicSemiconductor.nRF_DeviceFamilyPack.8.3.1</PackID>
-          <PackURL>http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_DeviceFamilyPack/</PackURL>
+          <PackID>NordicSemiconductor.nRF_DeviceFamilyPack.8.6.0</PackID>
+          <PackURL>http://developer.nordicsemi.com/nRF5_SDK/pieces/nRF_DeviceFamilyPack/</PackURL>
           <Cpu>IROM(0x00000000,0x40000) IRAM(0x20000000,0x8000) CPUTYPE("Cortex-M0") CLOCK(16000000) ELITTLE</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
           <StartupFile></StartupFile>
@@ -32,7 +33,7 @@ rf51xxx.flm))</FlashDriverDll>
           <SLE66CMisc></SLE66CMisc>
           <SLE66AMisc></SLE66AMisc>
           <SLE66LinkerMisc></SLE66LinkerMisc>
-          <SFDFile></SFDFile>
+          <SFDFile>$$Device:nRF51422_xxAC$SVD\nrf51.svd</SFDFile>
           <bCustSvd>0</bCustSvd>
           <UseEnv>0</UseEnv>
           <BinPath></BinPath>
@@ -85,6 +86,8 @@ rf51xxx.flm))</FlashDriverDll>
             <UserProg2Name></UserProg2Name>
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
             <UserProg2Dos16Mode>0</UserProg2Dos16Mode>
+            <nStopA1X>0</nStopA1X>
+            <nStopA2X>0</nStopA2X>
           </AfterMake>
           <SelectedForBatchBuild>0</SelectedForBatchBuild>
           <SVCSIdString></SVCSIdString>
@@ -123,48 +126,6 @@ rf51xxx.flm))</FlashDriverDll>
             <HexOffset>0</HexOffset>
             <Oh166RecLen>16</Oh166RecLen>
           </OPTHX>
-          <Simulator>
-            <UseSimulator>0</UseSimulator>
-            <LoadApplicationAtStartup>1</LoadApplicationAtStartup>
-            <RunToMain>1</RunToMain>
-            <RestoreBreakpoints>1</RestoreBreakpoints>
-            <RestoreWatchpoints>1</RestoreWatchpoints>
-            <RestoreMemoryDisplay>1</RestoreMemoryDisplay>
-            <RestoreFunctions>1</RestoreFunctions>
-            <RestoreToolbox>1</RestoreToolbox>
-            <LimitSpeedToRealTime>0</LimitSpeedToRealTime>
-            <RestoreSysVw>1</RestoreSysVw>
-          </Simulator>
-          <Target>
-            <UseTarget>1</UseTarget>
-            <LoadApplicationAtStartup>1</LoadApplicationAtStartup>
-            <RunToMain>1</RunToMain>
-            <RestoreBreakpoints>1</RestoreBreakpoints>
-            <RestoreWatchpoints>1</RestoreWatchpoints>
-            <RestoreMemoryDisplay>1</RestoreMemoryDisplay>
-            <RestoreFunctions>0</RestoreFunctions>
-            <RestoreToolbox>1</RestoreToolbox>
-            <RestoreTracepoints>0</RestoreTracepoints>
-            <RestoreSysVw>1</RestoreSysVw>
-            <UsePdscDebugDescription>1</UsePdscDebugDescription>
-          </Target>
-          <RunDebugAfterBuild>0</RunDebugAfterBuild>
-          <TargetSelection>-1</TargetSelection>
-          <SimDlls>
-            <CpuDll></CpuDll>
-            <CpuDllArguments></CpuDllArguments>
-            <PeripheralDll></PeripheralDll>
-            <PeripheralDllArguments></PeripheralDllArguments>
-            <InitializationFile></InitializationFile>
-          </SimDlls>
-          <TargetDlls>
-            <CpuDll></CpuDll>
-            <CpuDllArguments></CpuDllArguments>
-            <PeripheralDll></PeripheralDll>
-            <PeripheralDllArguments></PeripheralDllArguments>
-            <InitializationFile></InitializationFile>
-            <Driver>Segger\JL2CM3.dll</Driver>
-          </TargetDlls>
         </DebugOption>
         <Utilities>
           <Flash1>
@@ -177,8 +138,12 @@ rf51xxx.flm))</FlashDriverDll>
           </Flash1>
           <bUseTDR>1</bUseTDR>
           <Flash2>Segger\JL2CM3.dll</Flash2>
-          <Flash3></Flash3>
+          <Flash3>"" ()</Flash3>
           <Flash4></Flash4>
+          <pFcarmOut></pFcarmOut>
+          <pFcarmGrp></pFcarmGrp>
+          <pFcArmRoot></pFcArmRoot>
+          <FcArmLst>0</FcArmLst>
         </Utilities>
         <TargetArmAds>
           <ArmAdsMisc>
@@ -225,6 +190,7 @@ rf51xxx.flm))</FlashDriverDll>
             <useUlib>1</useUlib>
             <EndSel>0</EndSel>
             <uLtcg>0</uLtcg>
+            <nSecure>0</nSecure>
             <RoSelD>3</RoSelD>
             <RwSelD>5</RwSelD>
             <CodeSel>0</CodeSel>
@@ -357,11 +323,19 @@ rf51xxx.flm))</FlashDriverDll>
             <wLevel>0</wLevel>
             <uThumb>0</uThumb>
             <uSurpInc>0</uSurpInc>
+            <uC99>0</uC99>
+            <useXO>0</useXO>
+            <v6Lang>1</v6Lang>
+            <v6LangP>1</v6LangP>
+            <vShortEn>1</vShortEn>
+            <vShortWch>1</vShortWch>
+            <v6Lto>0</v6Lto>
+            <v6WtE>0</v6WtE>
             <VariousControls>
               <MiscControls>--c99</MiscControls>
-              <Define> BLE_STACK_SUPPORT_REQD S130 BOARD_PCA10028 SWI_DISABLE0 SOFTDEVICE_PRESENT NRF51 NRF_LOG_USES_UART=1</Define>
+              <Define>BLE_STACK_SUPPORT_REQD S130 BOARD_PCA10028 SWI_DISABLE0 SOFTDEVICE_PRESENT NRF51 NRF_LOG_USES_UART=1</Define>
               <Undefine></Undefine>
-              <IncludePath></IncludePath>
+              <IncludePath>..\..\..\..\..\..\..\shared_libs</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -373,6 +347,7 @@ rf51xxx.flm))</FlashDriverDll>
             <SwStkChk>0</SwStkChk>
             <NoWarn>0</NoWarn>
             <uSurpInc>0</uSurpInc>
+            <useXO>0</useXO>
             <VariousControls>
               <MiscControls></MiscControls>
               <Define> BLE_STACK_SUPPORT_REQD S130 BOARD_PCA10028 SWI_DISABLE0 SOFTDEVICE_PRESENT NRF51 NRF_LOG_USES_UART=1</Define>
@@ -389,6 +364,8 @@ rf51xxx.flm))</FlashDriverDll>
             <useFile>0</useFile>
             <TextAddressRange>0x00000000</TextAddressRange>
             <DataAddressRange>0x00000000</DataAddressRange>
+            <pXoBase></pXoBase>
+            <ScatterFile></ScatterFile>
             <IncludeLibs></IncludeLibs>
             <IncludeLibsPath></IncludeLibsPath>
             <Misc></Misc>
@@ -401,64 +378,121 @@ rf51xxx.flm))</FlashDriverDll>
         <Group>
           <GroupName>Application</GroupName>
           <Files>
-          <File>
-            <FileName>main.c</FileName>
-            <FileType>1</FileType>
-            <FilePath>..\..\..\main.c</FilePath>
-            <FileOption>
-              <CommonProperty>
-                <UseCPPCompiler>2</UseCPPCompiler>
-                <RVCTCodeConst>0</RVCTCodeConst>
-                <RVCTZI>0</RVCTZI>
-                <RVCTOtherData>0</RVCTOtherData>
-                <ModuleSelection>0</ModuleSelection>
-                <IncludeInBuild>1</IncludeInBuild>
-                <AlwaysBuild>2</AlwaysBuild>
-                <GenerateAssemblyFile>2</GenerateAssemblyFile>
-                <AssembleAssemblyFile>2</AssembleAssemblyFile>
-                <PublicsOnly>2</PublicsOnly>
-                <StopOnExitCode>11</StopOnExitCode>
-                <CustomArgument></CustomArgument>
-                <IncludeLibraryModules></IncludeLibraryModules>
-                <ComprImg>1</ComprImg>
-              </CommonProperty>
-            </FileOption>
-          </File>
+            <File>
+              <FileName>main.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\main.c</FilePath>
+              <FileOption>
+                <CommonProperty>
+                  <UseCPPCompiler>2</UseCPPCompiler>
+                  <RVCTCodeConst>0</RVCTCodeConst>
+                  <RVCTZI>0</RVCTZI>
+                  <RVCTOtherData>0</RVCTOtherData>
+                  <ModuleSelection>0</ModuleSelection>
+                  <IncludeInBuild>1</IncludeInBuild>
+                  <AlwaysBuild>2</AlwaysBuild>
+                  <GenerateAssemblyFile>2</GenerateAssemblyFile>
+                  <AssembleAssemblyFile>2</AssembleAssemblyFile>
+                  <PublicsOnly>2</PublicsOnly>
+                  <StopOnExitCode>11</StopOnExitCode>
+                  <CustomArgument></CustomArgument>
+                  <IncludeLibraryModules></IncludeLibraryModules>
+                  <ComprImg>1</ComprImg>
+                </CommonProperty>
+                <FileArmAds>
+                  <Cads>
+                    <interw>2</interw>
+                    <Optim>0</Optim>
+                    <oTime>2</oTime>
+                    <SplitLS>2</SplitLS>
+                    <OneElfS>2</OneElfS>
+                    <Strict>2</Strict>
+                    <EnumInt>2</EnumInt>
+                    <PlainCh>2</PlainCh>
+                    <Ropi>2</Ropi>
+                    <Rwpi>2</Rwpi>
+                    <wLevel>2</wLevel>
+                    <uThumb>2</uThumb>
+                    <uSurpInc>2</uSurpInc>
+                    <uC99>2</uC99>
+                    <useXO>2</useXO>
+                    <v6Lang>0</v6Lang>
+                    <v6LangP>0</v6LangP>
+                    <vShortEn>2</vShortEn>
+                    <vShortWch>2</vShortWch>
+                    <v6Lto>0</v6Lto>
+                    <v6WtE>0</v6WtE>
+                    <VariousControls>
+                      <MiscControls></MiscControls>
+                      <Define></Define>
+                      <Undefine></Undefine>
+                      <IncludePath></IncludePath>
+                    </VariousControls>
+                  </Cads>
+                </FileArmAds>
+              </FileOption>
+            </File>
+            <File>
+              <FileName>gpio_lib.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\..\..\shared_libs\gpio_lib.c</FilePath>
+            </File>
+            <File>
+              <FileName>battery_measure_lib.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\..\..\shared_libs\battery_measure_lib.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
           <GroupName>Documentation</GroupName>
           <Files>
-          <File>
-            <FileName>Abstract.txt</FileName>
-            <FileType>5</FileType>
-            <FilePath>..\..\..\Abstract.txt</FilePath>
-          </File>
-          <File>
-            <FileName>license.txt</FileName>
-            <FileType>5</FileType>
-            <FilePath>..\..\..\license.txt</FilePath>
-          </File>
-           </Files>
+            <File>
+              <FileName>Abstract.txt</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\..\Abstract.txt</FilePath>
+            </File>
+            <File>
+              <FileName>license.txt</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\..\license.txt</FilePath>
+            </File>
+          </Files>
         </Group>
         <Group>
-          <GroupName>::Application</GroupName>
+          <GroupName>::Board Support</GroupName>
         </Group>
         <Group>
-          <GroupName>::Documentation</GroupName>
+          <GroupName>::CMSIS</GroupName>
+        </Group>
+        <Group>
+          <GroupName>::Device</GroupName>
+        </Group>
+        <Group>
+          <GroupName>::nRF_BLE</GroupName>
+        </Group>
+        <Group>
+          <GroupName>::nRF_Drivers</GroupName>
+        </Group>
+        <Group>
+          <GroupName>::nRF_Libraries</GroupName>
+        </Group>
+        <Group>
+          <GroupName>::nRF_SoftDevice</GroupName>
         </Group>
       </Groups>
-    </Target>    
+    </Target>
     <Target>
       <TargetName>flash_s130_nrf51_2.0.0-7.alpha_softdevice</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
+      <pCCUsed>5060183::V5.06 update 2 (build 183)::ARMCC</pCCUsed>
       <TargetOption>
         <TargetCommonOption>
           <Device>nRF51422_xxAC</Device>
           <Vendor>Nordic Semiconductor</Vendor>
-          <PackID>..</PackID>
-          <PackURL></PackURL>
+          <PackID>NordicSemiconductor.nRF_DeviceFamilyPack.8.6.0</PackID>
+          <PackURL>http://developer.nordicsemi.com/nRF5_SDK/pieces/nRF_DeviceFamilyPack/</PackURL>
           <Cpu>IROM(0x00000000,0x40000) IRAM(0x20000000,0x8000) CPUTYPE("Cortex-M0") CLOCK(16000000) ELITTLE</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
           <StartupFile></StartupFile>
@@ -475,7 +509,7 @@ rf51xxx.flm))</FlashDriverDll>
           <SLE66CMisc></SLE66CMisc>
           <SLE66AMisc></SLE66AMisc>
           <SLE66LinkerMisc></SLE66LinkerMisc>
-          <SFDFile></SFDFile>
+          <SFDFile>$$Device:nRF51422_xxAC$SVD\nrf51.svd</SFDFile>
           <bCustSvd>0</bCustSvd>
           <UseEnv>0</UseEnv>
           <BinPath></BinPath>
@@ -528,6 +562,8 @@ rf51xxx.flm))</FlashDriverDll>
             <UserProg2Name></UserProg2Name>
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
             <UserProg2Dos16Mode>0</UserProg2Dos16Mode>
+            <nStopA1X>0</nStopA1X>
+            <nStopA2X>0</nStopA2X>
           </AfterMake>
           <SelectedForBatchBuild>0</SelectedForBatchBuild>
           <SVCSIdString></SVCSIdString>
@@ -566,48 +602,6 @@ rf51xxx.flm))</FlashDriverDll>
             <HexOffset>0</HexOffset>
             <Oh166RecLen>16</Oh166RecLen>
           </OPTHX>
-          <Simulator>
-            <UseSimulator>0</UseSimulator>
-            <LoadApplicationAtStartup>1</LoadApplicationAtStartup>
-            <RunToMain>1</RunToMain>
-            <RestoreBreakpoints>1</RestoreBreakpoints>
-            <RestoreWatchpoints>1</RestoreWatchpoints>
-            <RestoreMemoryDisplay>1</RestoreMemoryDisplay>
-            <RestoreFunctions>1</RestoreFunctions>
-            <RestoreToolbox>1</RestoreToolbox>
-            <LimitSpeedToRealTime>0</LimitSpeedToRealTime>
-            <RestoreSysVw>1</RestoreSysVw>
-          </Simulator>
-          <Target>
-            <UseTarget>1</UseTarget>
-            <LoadApplicationAtStartup>1</LoadApplicationAtStartup>
-            <RunToMain>1</RunToMain>
-            <RestoreBreakpoints>1</RestoreBreakpoints>
-            <RestoreWatchpoints>1</RestoreWatchpoints>
-            <RestoreMemoryDisplay>1</RestoreMemoryDisplay>
-            <RestoreFunctions>0</RestoreFunctions>
-            <RestoreToolbox>1</RestoreToolbox>
-            <RestoreTracepoints>0</RestoreTracepoints>
-            <RestoreSysVw>1</RestoreSysVw>
-            <UsePdscDebugDescription>1</UsePdscDebugDescription>
-          </Target>
-          <RunDebugAfterBuild>0</RunDebugAfterBuild>
-          <TargetSelection>-1</TargetSelection>
-          <SimDlls>
-            <CpuDll></CpuDll>
-            <CpuDllArguments></CpuDllArguments>
-            <PeripheralDll></PeripheralDll>
-            <PeripheralDllArguments></PeripheralDllArguments>
-            <InitializationFile></InitializationFile>
-          </SimDlls>
-          <TargetDlls>
-            <CpuDll></CpuDll>
-            <CpuDllArguments></CpuDllArguments>
-            <PeripheralDll></PeripheralDll>
-            <PeripheralDllArguments></PeripheralDllArguments>
-            <InitializationFile></InitializationFile>
-            <Driver>Segger\JL2CM3.dll</Driver>
-          </TargetDlls>
         </DebugOption>
         <Utilities>
           <Flash1>
@@ -622,6 +616,10 @@ rf51xxx.flm))</FlashDriverDll>
           <Flash2>Segger\JL2CM3.dll</Flash2>
           <Flash3></Flash3>
           <Flash4></Flash4>
+          <pFcarmOut></pFcarmOut>
+          <pFcarmGrp></pFcarmGrp>
+          <pFcArmRoot></pFcArmRoot>
+          <FcArmLst>0</FcArmLst>
         </Utilities>
         <TargetArmAds>
           <ArmAdsMisc>
@@ -668,6 +666,7 @@ rf51xxx.flm))</FlashDriverDll>
             <useUlib>1</useUlib>
             <EndSel>0</EndSel>
             <uLtcg>0</uLtcg>
+            <nSecure>0</nSecure>
             <RoSelD>3</RoSelD>
             <RwSelD>5</RwSelD>
             <CodeSel>0</CodeSel>
@@ -800,6 +799,14 @@ rf51xxx.flm))</FlashDriverDll>
             <wLevel>0</wLevel>
             <uThumb>0</uThumb>
             <uSurpInc>0</uSurpInc>
+            <uC99>0</uC99>
+            <useXO>0</useXO>
+            <v6Lang>1</v6Lang>
+            <v6LangP>1</v6LangP>
+            <vShortEn>1</vShortEn>
+            <vShortWch>1</vShortWch>
+            <v6Lto>0</v6Lto>
+            <v6WtE>0</v6WtE>
             <VariousControls>
               <MiscControls>--c99</MiscControls>
               <Define> BLE_STACK_SUPPORT_REQD NRF51</Define>
@@ -816,6 +823,7 @@ rf51xxx.flm))</FlashDriverDll>
             <SwStkChk>0</SwStkChk>
             <NoWarn>0</NoWarn>
             <uSurpInc>0</uSurpInc>
+            <useXO>0</useXO>
             <VariousControls>
               <MiscControls></MiscControls>
               <Define> BLE_STACK_SUPPORT_REQD NRF51</Define>
@@ -832,6 +840,8 @@ rf51xxx.flm))</FlashDriverDll>
             <useFile>0</useFile>
             <TextAddressRange>0x00000000</TextAddressRange>
             <DataAddressRange>0x00000000</DataAddressRange>
+            <pXoBase></pXoBase>
+            <ScatterFile></ScatterFile>
             <IncludeLibs></IncludeLibs>
             <IncludeLibsPath></IncludeLibsPath>
             <Misc></Misc>
@@ -844,440 +854,1227 @@ rf51xxx.flm))</FlashDriverDll>
         <Group>
           <GroupName>Application</GroupName>
           <Files>
-          <File>
-            <FileName>main.c</FileName>
-            <FileType>1</FileType>
-            <FilePath>..\..\..\main.c</FilePath>
-            <FileOption>
-              <CommonProperty>
-                <UseCPPCompiler>2</UseCPPCompiler>
-                <RVCTCodeConst>0</RVCTCodeConst>
-                <RVCTZI>0</RVCTZI>
-                <RVCTOtherData>0</RVCTOtherData>
-                <ModuleSelection>0</ModuleSelection>
-                <IncludeInBuild>0</IncludeInBuild>
-                <AlwaysBuild>2</AlwaysBuild>
-                <GenerateAssemblyFile>2</GenerateAssemblyFile>
-                <AssembleAssemblyFile>2</AssembleAssemblyFile>
-                <PublicsOnly>2</PublicsOnly>
-                <StopOnExitCode>11</StopOnExitCode>
-                <CustomArgument></CustomArgument>
-                <IncludeLibraryModules></IncludeLibraryModules>
-                <ComprImg>1</ComprImg>
-              </CommonProperty>
-            </FileOption>
-          </File>
+            <File>
+              <FileName>main.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\main.c</FilePath>
+              <FileOption>
+                <CommonProperty>
+                  <UseCPPCompiler>2</UseCPPCompiler>
+                  <RVCTCodeConst>0</RVCTCodeConst>
+                  <RVCTZI>0</RVCTZI>
+                  <RVCTOtherData>0</RVCTOtherData>
+                  <ModuleSelection>0</ModuleSelection>
+                  <IncludeInBuild>0</IncludeInBuild>
+                  <AlwaysBuild>2</AlwaysBuild>
+                  <GenerateAssemblyFile>2</GenerateAssemblyFile>
+                  <AssembleAssemblyFile>2</AssembleAssemblyFile>
+                  <PublicsOnly>2</PublicsOnly>
+                  <StopOnExitCode>11</StopOnExitCode>
+                  <CustomArgument></CustomArgument>
+                  <IncludeLibraryModules></IncludeLibraryModules>
+                  <ComprImg>1</ComprImg>
+                </CommonProperty>
+                <FileArmAds>
+                  <Cads>
+                    <interw>2</interw>
+                    <Optim>0</Optim>
+                    <oTime>2</oTime>
+                    <SplitLS>2</SplitLS>
+                    <OneElfS>2</OneElfS>
+                    <Strict>2</Strict>
+                    <EnumInt>2</EnumInt>
+                    <PlainCh>2</PlainCh>
+                    <Ropi>2</Ropi>
+                    <Rwpi>2</Rwpi>
+                    <wLevel>2</wLevel>
+                    <uThumb>2</uThumb>
+                    <uSurpInc>2</uSurpInc>
+                    <uC99>2</uC99>
+                    <useXO>2</useXO>
+                    <v6Lang>0</v6Lang>
+                    <v6LangP>0</v6LangP>
+                    <vShortEn>2</vShortEn>
+                    <vShortWch>2</vShortWch>
+                    <v6Lto>0</v6Lto>
+                    <v6WtE>0</v6WtE>
+                    <VariousControls>
+                      <MiscControls></MiscControls>
+                      <Define></Define>
+                      <Undefine></Undefine>
+                      <IncludePath></IncludePath>
+                    </VariousControls>
+                  </Cads>
+                </FileArmAds>
+              </FileOption>
+            </File>
+            <File>
+              <FileName>gpio_lib.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\..\..\shared_libs\gpio_lib.c</FilePath>
+            </File>
+            <File>
+              <FileName>battery_measure_lib.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\..\..\shared_libs\battery_measure_lib.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
           <GroupName>Documentation</GroupName>
           <Files>
-          <File>
-            <FileName>Abstract.txt</FileName>
-            <FileType>5</FileType>
-            <FilePath>..\..\..\Abstract.txt</FilePath>
-          </File>
-          <File>
-            <FileName>license.txt</FileName>
-            <FileType>5</FileType>
-            <FilePath>..\..\..\license.txt</FilePath>
-          </File>
-           </Files>
+            <File>
+              <FileName>Abstract.txt</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\..\Abstract.txt</FilePath>
+            </File>
+            <File>
+              <FileName>license.txt</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\..\license.txt</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>::Board Support</GroupName>
+          <GroupOption>
+            <CommonProperty>
+              <UseCPPCompiler>0</UseCPPCompiler>
+              <RVCTCodeConst>0</RVCTCodeConst>
+              <RVCTZI>0</RVCTZI>
+              <RVCTOtherData>0</RVCTOtherData>
+              <ModuleSelection>0</ModuleSelection>
+              <IncludeInBuild>0</IncludeInBuild>
+              <AlwaysBuild>2</AlwaysBuild>
+              <GenerateAssemblyFile>2</GenerateAssemblyFile>
+              <AssembleAssemblyFile>2</AssembleAssemblyFile>
+              <PublicsOnly>2</PublicsOnly>
+              <StopOnExitCode>11</StopOnExitCode>
+              <CustomArgument></CustomArgument>
+              <IncludeLibraryModules></IncludeLibraryModules>
+              <ComprImg>1</ComprImg>
+            </CommonProperty>
+            <GroupArmAds>
+              <Cads>
+                <interw>2</interw>
+                <Optim>0</Optim>
+                <oTime>2</oTime>
+                <SplitLS>2</SplitLS>
+                <OneElfS>2</OneElfS>
+                <Strict>2</Strict>
+                <EnumInt>2</EnumInt>
+                <PlainCh>2</PlainCh>
+                <Ropi>2</Ropi>
+                <Rwpi>2</Rwpi>
+                <wLevel>2</wLevel>
+                <uThumb>2</uThumb>
+                <uSurpInc>2</uSurpInc>
+                <uC99>2</uC99>
+                <useXO>2</useXO>
+                <v6Lang>0</v6Lang>
+                <v6LangP>0</v6LangP>
+                <vShortEn>2</vShortEn>
+                <vShortWch>2</vShortWch>
+                <v6Lto>0</v6Lto>
+                <v6WtE>0</v6WtE>
+                <VariousControls>
+                  <MiscControls></MiscControls>
+                  <Define></Define>
+                  <Undefine></Undefine>
+                  <IncludePath></IncludePath>
+                </VariousControls>
+              </Cads>
+              <Aads>
+                <interw>2</interw>
+                <Ropi>2</Ropi>
+                <Rwpi>2</Rwpi>
+                <thumb>2</thumb>
+                <SplitLS>2</SplitLS>
+                <SwStkChk>2</SwStkChk>
+                <NoWarn>2</NoWarn>
+                <uSurpInc>2</uSurpInc>
+                <useXO>2</useXO>
+                <VariousControls>
+                  <MiscControls></MiscControls>
+                  <Define></Define>
+                  <Undefine></Undefine>
+                  <IncludePath></IncludePath>
+                </VariousControls>
+              </Aads>
+            </GroupArmAds>
+          </GroupOption>
+        </Group>
+        <Group>
+          <GroupName>::CMSIS</GroupName>
+          <GroupOption>
+            <CommonProperty>
+              <UseCPPCompiler>0</UseCPPCompiler>
+              <RVCTCodeConst>0</RVCTCodeConst>
+              <RVCTZI>0</RVCTZI>
+              <RVCTOtherData>0</RVCTOtherData>
+              <ModuleSelection>0</ModuleSelection>
+              <IncludeInBuild>0</IncludeInBuild>
+              <AlwaysBuild>2</AlwaysBuild>
+              <GenerateAssemblyFile>2</GenerateAssemblyFile>
+              <AssembleAssemblyFile>2</AssembleAssemblyFile>
+              <PublicsOnly>2</PublicsOnly>
+              <StopOnExitCode>11</StopOnExitCode>
+              <CustomArgument></CustomArgument>
+              <IncludeLibraryModules></IncludeLibraryModules>
+              <ComprImg>1</ComprImg>
+            </CommonProperty>
+            <GroupArmAds>
+              <Cads>
+                <interw>2</interw>
+                <Optim>0</Optim>
+                <oTime>2</oTime>
+                <SplitLS>2</SplitLS>
+                <OneElfS>2</OneElfS>
+                <Strict>2</Strict>
+                <EnumInt>2</EnumInt>
+                <PlainCh>2</PlainCh>
+                <Ropi>2</Ropi>
+                <Rwpi>2</Rwpi>
+                <wLevel>2</wLevel>
+                <uThumb>2</uThumb>
+                <uSurpInc>2</uSurpInc>
+                <uC99>2</uC99>
+                <useXO>2</useXO>
+                <v6Lang>0</v6Lang>
+                <v6LangP>0</v6LangP>
+                <vShortEn>2</vShortEn>
+                <vShortWch>2</vShortWch>
+                <v6Lto>0</v6Lto>
+                <v6WtE>0</v6WtE>
+                <VariousControls>
+                  <MiscControls></MiscControls>
+                  <Define></Define>
+                  <Undefine></Undefine>
+                  <IncludePath></IncludePath>
+                </VariousControls>
+              </Cads>
+              <Aads>
+                <interw>2</interw>
+                <Ropi>2</Ropi>
+                <Rwpi>2</Rwpi>
+                <thumb>2</thumb>
+                <SplitLS>2</SplitLS>
+                <SwStkChk>2</SwStkChk>
+                <NoWarn>2</NoWarn>
+                <uSurpInc>2</uSurpInc>
+                <useXO>2</useXO>
+                <VariousControls>
+                  <MiscControls></MiscControls>
+                  <Define></Define>
+                  <Undefine></Undefine>
+                  <IncludePath></IncludePath>
+                </VariousControls>
+              </Aads>
+            </GroupArmAds>
+          </GroupOption>
+        </Group>
+        <Group>
+          <GroupName>::Device</GroupName>
+          <GroupOption>
+            <CommonProperty>
+              <UseCPPCompiler>0</UseCPPCompiler>
+              <RVCTCodeConst>0</RVCTCodeConst>
+              <RVCTZI>0</RVCTZI>
+              <RVCTOtherData>0</RVCTOtherData>
+              <ModuleSelection>0</ModuleSelection>
+              <IncludeInBuild>0</IncludeInBuild>
+              <AlwaysBuild>2</AlwaysBuild>
+              <GenerateAssemblyFile>2</GenerateAssemblyFile>
+              <AssembleAssemblyFile>2</AssembleAssemblyFile>
+              <PublicsOnly>2</PublicsOnly>
+              <StopOnExitCode>11</StopOnExitCode>
+              <CustomArgument></CustomArgument>
+              <IncludeLibraryModules></IncludeLibraryModules>
+              <ComprImg>1</ComprImg>
+            </CommonProperty>
+            <GroupArmAds>
+              <Cads>
+                <interw>2</interw>
+                <Optim>0</Optim>
+                <oTime>2</oTime>
+                <SplitLS>2</SplitLS>
+                <OneElfS>2</OneElfS>
+                <Strict>2</Strict>
+                <EnumInt>2</EnumInt>
+                <PlainCh>2</PlainCh>
+                <Ropi>2</Ropi>
+                <Rwpi>2</Rwpi>
+                <wLevel>2</wLevel>
+                <uThumb>2</uThumb>
+                <uSurpInc>2</uSurpInc>
+                <uC99>2</uC99>
+                <useXO>2</useXO>
+                <v6Lang>0</v6Lang>
+                <v6LangP>0</v6LangP>
+                <vShortEn>2</vShortEn>
+                <vShortWch>2</vShortWch>
+                <v6Lto>0</v6Lto>
+                <v6WtE>0</v6WtE>
+                <VariousControls>
+                  <MiscControls></MiscControls>
+                  <Define></Define>
+                  <Undefine></Undefine>
+                  <IncludePath></IncludePath>
+                </VariousControls>
+              </Cads>
+              <Aads>
+                <interw>2</interw>
+                <Ropi>2</Ropi>
+                <Rwpi>2</Rwpi>
+                <thumb>2</thumb>
+                <SplitLS>2</SplitLS>
+                <SwStkChk>2</SwStkChk>
+                <NoWarn>2</NoWarn>
+                <uSurpInc>2</uSurpInc>
+                <useXO>2</useXO>
+                <VariousControls>
+                  <MiscControls></MiscControls>
+                  <Define></Define>
+                  <Undefine></Undefine>
+                  <IncludePath></IncludePath>
+                </VariousControls>
+              </Aads>
+            </GroupArmAds>
+          </GroupOption>
+        </Group>
+        <Group>
+          <GroupName>::nRF_BLE</GroupName>
+          <GroupOption>
+            <CommonProperty>
+              <UseCPPCompiler>0</UseCPPCompiler>
+              <RVCTCodeConst>0</RVCTCodeConst>
+              <RVCTZI>0</RVCTZI>
+              <RVCTOtherData>0</RVCTOtherData>
+              <ModuleSelection>0</ModuleSelection>
+              <IncludeInBuild>0</IncludeInBuild>
+              <AlwaysBuild>2</AlwaysBuild>
+              <GenerateAssemblyFile>2</GenerateAssemblyFile>
+              <AssembleAssemblyFile>2</AssembleAssemblyFile>
+              <PublicsOnly>2</PublicsOnly>
+              <StopOnExitCode>11</StopOnExitCode>
+              <CustomArgument></CustomArgument>
+              <IncludeLibraryModules></IncludeLibraryModules>
+              <ComprImg>1</ComprImg>
+            </CommonProperty>
+            <GroupArmAds>
+              <Cads>
+                <interw>2</interw>
+                <Optim>0</Optim>
+                <oTime>2</oTime>
+                <SplitLS>2</SplitLS>
+                <OneElfS>2</OneElfS>
+                <Strict>2</Strict>
+                <EnumInt>2</EnumInt>
+                <PlainCh>2</PlainCh>
+                <Ropi>2</Ropi>
+                <Rwpi>2</Rwpi>
+                <wLevel>2</wLevel>
+                <uThumb>2</uThumb>
+                <uSurpInc>2</uSurpInc>
+                <uC99>2</uC99>
+                <useXO>2</useXO>
+                <v6Lang>0</v6Lang>
+                <v6LangP>0</v6LangP>
+                <vShortEn>2</vShortEn>
+                <vShortWch>2</vShortWch>
+                <v6Lto>0</v6Lto>
+                <v6WtE>0</v6WtE>
+                <VariousControls>
+                  <MiscControls></MiscControls>
+                  <Define></Define>
+                  <Undefine></Undefine>
+                  <IncludePath></IncludePath>
+                </VariousControls>
+              </Cads>
+              <Aads>
+                <interw>2</interw>
+                <Ropi>2</Ropi>
+                <Rwpi>2</Rwpi>
+                <thumb>2</thumb>
+                <SplitLS>2</SplitLS>
+                <SwStkChk>2</SwStkChk>
+                <NoWarn>2</NoWarn>
+                <uSurpInc>2</uSurpInc>
+                <useXO>2</useXO>
+                <VariousControls>
+                  <MiscControls></MiscControls>
+                  <Define></Define>
+                  <Undefine></Undefine>
+                  <IncludePath></IncludePath>
+                </VariousControls>
+              </Aads>
+            </GroupArmAds>
+          </GroupOption>
+        </Group>
+        <Group>
+          <GroupName>::nRF_Drivers</GroupName>
+          <GroupOption>
+            <CommonProperty>
+              <UseCPPCompiler>0</UseCPPCompiler>
+              <RVCTCodeConst>0</RVCTCodeConst>
+              <RVCTZI>0</RVCTZI>
+              <RVCTOtherData>0</RVCTOtherData>
+              <ModuleSelection>0</ModuleSelection>
+              <IncludeInBuild>0</IncludeInBuild>
+              <AlwaysBuild>2</AlwaysBuild>
+              <GenerateAssemblyFile>2</GenerateAssemblyFile>
+              <AssembleAssemblyFile>2</AssembleAssemblyFile>
+              <PublicsOnly>2</PublicsOnly>
+              <StopOnExitCode>11</StopOnExitCode>
+              <CustomArgument></CustomArgument>
+              <IncludeLibraryModules></IncludeLibraryModules>
+              <ComprImg>1</ComprImg>
+            </CommonProperty>
+            <GroupArmAds>
+              <Cads>
+                <interw>2</interw>
+                <Optim>0</Optim>
+                <oTime>2</oTime>
+                <SplitLS>2</SplitLS>
+                <OneElfS>2</OneElfS>
+                <Strict>2</Strict>
+                <EnumInt>2</EnumInt>
+                <PlainCh>2</PlainCh>
+                <Ropi>2</Ropi>
+                <Rwpi>2</Rwpi>
+                <wLevel>2</wLevel>
+                <uThumb>2</uThumb>
+                <uSurpInc>2</uSurpInc>
+                <uC99>2</uC99>
+                <useXO>2</useXO>
+                <v6Lang>0</v6Lang>
+                <v6LangP>0</v6LangP>
+                <vShortEn>2</vShortEn>
+                <vShortWch>2</vShortWch>
+                <v6Lto>0</v6Lto>
+                <v6WtE>0</v6WtE>
+                <VariousControls>
+                  <MiscControls></MiscControls>
+                  <Define></Define>
+                  <Undefine></Undefine>
+                  <IncludePath></IncludePath>
+                </VariousControls>
+              </Cads>
+              <Aads>
+                <interw>2</interw>
+                <Ropi>2</Ropi>
+                <Rwpi>2</Rwpi>
+                <thumb>2</thumb>
+                <SplitLS>2</SplitLS>
+                <SwStkChk>2</SwStkChk>
+                <NoWarn>2</NoWarn>
+                <uSurpInc>2</uSurpInc>
+                <useXO>2</useXO>
+                <VariousControls>
+                  <MiscControls></MiscControls>
+                  <Define></Define>
+                  <Undefine></Undefine>
+                  <IncludePath></IncludePath>
+                </VariousControls>
+              </Aads>
+            </GroupArmAds>
+          </GroupOption>
+        </Group>
+        <Group>
+          <GroupName>::nRF_Libraries</GroupName>
+          <GroupOption>
+            <CommonProperty>
+              <UseCPPCompiler>0</UseCPPCompiler>
+              <RVCTCodeConst>0</RVCTCodeConst>
+              <RVCTZI>0</RVCTZI>
+              <RVCTOtherData>0</RVCTOtherData>
+              <ModuleSelection>0</ModuleSelection>
+              <IncludeInBuild>0</IncludeInBuild>
+              <AlwaysBuild>2</AlwaysBuild>
+              <GenerateAssemblyFile>2</GenerateAssemblyFile>
+              <AssembleAssemblyFile>2</AssembleAssemblyFile>
+              <PublicsOnly>2</PublicsOnly>
+              <StopOnExitCode>11</StopOnExitCode>
+              <CustomArgument></CustomArgument>
+              <IncludeLibraryModules></IncludeLibraryModules>
+              <ComprImg>1</ComprImg>
+            </CommonProperty>
+            <GroupArmAds>
+              <Cads>
+                <interw>2</interw>
+                <Optim>0</Optim>
+                <oTime>2</oTime>
+                <SplitLS>2</SplitLS>
+                <OneElfS>2</OneElfS>
+                <Strict>2</Strict>
+                <EnumInt>2</EnumInt>
+                <PlainCh>2</PlainCh>
+                <Ropi>2</Ropi>
+                <Rwpi>2</Rwpi>
+                <wLevel>2</wLevel>
+                <uThumb>2</uThumb>
+                <uSurpInc>2</uSurpInc>
+                <uC99>2</uC99>
+                <useXO>2</useXO>
+                <v6Lang>0</v6Lang>
+                <v6LangP>0</v6LangP>
+                <vShortEn>2</vShortEn>
+                <vShortWch>2</vShortWch>
+                <v6Lto>0</v6Lto>
+                <v6WtE>0</v6WtE>
+                <VariousControls>
+                  <MiscControls></MiscControls>
+                  <Define></Define>
+                  <Undefine></Undefine>
+                  <IncludePath></IncludePath>
+                </VariousControls>
+              </Cads>
+              <Aads>
+                <interw>2</interw>
+                <Ropi>2</Ropi>
+                <Rwpi>2</Rwpi>
+                <thumb>2</thumb>
+                <SplitLS>2</SplitLS>
+                <SwStkChk>2</SwStkChk>
+                <NoWarn>2</NoWarn>
+                <uSurpInc>2</uSurpInc>
+                <useXO>2</useXO>
+                <VariousControls>
+                  <MiscControls></MiscControls>
+                  <Define></Define>
+                  <Undefine></Undefine>
+                  <IncludePath></IncludePath>
+                </VariousControls>
+              </Aads>
+            </GroupArmAds>
+          </GroupOption>
+        </Group>
+        <Group>
+          <GroupName>::nRF_SoftDevice</GroupName>
+          <GroupOption>
+            <CommonProperty>
+              <UseCPPCompiler>0</UseCPPCompiler>
+              <RVCTCodeConst>0</RVCTCodeConst>
+              <RVCTZI>0</RVCTZI>
+              <RVCTOtherData>0</RVCTOtherData>
+              <ModuleSelection>0</ModuleSelection>
+              <IncludeInBuild>0</IncludeInBuild>
+              <AlwaysBuild>2</AlwaysBuild>
+              <GenerateAssemblyFile>2</GenerateAssemblyFile>
+              <AssembleAssemblyFile>2</AssembleAssemblyFile>
+              <PublicsOnly>2</PublicsOnly>
+              <StopOnExitCode>11</StopOnExitCode>
+              <CustomArgument></CustomArgument>
+              <IncludeLibraryModules></IncludeLibraryModules>
+              <ComprImg>1</ComprImg>
+            </CommonProperty>
+            <GroupArmAds>
+              <Cads>
+                <interw>2</interw>
+                <Optim>0</Optim>
+                <oTime>2</oTime>
+                <SplitLS>2</SplitLS>
+                <OneElfS>2</OneElfS>
+                <Strict>2</Strict>
+                <EnumInt>2</EnumInt>
+                <PlainCh>2</PlainCh>
+                <Ropi>2</Ropi>
+                <Rwpi>2</Rwpi>
+                <wLevel>2</wLevel>
+                <uThumb>2</uThumb>
+                <uSurpInc>2</uSurpInc>
+                <uC99>2</uC99>
+                <useXO>2</useXO>
+                <v6Lang>0</v6Lang>
+                <v6LangP>0</v6LangP>
+                <vShortEn>2</vShortEn>
+                <vShortWch>2</vShortWch>
+                <v6Lto>0</v6Lto>
+                <v6WtE>0</v6WtE>
+                <VariousControls>
+                  <MiscControls></MiscControls>
+                  <Define></Define>
+                  <Undefine></Undefine>
+                  <IncludePath></IncludePath>
+                </VariousControls>
+              </Cads>
+              <Aads>
+                <interw>2</interw>
+                <Ropi>2</Ropi>
+                <Rwpi>2</Rwpi>
+                <thumb>2</thumb>
+                <SplitLS>2</SplitLS>
+                <SwStkChk>2</SwStkChk>
+                <NoWarn>2</NoWarn>
+                <uSurpInc>2</uSurpInc>
+                <useXO>2</useXO>
+                <VariousControls>
+                  <MiscControls></MiscControls>
+                  <Define></Define>
+                  <Undefine></Undefine>
+                  <IncludePath></IncludePath>
+                </VariousControls>
+              </Aads>
+            </GroupArmAds>
+          </GroupOption>
         </Group>
       </Groups>
     </Target>
   </Targets>
 
-<RTE>
-  <packages>
-    <filter>
-      <targetInfos/>
-    </filter>
-    <package name="CMSIS" url="http://www.keil.com/pack/" vendor="ARM" version="4.5.0">
-      <targetInfos>
-        <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
-        <targetInfo excluded="1" name="flash_s130_nrf51_2.0.0-7.alpha_softdevice"/>
-      </targetInfos>
-    </package>
-    <package name="nRF_DeviceFamilyPack" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_DeviceFamilyPack/" vendor="NordicSemiconductor" version="8.3.1">
-      <targetInfos>
-        <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
-        <targetInfo excluded="1" name="flash_s130_nrf51_2.0.0-7.alpha_softdevice"/>
-      </targetInfos>
-    </package>
-    <package name="nRF_Examples" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Examples" vendor="NordicSemiconductor" version="11.0.0-2.alpha">
-      <targetInfos>
-        <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
-        <targetInfo excluded="1" name="flash_s130_nrf51_2.0.0-7.alpha_softdevice"/>
-      </targetInfos>
-    </package>
-    <package name="nRF_Drivers" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Drivers" vendor="NordicSemiconductor" version="4.0.0-2.alpha">
-      <targetInfos>
-        <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
-        <targetInfo excluded="1" name="flash_s130_nrf51_2.0.0-7.alpha_softdevice"/>
-      </targetInfos>
-    </package>
-    <package name="nRF_Drivers_External" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Drivers_External" vendor="NordicSemiconductor" version="1.2.1-2.alpha">
-      <targetInfos>
-        <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
-        <targetInfo excluded="1" name="flash_s130_nrf51_2.0.0-7.alpha_softdevice"/>
-      </targetInfos>
-    </package>
-    <package name="nRF_SoftDevice_Common" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_SoftDevice_Common" vendor="NordicSemiconductor" version="2.0.0-2.alpha">
-      <targetInfos>
-        <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
-        <targetInfo excluded="1" name="flash_s130_nrf51_2.0.0-7.alpha_softdevice"/>
-      </targetInfos>
-    </package>
-    <package name="nRF_Libraries" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Libraries" vendor="NordicSemiconductor" version="4.0.0-2.alpha">
-      <targetInfos>
-        <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
-        <targetInfo excluded="1" name="flash_s130_nrf51_2.0.0-7.alpha_softdevice"/>
-      </targetInfos>
-    </package>
-    <package name="nRF_SoftDevice_S130" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_SoftDevice_S130" vendor="NordicSemiconductor" version="2.0.0-7.alpha">
-      <targetInfos>
-        <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
-        <targetInfo excluded="1" name="flash_s130_nrf51_2.0.0-7.alpha_softdevice"/>
-      </targetInfos>
-    </package>
-    <package name="nRF_BLE" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_BLE" vendor="NordicSemiconductor" version="4.0.0-2.alpha">
-      <targetInfos>
-        <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
-        <targetInfo excluded="1" name="flash_s130_nrf51_2.0.0-7.alpha_softdevice"/>
-      </targetInfos>
-    </package>
-  </packages>
-  <apis/>
-  <components>
-    <component Cclass="CMSIS" Cgroup="CORE" Cvendor="ARM" Cversion="4.3.0" condition="CMSIS Core">
-      <package name="CMSIS" url="http://www.keil.com/pack/" vendor="ARM" version="4.5.0"/>
-      <targetInfos>
-        <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
-        <targetInfo excluded="1" name="flash_s130_nrf51_2.0.0-7.alpha_softdevice"/>
-      </targetInfos>
-    </component>
-    <component Cclass="Device" Cgroup="Startup" Cvendor="NordicSemiconductor" Cversion="8.3.1" condition="nRF51 Series CMSIS Device">
-      <package name="nRF_DeviceFamilyPack" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_DeviceFamilyPack/" vendor="NordicSemiconductor" version="8.3.1"/>
-      <targetInfos>
-        <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
-        <targetInfo excluded="1" name="flash_s130_nrf51_2.0.0-7.alpha_softdevice"/>
-      </targetInfos>
-    </component>
-    <component Cclass="nRF_Libraries" Cgroup="app_button" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
-      <package name="nRF_Libraries" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Libraries" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
-      <targetInfos>
-        <targetInfo excluded="1" name="flash_softdevice"/>
-        <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
-      </targetInfos>
-    </component>
-    <component Cclass="nRF_Drivers" Cgroup="nrf_delay" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
-      <package name="nRF_Drivers" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Drivers" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
-      <targetInfos>
-        <targetInfo excluded="1" name="flash_softdevice"/>
-        <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
-      </targetInfos>
-    </component>
-    <component Cclass="nRF_Drivers" Cgroup="nrf_gpio" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
-      <package name="nRF_Drivers" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Drivers" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
-      <targetInfos>
-        <targetInfo excluded="1" name="flash_softdevice"/>
-        <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
-      </targetInfos>
-    </component>
-    <component Cclass="nRF_Libraries" Cgroup="app_error" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
-      <package name="nRF_Libraries" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Libraries" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
-      <targetInfos>
-        <targetInfo excluded="1" name="flash_softdevice"/>
-        <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
-      </targetInfos>
-    </component>
-    <component Cclass="nRF_BLE" Cgroup="BLE_Services" Csub="ble_hrs" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
-      <package name="nRF_BLE" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_BLE" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
-      <targetInfos>
-        <targetInfo excluded="1" name="flash_softdevice"/>
-        <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
-      </targetInfos>
-    </component>
-    <component Cclass="nRF_Libraries" Cgroup="app_util" Cvariant="default" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
-      <package name="nRF_Libraries" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Libraries" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
-      <targetInfos>
-        <targetInfo excluded="1" name="flash_softdevice"/>
-        <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
-      </targetInfos>
-    </component>
-    <component Cclass="nRF_SoftDevice" Cgroup="s130" Cvariant="default" Cvendor="NordicSemiconductor" Cversion="2.0.0-7.alpha">
-      <package name="nRF_SoftDevice_S130" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_SoftDevice_S130" vendor="NordicSemiconductor" version="2.0.0-7.alpha"/>
-      <targetInfos>
-        <targetInfo excluded="1" name="flash_softdevice"/>
-        <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
-      </targetInfos>
-    </component>
-    <component Cclass="nRF_Drivers" Cgroup="pstorage" Cvariant="default" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
-      <package name="nRF_Drivers" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Drivers" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
-      <targetInfos>
-        <targetInfo excluded="1" name="flash_softdevice"/>
-        <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
-      </targetInfos>
-    </component>
-    <component Cclass="nRF_Drivers" Cgroup="nrf_gpiote" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
-      <package name="nRF_Drivers" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Drivers" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
-      <targetInfos>
-        <targetInfo excluded="1" name="flash_softdevice"/>
-        <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
-      </targetInfos>
-    </component>
-    <component Cclass="nRF_Drivers" Cgroup="nrf_error" Cvariant="default" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
-      <package name="nRF_Drivers" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Drivers" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
-      <targetInfos>
-        <targetInfo excluded="1" name="flash_softdevice"/>
-        <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
-      </targetInfos>
-    </component>
-    <component Cclass="nRF_BLE" Cgroup="BLE_Modules" Csub="ble_conn_params" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
-      <package name="nRF_BLE" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_BLE" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
-      <targetInfos>
-        <targetInfo excluded="1" name="flash_softdevice"/>
-        <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
-      </targetInfos>
-    </component>
-    <component Cclass="nRF_SoftDevice" Cgroup="Internal" Csub="softdevice_present" Cvendor="NordicSemiconductor" Cversion="2.0.0-2.alpha">
-      <package name="nRF_SoftDevice_Common" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_SoftDevice_Common" vendor="NordicSemiconductor" version="2.0.0-2.alpha"/>
-      <targetInfos>
-        <targetInfo excluded="1" name="flash_softdevice"/>
-        <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
-      </targetInfos>
-    </component>
-    <component Cclass="nRF_BLE" Cgroup="BLE_Modules" Csub="ble_service_common" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
-      <package name="nRF_BLE" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_BLE" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
-      <targetInfos>
-        <targetInfo excluded="1" name="flash_softdevice"/>
-        <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
-      </targetInfos>
-    </component>
-    <component Cclass="Board Support" Cgroup="bsp_btn_ble" Cvendor="NordicSemiconductor" Cversion="11.0.0-2.alpha">
-      <package name="nRF_Examples" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Examples" vendor="NordicSemiconductor" version="11.0.0-2.alpha"/>
-      <targetInfos>
-        <targetInfo excluded="1" name="flash_softdevice"/>
-        <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
-      </targetInfos>
-    </component>
-    <component Cclass="nRF_BLE" Cgroup="BLE_Services" Csub="ble_bas" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
-      <package name="nRF_BLE" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_BLE" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
-      <targetInfos>
-        <targetInfo excluded="1" name="flash_softdevice"/>
-        <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
-      </targetInfos>
-    </component>
-    <component Cclass="nRF_Libraries" Cgroup="nrf_log" Cvariant="default" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
-      <package name="nRF_Libraries" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Libraries" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
-      <targetInfos>
-        <targetInfo excluded="1" name="flash_softdevice"/>
-        <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
-      </targetInfos>
-    </component>
-    <component Cclass="nRF_Libraries" Cgroup="segger_rtt" Cvendor="NordicSemiconductor" Cversion="1.2.1-2.alpha">
-      <package name="nRF_Drivers_External" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Drivers_External" vendor="NordicSemiconductor" version="1.2.1-2.alpha"/>
-      <targetInfos>
-        <targetInfo excluded="1" name="flash_softdevice"/>
-        <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
-      </targetInfos>
-    </component>
-    <component Cclass="nRF_Drivers" Cgroup="nrf_uarte" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
-      <package name="nRF_Drivers" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Drivers" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
-      <targetInfos>
-        <targetInfo excluded="1" name="flash_softdevice"/>
-        <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
-      </targetInfos>
-    </component>
-    <component Cclass="nRF_Libraries" Cgroup="retarget" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
-      <package name="nRF_Libraries" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Libraries" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
-      <targetInfos>
-        <targetInfo excluded="1" name="flash_softdevice"/>
-        <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
-      </targetInfos>
-    </component>
-    <component Cclass="Board Support" Cgroup="bsp" Cvariant="default" Cvendor="NordicSemiconductor" Cversion="11.0.0-2.alpha">
-      <package name="nRF_Examples" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Examples" vendor="NordicSemiconductor" version="11.0.0-2.alpha"/>
-      <targetInfos>
-        <targetInfo excluded="1" name="flash_softdevice"/>
-        <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
-      </targetInfos>
-    </component>
-    <component Cclass="nRF_Libraries" Cgroup="app_fifo" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
-      <package name="nRF_Libraries" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Libraries" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
-      <targetInfos>
-        <targetInfo excluded="1" name="flash_softdevice"/>
-        <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
-      </targetInfos>
-    </component>
-    <component Cclass="nRF_Libraries" Cgroup="nrf_assert" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
-      <package name="nRF_Libraries" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Libraries" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
-      <targetInfos>
-        <targetInfo excluded="1" name="flash_softdevice"/>
-        <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
-      </targetInfos>
-    </component>
-    <component Cclass="nRF_SoftDevice" Cgroup="s130_hex" Cvendor="NordicSemiconductor" Cversion="2.0.0-7.alpha">
-      <package name="nRF_SoftDevice_S130" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_SoftDevice_S130" vendor="NordicSemiconductor" version="2.0.0-7.alpha"/>
-      <targetInfos>
-        <targetInfo excluded="1" name="nrf51422_xxac_s130"/>
-        <targetInfo excluded="1" name="flash_softdevice"/>
-      </targetInfos>
-    </component>
-    <component Cclass="nRF_Drivers" Cgroup="nrf_drv_uart" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
-      <package name="nRF_Drivers" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Drivers" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
-      <targetInfos>
-        <targetInfo excluded="1" name="flash_softdevice"/>
-        <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
-      </targetInfos>
-    </component>
-    <component Cclass="nRF_BLE" Cgroup="BLE_Modules" Csub="device_manager" Cvariant="Peripheral" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
-      <package name="nRF_BLE" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_BLE" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
-      <targetInfos>
-        <targetInfo excluded="1" name="flash_softdevice"/>
-        <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
-      </targetInfos>
-    </component>
-    <component Cclass="nRF_BLE" Cgroup="BLE_Services" Csub="ble_dis" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
-      <package name="nRF_BLE" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_BLE" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
-      <targetInfos>
-        <targetInfo excluded="1" name="flash_softdevice"/>
-        <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
-      </targetInfos>
-    </component>
-    <component Cclass="nRF_Libraries" Cgroup="sensorsim" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
-      <package name="nRF_Libraries" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Libraries" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
-      <targetInfos>
-        <targetInfo excluded="1" name="flash_softdevice"/>
-        <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
-      </targetInfos>
-    </component>
-    <component Cclass="nRF_SoftDevice" Cgroup="Internal" Csub="sd_common" Cvariant="default" Cvendor="NordicSemiconductor" Cversion="2.0.0-2.alpha">
-      <package name="nRF_SoftDevice_Common" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_SoftDevice_Common" vendor="NordicSemiconductor" version="2.0.0-2.alpha"/>
-      <targetInfos>
-        <targetInfo excluded="1" name="flash_softdevice"/>
-        <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
-      </targetInfos>
-    </component>
-    <component Cclass="nRF_Libraries" Cgroup="app_trace" Cvariant="default" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
-      <package name="nRF_Libraries" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Libraries" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
-      <targetInfos>
-        <targetInfo excluded="1" name="flash_softdevice"/>
-        <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
-      </targetInfos>
-    </component>
-    <component Cclass="nRF_BLE" Cgroup="BLE_Modules" Csub="ble_advertising" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
-      <package name="nRF_BLE" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_BLE" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
-      <targetInfos>
-        <targetInfo excluded="1" name="flash_softdevice"/>
-        <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
-      </targetInfos>
-    </component>
-    <component Cclass="nRF_Drivers" Cgroup="nrf_drv_gpiote" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
-      <package name="nRF_Drivers" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Drivers" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
-      <targetInfos>
-        <targetInfo excluded="1" name="flash_softdevice"/>
-        <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
-      </targetInfos>
-    </component>
-    <component Cclass="nRF_Drivers" Cgroup="nrf_uart" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
-      <package name="nRF_Drivers" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Drivers" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
-      <targetInfos>
-        <targetInfo excluded="1" name="flash_softdevice"/>
-        <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
-      </targetInfos>
-    </component>
-    <component Cclass="nRF_Drivers" Cgroup="nrf_drv_common" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
-      <package name="nRF_Drivers" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Drivers" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
-      <targetInfos>
-        <targetInfo excluded="1" name="flash_softdevice"/>
-        <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
-      </targetInfos>
-    </component>
-    <component Cclass="nRF_Libraries" Cgroup="nordic_common" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
-      <package name="nRF_Libraries" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Libraries" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
-      <targetInfos>
-        <targetInfo excluded="1" name="flash_softdevice"/>
-        <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
-      </targetInfos>
-    </component>
-    <component Cclass="nRF_Libraries" Cgroup="app_timer" Cvariant="default" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
-      <package name="nRF_Libraries" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Libraries" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
-      <targetInfos>
-        <targetInfo excluded="1" name="flash_softdevice"/>
-        <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
-      </targetInfos>
-    </component>
-    <component Cclass="nRF_Drivers" Cgroup="app_uart" Cvariant="Fifo" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
-      <package name="nRF_Libraries" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Libraries" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
-      <targetInfos>
-        <targetInfo excluded="1" name="flash_softdevice"/>
-        <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
-      </targetInfos>
-    </component>
-    <component Cclass="nRF_BLE" Cgroup="BLE_Modules" Csub="ble_advdata" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
-      <package name="nRF_BLE" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_BLE" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
-      <targetInfos>
-        <targetInfo excluded="1" name="flash_softdevice"/>
-        <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
-      </targetInfos>
-    </component>
-    <component Cclass="nRF_BLE" Cgroup="BLE_Modules" Csub="ble_common" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
-      <package name="nRF_BLE" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_BLE" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
-      <targetInfos>
-        <targetInfo excluded="1" name="flash_softdevice"/>
-        <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
-      </targetInfos>
-    </component> 
-  </components>
-  <files>
-    <file attr="config" category="header" name="pstorage\config\pstorage_platform.h">
-      <instance index="0">RTE\nRF_Drivers\nRF51422_xxAC\pstorage_platform.h</instance>
-      <component Cclass="nRF_Drivers" Cgroup="pstorage" Cvariant="default" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha"/>
-      <package name="nRF_Drivers" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Drivers" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
-      <targetInfos>
-        <targetInfo excluded="1" name="flash_softdevice"/>
-        <targetInfo name="nrf51422_xxac_s130"/>
-      </targetInfos>
-    </file>
-    <file attr="config" category="header" name="config\nrf_drv_config.h">
-      <instance index="0">RTE\nRF_Drivers\nRF51422_xxAC\nrf_drv_config.h</instance>
-      <component Cclass="nRF_Drivers" Cgroup="nrf_drv_uart" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha"/>
-      <package name="nRF_Drivers" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Drivers" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
-      <targetInfos>
-        <targetInfo excluded="1" name="flash_softdevice"/>
-        <targetInfo name="nrf51422_xxac_s130"/>
-      </targetInfos>
-    </file>
-    <file attr="config" category="header" name="device_manager\config\device_manager_cnfg.h">
-      <instance index="0">RTE\nRF_BLE\nRF51422_xxAC\device_manager_cnfg.h</instance>
-      <component Cclass="nRF_BLE" Cgroup="BLE_Modules" Csub="device_manager" Cvariant="Peripheral" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha"/>
-      <package name="nRF_BLE" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_BLE" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
-      <targetInfos>
-        <targetInfo excluded="1" name="flash_softdevice"/>
-        <targetInfo name="nrf51422_xxac_s130"/>
-      </targetInfos>
-    </file>
-    <file attr="config" category="header" name="config\nrf_drv_config.h">
-      <instance index="0">RTE\nRF_Drivers\nRF51422_xxAC\nrf_drv_config.h</instance>
-      <component Cclass="nRF_Drivers" Cgroup="nrf_drv_gpiote" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha"/>
-      <package name="nRF_Drivers" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Drivers" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
-      <targetInfos>
-        <targetInfo excluded="1" name="flash_softdevice"/>
-        <targetInfo name="nrf51422_xxac_s130"/>
-      </targetInfos>
-    </file>
-    <file attr="config" category="header" name="config\nrf_drv_config.h">
-      <instance index="0">RTE\nRF_Drivers\nRF51422_xxAC\nrf_drv_config.h</instance>
-      <component Cclass="nRF_Drivers" Cgroup="nrf_drv_common" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha"/>
-      <package name="nRF_Drivers" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Drivers" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
-      <targetInfos>
-        <targetInfo excluded="1" name="flash_softdevice"/>
-        <targetInfo name="nrf51422_xxac_s130"/>
-      </targetInfos>
-    </file> 
-  </files>
-</RTE>
+  <RTE>
+    <packages>
+      <filter>
+        <targetInfos/>
+      </filter>
+      <package name="CMSIS" url="http://www.keil.com/pack/" vendor="ARM" version="4.5.0">
+        <targetInfos>
+          <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
+        </targetInfos>
+      </package>
+      <package name="nRF_BLE" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_BLE" vendor="NordicSemiconductor" version="4.0.0-2.alpha">
+        <targetInfos>
+          <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
+        </targetInfos>
+      </package>
+      <package name="nRF_DeviceFamilyPack" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_DeviceFamilyPack/" vendor="NordicSemiconductor" version="8.3.1">
+        <targetInfos>
+          <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
+        </targetInfos>
+      </package>
+      <package name="nRF_Drivers" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Drivers" vendor="NordicSemiconductor" version="4.0.0-2.alpha">
+        <targetInfos>
+          <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
+        </targetInfos>
+      </package>
+      <package name="nRF_Drivers_External" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Drivers_External" vendor="NordicSemiconductor" version="1.2.1-2.alpha">
+        <targetInfos>
+          <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
+        </targetInfos>
+      </package>
+      <package name="nRF_Examples" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Examples" vendor="NordicSemiconductor" version="11.0.0-2.alpha">
+        <targetInfos>
+          <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
+        </targetInfos>
+      </package>
+      <package name="nRF_Libraries" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Libraries" vendor="NordicSemiconductor" version="4.0.0-2.alpha">
+        <targetInfos>
+          <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
+        </targetInfos>
+      </package>
+      <package name="nRF_SoftDevice_Common" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_SoftDevice_Common" vendor="NordicSemiconductor" version="2.0.0-2.alpha">
+        <targetInfos>
+          <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
+        </targetInfos>
+      </package>
+      <package name="nRF_SoftDevice_S130" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_SoftDevice_S130" vendor="NordicSemiconductor" version="2.0.0-7.alpha">
+        <targetInfos>
+          <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
+        </targetInfos>
+      </package>
+    </packages>
+    <apis/>
+    <components>
+      <component Cclass="CMSIS" Cgroup="CORE" Cvendor="ARM" Cversion="4.3.0" condition="CMSIS Core">
+        <package name="CMSIS" url="http://www.keil.com/pack/" vendor="ARM" version="4.5.0"/>
+        <targetInfos>
+          <targetInfo excluded="1" name="flash_s130_nrf51_2.0.0-7.alpha_softdevice"/>
+          <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
+        </targetInfos>
+      </component>
+      <component Cclass="Board Support" Cgroup="bsp" Cvariant="default" Cvendor="NordicSemiconductor" Cversion="11.0.0-2.alpha">
+        <package name="nRF_Examples" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Examples" vendor="NordicSemiconductor" version="11.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo excluded="1" name="flash_softdevice"/>
+          <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
+        </targetInfos>
+      </component>
+      <component Cclass="Board Support" Cgroup="bsp_btn_ble" Cvendor="NordicSemiconductor" Cversion="11.0.0-2.alpha">
+        <package name="nRF_Examples" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Examples" vendor="NordicSemiconductor" version="11.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo excluded="1" name="flash_softdevice"/>
+          <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
+        </targetInfos>
+      </component>
+      <component Cclass="Device" Cgroup="Startup" Cvendor="NordicSemiconductor" Cversion="8.3.1" condition="nRF51 Series CMSIS Device">
+        <package name="nRF_DeviceFamilyPack" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_DeviceFamilyPack/" vendor="NordicSemiconductor" version="8.3.1"/>
+        <targetInfos>
+          <targetInfo excluded="1" name="flash_s130_nrf51_2.0.0-7.alpha_softdevice"/>
+          <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
+        </targetInfos>
+      </component>
+      <component Cclass="nRF_BLE" Cgroup="BLE_Modules" Csub="ble_advdata" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
+        <package name="nRF_BLE" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_BLE" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo excluded="1" name="flash_softdevice"/>
+          <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
+        </targetInfos>
+      </component>
+      <component Cclass="nRF_BLE" Cgroup="BLE_Modules" Csub="ble_advertising" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
+        <package name="nRF_BLE" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_BLE" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo excluded="1" name="flash_softdevice"/>
+          <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
+        </targetInfos>
+      </component>
+      <component Cclass="nRF_BLE" Cgroup="BLE_Modules" Csub="ble_common" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
+        <package name="nRF_BLE" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_BLE" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo excluded="1" name="flash_softdevice"/>
+          <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
+        </targetInfos>
+      </component>
+      <component Cclass="nRF_BLE" Cgroup="BLE_Modules" Csub="ble_conn_params" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
+        <package name="nRF_BLE" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_BLE" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo excluded="1" name="flash_softdevice"/>
+          <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
+        </targetInfos>
+      </component>
+      <component Cclass="nRF_BLE" Cgroup="BLE_Modules" Csub="ble_service_common" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
+        <package name="nRF_BLE" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_BLE" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo excluded="1" name="flash_softdevice"/>
+          <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
+        </targetInfos>
+      </component>
+      <component Cclass="nRF_BLE" Cgroup="BLE_Modules" Csub="device_manager" Cvariant="Peripheral" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
+        <package name="nRF_BLE" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_BLE" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo excluded="1" name="flash_softdevice"/>
+          <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
+        </targetInfos>
+      </component>
+      <component Cclass="nRF_BLE" Cgroup="BLE_Services" Csub="ble_bas" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
+        <package name="nRF_BLE" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_BLE" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo excluded="1" name="flash_softdevice"/>
+          <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
+        </targetInfos>
+      </component>
+      <component Cclass="nRF_BLE" Cgroup="BLE_Services" Csub="ble_dis" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
+        <package name="nRF_BLE" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_BLE" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo excluded="1" name="flash_softdevice"/>
+          <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
+        </targetInfos>
+      </component>
+      <component Cclass="nRF_BLE" Cgroup="BLE_Services" Csub="ble_hrs" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
+        <package name="nRF_BLE" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_BLE" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo excluded="1" name="flash_softdevice"/>
+          <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
+        </targetInfos>
+      </component>
+      <component Cclass="nRF_Drivers" Cgroup="app_uart" Cvariant="Fifo" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
+        <package name="nRF_Libraries" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Libraries" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo excluded="1" name="flash_softdevice"/>
+          <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
+        </targetInfos>
+      </component>
+      <component Cclass="nRF_Drivers" Cgroup="nrf_delay" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
+        <package name="nRF_Drivers" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Drivers" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo excluded="1" name="flash_softdevice"/>
+          <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
+        </targetInfos>
+      </component>
+      <component Cclass="nRF_Drivers" Cgroup="nrf_drv_common" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
+        <package name="nRF_Drivers" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Drivers" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo excluded="1" name="flash_softdevice"/>
+          <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
+        </targetInfos>
+      </component>
+      <component Cclass="nRF_Drivers" Cgroup="nrf_drv_gpiote" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
+        <package name="nRF_Drivers" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Drivers" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo excluded="1" name="flash_softdevice"/>
+          <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
+        </targetInfos>
+      </component>
+      <component Cclass="nRF_Drivers" Cgroup="nrf_drv_uart" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
+        <package name="nRF_Drivers" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Drivers" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo excluded="1" name="flash_softdevice"/>
+          <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
+        </targetInfos>
+      </component>
+      <component Cclass="nRF_Drivers" Cgroup="nrf_error" Cvariant="default" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
+        <package name="nRF_Drivers" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Drivers" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo excluded="1" name="flash_softdevice"/>
+          <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
+        </targetInfos>
+      </component>
+      <component Cclass="nRF_Drivers" Cgroup="nrf_gpio" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
+        <package name="nRF_Drivers" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Drivers" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo excluded="1" name="flash_softdevice"/>
+          <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
+        </targetInfos>
+      </component>
+      <component Cclass="nRF_Drivers" Cgroup="nrf_gpiote" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
+        <package name="nRF_Drivers" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Drivers" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo excluded="1" name="flash_softdevice"/>
+          <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
+        </targetInfos>
+      </component>
+      <component Cclass="nRF_Drivers" Cgroup="nrf_uart" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
+        <package name="nRF_Drivers" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Drivers" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo excluded="1" name="flash_softdevice"/>
+          <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
+        </targetInfos>
+      </component>
+      <component Cclass="nRF_Drivers" Cgroup="nrf_uarte" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
+        <package name="nRF_Drivers" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Drivers" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo excluded="1" name="flash_softdevice"/>
+          <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
+        </targetInfos>
+      </component>
+      <component Cclass="nRF_Drivers" Cgroup="pstorage" Cvariant="default" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
+        <package name="nRF_Drivers" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Drivers" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo excluded="1" name="flash_softdevice"/>
+          <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
+        </targetInfos>
+      </component>
+      <component Cclass="nRF_Libraries" Cgroup="app_button" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
+        <package name="nRF_Libraries" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Libraries" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo excluded="1" name="flash_softdevice"/>
+          <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
+        </targetInfos>
+      </component>
+      <component Cclass="nRF_Libraries" Cgroup="app_error" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
+        <package name="nRF_Libraries" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Libraries" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo excluded="1" name="flash_softdevice"/>
+          <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
+        </targetInfos>
+      </component>
+      <component Cclass="nRF_Libraries" Cgroup="app_fifo" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
+        <package name="nRF_Libraries" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Libraries" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo excluded="1" name="flash_softdevice"/>
+          <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
+        </targetInfos>
+      </component>
+      <component Cclass="nRF_Libraries" Cgroup="app_timer" Cvariant="default" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
+        <package name="nRF_Libraries" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Libraries" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo excluded="1" name="flash_softdevice"/>
+          <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
+        </targetInfos>
+      </component>
+      <component Cclass="nRF_Libraries" Cgroup="app_trace" Cvariant="default" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
+        <package name="nRF_Libraries" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Libraries" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo excluded="1" name="flash_softdevice"/>
+          <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
+        </targetInfos>
+      </component>
+      <component Cclass="nRF_Libraries" Cgroup="app_util" Cvariant="default" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
+        <package name="nRF_Libraries" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Libraries" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo excluded="1" name="flash_softdevice"/>
+          <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
+        </targetInfos>
+      </component>
+      <component Cclass="nRF_Libraries" Cgroup="nordic_common" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
+        <package name="nRF_Libraries" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Libraries" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo excluded="1" name="flash_softdevice"/>
+          <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
+        </targetInfos>
+      </component>
+      <component Cclass="nRF_Libraries" Cgroup="nrf_assert" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
+        <package name="nRF_Libraries" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Libraries" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo excluded="1" name="flash_softdevice"/>
+          <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
+        </targetInfos>
+      </component>
+      <component Cclass="nRF_Libraries" Cgroup="nrf_log" Cvariant="default" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
+        <package name="nRF_Libraries" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Libraries" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo excluded="1" name="flash_softdevice"/>
+          <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
+        </targetInfos>
+      </component>
+      <component Cclass="nRF_Libraries" Cgroup="retarget" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
+        <package name="nRF_Libraries" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Libraries" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo excluded="1" name="flash_softdevice"/>
+          <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
+        </targetInfos>
+      </component>
+      <component Cclass="nRF_Libraries" Cgroup="segger_rtt" Cvendor="NordicSemiconductor" Cversion="1.2.1-2.alpha">
+        <package name="nRF_Drivers_External" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Drivers_External" vendor="NordicSemiconductor" version="1.2.1-2.alpha"/>
+        <targetInfos>
+          <targetInfo excluded="1" name="flash_softdevice"/>
+          <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
+        </targetInfos>
+      </component>
+      <component Cclass="nRF_Libraries" Cgroup="sensorsim" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha">
+        <package name="nRF_Libraries" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Libraries" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo excluded="1" name="flash_softdevice"/>
+          <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
+        </targetInfos>
+      </component>
+      <component Cclass="nRF_SoftDevice" Cgroup="Internal" Csub="sd_common" Cvariant="default" Cvendor="NordicSemiconductor" Cversion="2.0.0-2.alpha">
+        <package name="nRF_SoftDevice_Common" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_SoftDevice_Common" vendor="NordicSemiconductor" version="2.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo excluded="1" name="flash_softdevice"/>
+          <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
+        </targetInfos>
+      </component>
+      <component Cclass="nRF_SoftDevice" Cgroup="Internal" Csub="softdevice_present" Cvendor="NordicSemiconductor" Cversion="2.0.0-2.alpha">
+        <package name="nRF_SoftDevice_Common" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_SoftDevice_Common" vendor="NordicSemiconductor" version="2.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo excluded="1" name="flash_softdevice"/>
+          <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
+        </targetInfos>
+      </component>
+      <component Cclass="nRF_SoftDevice" Cgroup="s130" Cvariant="default" Cvendor="NordicSemiconductor" Cversion="2.0.0-7.alpha">
+        <package name="nRF_SoftDevice_S130" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_SoftDevice_S130" vendor="NordicSemiconductor" version="2.0.0-7.alpha"/>
+        <targetInfos>
+          <targetInfo excluded="1" name="flash_softdevice"/>
+          <targetInfo name="nrf51422_xxac_s130" versionMatchMode="fixed"/>
+        </targetInfos>
+      </component>
+      <component Cclass="nRF_SoftDevice" Cgroup="s130_hex" Cvendor="NordicSemiconductor" Cversion="2.0.0-7.alpha">
+        <package name="nRF_SoftDevice_S130" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_SoftDevice_S130" vendor="NordicSemiconductor" version="2.0.0-7.alpha"/>
+        <targetInfos>
+          <targetInfo excluded="1" name="flash_softdevice"/>
+          <targetInfo excluded="1" name="nrf51422_xxac_s130"/>
+        </targetInfos>
+      </component>
+    </components>
+    <files>
+      <file attr="config" category="source" name="bsp\bsp.c" version="11.0.0-2.alpha">
+        <instance index="0">RTE\Board_Support\nRF51422_xxAC\bsp.c</instance>
+        <component Cclass="Board Support" Cgroup="bsp" Cvariant="default" Cvendor="NordicSemiconductor" Cversion="11.0.0-2.alpha" condition="bsp_default"/>
+        <package name="nRF_Examples" schemaVersion="1.2" supportContact="http://www.nordicsemi.com/About-us/Contact-us" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Examples/" vendor="NordicSemiconductor" version="11.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo name="nrf51422_xxac_s130"/>
+        </targetInfos>
+      </file>
+      <file attr="config" category="source" name="bsp\bsp_btn_ble.c" version="11.0.0-2.alpha">
+        <instance index="0">RTE\Board_Support\nRF51422_xxAC\bsp_btn_ble.c</instance>
+        <component Cclass="Board Support" Cgroup="bsp_btn_ble" Cvendor="NordicSemiconductor" Cversion="11.0.0-2.alpha" condition="bsp_btn_ble"/>
+        <package name="nRF_Examples" schemaVersion="1.2" supportContact="http://www.nordicsemi.com/About-us/Contact-us" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Examples/" vendor="NordicSemiconductor" version="11.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo name="nrf51422_xxac_s130"/>
+        </targetInfos>
+      </file>
+      <file attr="config" category="source" condition="ARM Compiler" name="Device\Source\arm\arm_startup_nrf51.s" version="8.6.0">
+        <instance index="0">RTE\Device\nRF51422_xxAC\arm_startup_nrf51.s</instance>
+        <component Cclass="Device" Cgroup="Startup" Cvendor="NordicSemiconductor" Cversion="8.3.1" condition="nRF51 Series CMSIS Device"/>
+        <package license="License\license.txt" name="nRF_DeviceFamilyPack" schemaVersion="1.3" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_DeviceFamilyPack/" vendor="NordicSemiconductor" version="8.3.1"/>
+        <targetInfos>
+          <targetInfo excluded="1" name="flash_s130_nrf51_2.0.0-7.alpha_softdevice"/>
+          <targetInfo name="nrf51422_xxac_s130"/>
+        </targetInfos>
+      </file>
+      <file attr="config" category="source" name="Device\Source\system_nrf51.c" version="8.6.0">
+        <instance index="0">RTE\Device\nRF51422_xxAC\system_nrf51.c</instance>
+        <component Cclass="Device" Cgroup="Startup" Cvendor="NordicSemiconductor" Cversion="8.3.1" condition="nRF51 Series CMSIS Device"/>
+        <package license="License\license.txt" name="nRF_DeviceFamilyPack" schemaVersion="1.3" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_DeviceFamilyPack/" vendor="NordicSemiconductor" version="8.3.1"/>
+        <targetInfos>
+          <targetInfo excluded="1" name="flash_s130_nrf51_2.0.0-7.alpha_softdevice"/>
+          <targetInfo name="nrf51422_xxac_s130"/>
+        </targetInfos>
+      </file>
+      <file attr="config" category="source" name="common\ble_advdata.c" version="4.0.0-2.alpha">
+        <instance index="0">RTE\nRF_BLE\nRF51422_xxAC\ble_advdata.c</instance>
+        <component Cclass="nRF_BLE" Cgroup="BLE_Modules" Csub="ble_advdata" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha" condition="ble_advdata"/>
+        <package name="nRF_BLE" schemaVersion="1.2" supportContact="http://www.nordicsemi.com/About-us/Contact-us" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_BLE/" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo name="nrf51422_xxac_s130"/>
+        </targetInfos>
+      </file>
+      <file attr="config" category="header" name="common\ble_advdata.h" version="4.0.0-2.alpha">
+        <instance index="0">RTE\nRF_BLE\nRF51422_xxAC\ble_advdata.h</instance>
+        <component Cclass="nRF_BLE" Cgroup="BLE_Modules" Csub="ble_advdata" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha" condition="ble_advdata"/>
+        <package name="nRF_BLE" schemaVersion="1.2" supportContact="http://www.nordicsemi.com/About-us/Contact-us" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_BLE/" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo name="nrf51422_xxac_s130"/>
+        </targetInfos>
+      </file>
+      <file attr="config" category="source" name="ble_advertising\ble_advertising.c" version="4.0.0-2.alpha">
+        <instance index="0">RTE\nRF_BLE\nRF51422_xxAC\ble_advertising.c</instance>
+        <component Cclass="nRF_BLE" Cgroup="BLE_Modules" Csub="ble_advertising" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha" condition="ble_advertising"/>
+        <package name="nRF_BLE" schemaVersion="1.2" supportContact="http://www.nordicsemi.com/About-us/Contact-us" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_BLE/" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo name="nrf51422_xxac_s130"/>
+        </targetInfos>
+      </file>
+      <file attr="config" category="source" name="common\ble_conn_params.c" version="4.0.0-2.alpha">
+        <instance index="0">RTE\nRF_BLE\nRF51422_xxAC\ble_conn_params.c</instance>
+        <component Cclass="nRF_BLE" Cgroup="BLE_Modules" Csub="ble_conn_params" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha" condition="ble_conn_params"/>
+        <package name="nRF_BLE" schemaVersion="1.2" supportContact="http://www.nordicsemi.com/About-us/Contact-us" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_BLE/" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo name="nrf51422_xxac_s130"/>
+        </targetInfos>
+      </file>
+      <file attr="config" category="header" name="common\ble_conn_params.h" version="4.0.0-2.alpha">
+        <instance index="0">RTE\nRF_BLE\nRF51422_xxAC\ble_conn_params.h</instance>
+        <component Cclass="nRF_BLE" Cgroup="BLE_Modules" Csub="ble_conn_params" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha" condition="ble_conn_params"/>
+        <package name="nRF_BLE" schemaVersion="1.2" supportContact="http://www.nordicsemi.com/About-us/Contact-us" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_BLE/" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo name="nrf51422_xxac_s130"/>
+        </targetInfos>
+      </file>
+      <file attr="config" category="header" name="device_manager\config\device_manager_cnfg.h" version="4.0.0-2.alpha">
+        <instance index="0">RTE\nRF_BLE\nRF51422_xxAC\device_manager_cnfg.h</instance>
+        <component Cclass="nRF_BLE" Cgroup="BLE_Modules" Csub="device_manager" Cvariant="Peripheral" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha" condition="device_manager_Peripheral"/>
+        <package name="nRF_BLE" schemaVersion="1.2" supportContact="http://www.nordicsemi.com/About-us/Contact-us" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_BLE/" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo excluded="1" name="flash_softdevice"/>
+          <targetInfo name="nrf51422_xxac_s130"/>
+        </targetInfos>
+      </file>
+      <file attr="config" category="header" name="uart\app_uart.h" version="4.0.0-2.alpha">
+        <instance index="0">RTE\nRF_Drivers\nRF51422_xxAC\app_uart.h</instance>
+        <component Cclass="nRF_Drivers" Cgroup="app_uart" Cvariant="Fifo" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha" condition="app_uart_Fifo"/>
+        <package name="nRF_Libraries" schemaVersion="1.2" supportContact="http://www.nordicsemi.com/About-us/Contact-us" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Libraries/" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo name="nrf51422_xxac_s130"/>
+        </targetInfos>
+      </file>
+      <file attr="config" category="source" name="uart\app_uart_fifo.c" version="4.0.0-2.alpha">
+        <instance index="0">RTE\nRF_Drivers\nRF51422_xxAC\app_uart_fifo.c</instance>
+        <component Cclass="nRF_Drivers" Cgroup="app_uart" Cvariant="Fifo" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha" condition="app_uart_Fifo"/>
+        <package name="nRF_Libraries" schemaVersion="1.2" supportContact="http://www.nordicsemi.com/About-us/Contact-us" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Libraries/" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo name="nrf51422_xxac_s130"/>
+        </targetInfos>
+      </file>
+      <file attr="config" category="header" name="config\nrf_drv_config.h" version="4.0.0-2.alpha">
+        <instance index="0">RTE\nRF_Drivers\nRF51422_xxAC\nrf_drv_config.h</instance>
+        <component Cclass="nRF_Drivers" Cgroup="nrf_drv_uart" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha" condition="nrf_drv_uart"/>
+        <package name="nRF_Drivers" schemaVersion="1.2" supportContact="http://www.nordicsemi.com/About-us/Contact-us" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Drivers/" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo excluded="1" name="flash_softdevice"/>
+          <targetInfo name="nrf51422_xxac_s130"/>
+        </targetInfos>
+      </file>
+      <file attr="config" category="source" name="pstorage\pstorage.c" version="4.0.0-2.alpha">
+        <instance index="0">RTE\nRF_Drivers\nRF51422_xxAC\pstorage.c</instance>
+        <component Cclass="nRF_Drivers" Cgroup="pstorage" Cvariant="default" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha" condition="pstorage_default"/>
+        <package name="nRF_Drivers" schemaVersion="1.2" supportContact="http://www.nordicsemi.com/About-us/Contact-us" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Drivers/" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo name="nrf51422_xxac_s130"/>
+        </targetInfos>
+      </file>
+      <file attr="config" category="header" name="pstorage\pstorage.h" version="4.0.0-2.alpha">
+        <instance index="0">RTE\nRF_Drivers\nRF51422_xxAC\pstorage.h</instance>
+        <component Cclass="nRF_Drivers" Cgroup="pstorage" Cvariant="default" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha" condition="pstorage_default"/>
+        <package name="nRF_Drivers" schemaVersion="1.2" supportContact="http://www.nordicsemi.com/About-us/Contact-us" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Drivers/" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo name="nrf51422_xxac_s130"/>
+        </targetInfos>
+      </file>
+      <file attr="config" category="header" name="pstorage\config\pstorage_platform.h" version="4.0.0-2.alpha">
+        <instance index="0">RTE\nRF_Drivers\nRF51422_xxAC\pstorage_platform.h</instance>
+        <component Cclass="nRF_Drivers" Cgroup="pstorage" Cvariant="default" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha" condition="pstorage_default"/>
+        <package name="nRF_Drivers" schemaVersion="1.2" supportContact="http://www.nordicsemi.com/About-us/Contact-us" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Drivers/" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo excluded="1" name="flash_softdevice"/>
+          <targetInfo name="nrf51422_xxac_s130"/>
+        </targetInfos>
+      </file>
+      <file attr="config" category="source" name="segger_rtt\SEGGER_RTT.c" version="1.2.1-2.alpha">
+        <instance index="0">RTE\nRF_Libraries\nRF51422_xxAC\SEGGER_RTT.c</instance>
+        <component Cclass="nRF_Libraries" Cgroup="segger_rtt" Cvendor="NordicSemiconductor" Cversion="1.2.1-2.alpha" condition="segger_rtt"/>
+        <package name="nRF_Drivers_External" schemaVersion="1.2" supportContact="http://www.nordicsemi.com/About-us/Contact-us" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Drivers_External/" vendor="NordicSemiconductor" version="1.2.1-2.alpha"/>
+        <targetInfos>
+          <targetInfo name="nrf51422_xxac_s130"/>
+        </targetInfos>
+      </file>
+      <file attr="config" category="header" name="segger_rtt\SEGGER_RTT.h" version="1.2.1-2.alpha">
+        <instance index="0">RTE\nRF_Libraries\nRF51422_xxAC\SEGGER_RTT.h</instance>
+        <component Cclass="nRF_Libraries" Cgroup="segger_rtt" Cvendor="NordicSemiconductor" Cversion="1.2.1-2.alpha" condition="segger_rtt"/>
+        <package name="nRF_Drivers_External" schemaVersion="1.2" supportContact="http://www.nordicsemi.com/About-us/Contact-us" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Drivers_External/" vendor="NordicSemiconductor" version="1.2.1-2.alpha"/>
+        <targetInfos>
+          <targetInfo name="nrf51422_xxac_s130"/>
+        </targetInfos>
+      </file>
+      <file attr="config" category="header" name="segger_rtt\SEGGER_RTT_Conf.h" version="1.2.1-2.alpha">
+        <instance index="0">RTE\nRF_Libraries\nRF51422_xxAC\SEGGER_RTT_Conf.h</instance>
+        <component Cclass="nRF_Libraries" Cgroup="segger_rtt" Cvendor="NordicSemiconductor" Cversion="1.2.1-2.alpha" condition="segger_rtt"/>
+        <package name="nRF_Drivers_External" schemaVersion="1.2" supportContact="http://www.nordicsemi.com/About-us/Contact-us" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Drivers_External/" vendor="NordicSemiconductor" version="1.2.1-2.alpha"/>
+        <targetInfos>
+          <targetInfo name="nrf51422_xxac_s130"/>
+        </targetInfos>
+      </file>
+      <file attr="config" category="source" name="segger_rtt\SEGGER_RTT_printf.c" version="1.2.1-2.alpha">
+        <instance index="0">RTE\nRF_Libraries\nRF51422_xxAC\SEGGER_RTT_printf.c</instance>
+        <component Cclass="nRF_Libraries" Cgroup="segger_rtt" Cvendor="NordicSemiconductor" Cversion="1.2.1-2.alpha" condition="segger_rtt"/>
+        <package name="nRF_Drivers_External" schemaVersion="1.2" supportContact="http://www.nordicsemi.com/About-us/Contact-us" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Drivers_External/" vendor="NordicSemiconductor" version="1.2.1-2.alpha"/>
+        <targetInfos>
+          <targetInfo name="nrf51422_xxac_s130"/>
+        </targetInfos>
+      </file>
+      <file attr="config" category="source" name="button\app_button.c" version="4.0.0-2.alpha">
+        <instance index="0">RTE\nRF_Libraries\nRF51422_xxAC\app_button.c</instance>
+        <component Cclass="nRF_Libraries" Cgroup="app_button" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha" condition="app_button"/>
+        <package name="nRF_Libraries" schemaVersion="1.2" supportContact="http://www.nordicsemi.com/About-us/Contact-us" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Libraries/" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo name="nrf51422_xxac_s130"/>
+        </targetInfos>
+      </file>
+      <file attr="config" category="header" name="button\app_button.h" version="4.0.0-2.alpha">
+        <instance index="0">RTE\nRF_Libraries\nRF51422_xxAC\app_button.h</instance>
+        <component Cclass="nRF_Libraries" Cgroup="app_button" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha" condition="app_button"/>
+        <package name="nRF_Libraries" schemaVersion="1.2" supportContact="http://www.nordicsemi.com/About-us/Contact-us" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Libraries/" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo name="nrf51422_xxac_s130"/>
+        </targetInfos>
+      </file>
+      <file attr="config" category="source" name="util\app_error.c" version="4.0.0-2.alpha">
+        <instance index="0">RTE\nRF_Libraries\nRF51422_xxAC\app_error.c</instance>
+        <component Cclass="nRF_Libraries" Cgroup="app_error" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha" condition="app_error"/>
+        <package name="nRF_Libraries" schemaVersion="1.2" supportContact="http://www.nordicsemi.com/About-us/Contact-us" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Libraries/" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo name="nrf51422_xxac_s130"/>
+        </targetInfos>
+      </file>
+      <file attr="config" category="header" name="util\app_error.h" version="4.0.0-2.alpha">
+        <instance index="0">RTE\nRF_Libraries\nRF51422_xxAC\app_error.h</instance>
+        <component Cclass="nRF_Libraries" Cgroup="app_error" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha" condition="app_error"/>
+        <package name="nRF_Libraries" schemaVersion="1.2" supportContact="http://www.nordicsemi.com/About-us/Contact-us" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Libraries/" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo name="nrf51422_xxac_s130"/>
+        </targetInfos>
+      </file>
+      <file attr="config" category="source" name="fifo\app_fifo.c" version="4.0.0-2.alpha">
+        <instance index="0">RTE\nRF_Libraries\nRF51422_xxAC\app_fifo.c</instance>
+        <component Cclass="nRF_Libraries" Cgroup="app_fifo" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha" condition="app_fifo"/>
+        <package name="nRF_Libraries" schemaVersion="1.2" supportContact="http://www.nordicsemi.com/About-us/Contact-us" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Libraries/" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo name="nrf51422_xxac_s130"/>
+        </targetInfos>
+      </file>
+      <file attr="config" category="header" name="fifo\app_fifo.h" version="4.0.0-2.alpha">
+        <instance index="0">RTE\nRF_Libraries\nRF51422_xxAC\app_fifo.h</instance>
+        <component Cclass="nRF_Libraries" Cgroup="app_fifo" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha" condition="app_fifo"/>
+        <package name="nRF_Libraries" schemaVersion="1.2" supportContact="http://www.nordicsemi.com/About-us/Contact-us" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Libraries/" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo name="nrf51422_xxac_s130"/>
+        </targetInfos>
+      </file>
+      <file attr="config" category="source" name="timer\app_timer.c" version="4.0.0-2.alpha">
+        <instance index="0">RTE\nRF_Libraries\nRF51422_xxAC\app_timer.c</instance>
+        <component Cclass="nRF_Libraries" Cgroup="app_timer" Cvariant="default" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha" condition="app_timer_default"/>
+        <package name="nRF_Libraries" schemaVersion="1.2" supportContact="http://www.nordicsemi.com/About-us/Contact-us" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Libraries/" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo name="nrf51422_xxac_s130"/>
+        </targetInfos>
+      </file>
+      <file attr="config" category="header" name="timer\app_timer.h" version="4.0.0-2.alpha">
+        <instance index="0">RTE\nRF_Libraries\nRF51422_xxAC\app_timer.h</instance>
+        <component Cclass="nRF_Libraries" Cgroup="app_timer" Cvariant="default" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha" condition="app_timer_default"/>
+        <package name="nRF_Libraries" schemaVersion="1.2" supportContact="http://www.nordicsemi.com/About-us/Contact-us" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Libraries/" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo name="nrf51422_xxac_s130"/>
+        </targetInfos>
+      </file>
+      <file attr="config" category="source" name="trace\app_trace.c" version="4.0.0-2.alpha">
+        <instance index="0">RTE\nRF_Libraries\nRF51422_xxAC\app_trace.c</instance>
+        <component Cclass="nRF_Libraries" Cgroup="app_trace" Cvariant="default" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha" condition="app_trace_default"/>
+        <package name="nRF_Libraries" schemaVersion="1.2" supportContact="http://www.nordicsemi.com/About-us/Contact-us" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Libraries/" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo name="nrf51422_xxac_s130"/>
+        </targetInfos>
+      </file>
+      <file attr="config" category="header" name="trace\app_trace.h" version="4.0.0-2.alpha">
+        <instance index="0">RTE\nRF_Libraries\nRF51422_xxAC\app_trace.h</instance>
+        <component Cclass="nRF_Libraries" Cgroup="app_trace" Cvariant="default" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha" condition="app_trace_default"/>
+        <package name="nRF_Libraries" schemaVersion="1.2" supportContact="http://www.nordicsemi.com/About-us/Contact-us" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Libraries/" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo name="nrf51422_xxac_s130"/>
+        </targetInfos>
+      </file>
+      <file attr="config" category="source" name="util\nrf_assert.c" version="4.0.0-2.alpha">
+        <instance index="0">RTE\nRF_Libraries\nRF51422_xxAC\nrf_assert.c</instance>
+        <component Cclass="nRF_Libraries" Cgroup="nrf_assert" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha" condition="nrf_assert"/>
+        <package name="nRF_Libraries" schemaVersion="1.2" supportContact="http://www.nordicsemi.com/About-us/Contact-us" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Libraries/" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo name="nrf51422_xxac_s130"/>
+        </targetInfos>
+      </file>
+      <file attr="config" category="header" name="util\nrf_assert.h" version="4.0.0-2.alpha">
+        <instance index="0">RTE\nRF_Libraries\nRF51422_xxAC\nrf_assert.h</instance>
+        <component Cclass="nRF_Libraries" Cgroup="nrf_assert" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha" condition="nrf_assert"/>
+        <package name="nRF_Libraries" schemaVersion="1.2" supportContact="http://www.nordicsemi.com/About-us/Contact-us" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Libraries/" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo name="nrf51422_xxac_s130"/>
+        </targetInfos>
+      </file>
+      <file attr="config" category="source" name="util\nrf_log.c" version="4.0.0-2.alpha">
+        <instance index="0">RTE\nRF_Libraries\nRF51422_xxAC\nrf_log.c</instance>
+        <component Cclass="nRF_Libraries" Cgroup="nrf_log" Cvariant="default" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha" condition="nrf_log_default"/>
+        <package name="nRF_Libraries" schemaVersion="1.2" supportContact="http://www.nordicsemi.com/About-us/Contact-us" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Libraries/" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo name="nrf51422_xxac_s130"/>
+        </targetInfos>
+      </file>
+      <file attr="config" category="header" name="util\nrf_log.h" version="4.0.0-2.alpha">
+        <instance index="0">RTE\nRF_Libraries\nRF51422_xxAC\nrf_log.h</instance>
+        <component Cclass="nRF_Libraries" Cgroup="nrf_log" Cvariant="default" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha" condition="nrf_log_default"/>
+        <package name="nRF_Libraries" schemaVersion="1.2" supportContact="http://www.nordicsemi.com/About-us/Contact-us" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Libraries/" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo name="nrf51422_xxac_s130"/>
+        </targetInfos>
+      </file>
+      <file attr="config" category="source" name="uart\retarget.c" version="4.0.0-2.alpha">
+        <instance index="0">RTE\nRF_Libraries\nRF51422_xxAC\retarget.c</instance>
+        <component Cclass="nRF_Libraries" Cgroup="retarget" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha" condition="retarget"/>
+        <package name="nRF_Libraries" schemaVersion="1.2" supportContact="http://www.nordicsemi.com/About-us/Contact-us" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Libraries/" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo name="nrf51422_xxac_s130"/>
+        </targetInfos>
+      </file>
+      <file attr="config" category="source" name="sensorsim\sensorsim.c" version="4.0.0-2.alpha">
+        <instance index="0">RTE\nRF_Libraries\nRF51422_xxAC\sensorsim.c</instance>
+        <component Cclass="nRF_Libraries" Cgroup="sensorsim" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha" condition="sensorsim"/>
+        <package name="nRF_Libraries" schemaVersion="1.2" supportContact="http://www.nordicsemi.com/About-us/Contact-us" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_Libraries/" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo name="nrf51422_xxac_s130"/>
+        </targetInfos>
+      </file>
+      <file attr="config" category="doc" name="doc\s130_nrf51_2.0.0-7.alpha_licence_agreement.txt" version="2.0.0-7.alpha">
+        <instance index="0">RTE\nRF_SoftDevice\nRF51422_xxAC\s130_nrf51_2.0.0-7.alpha_licence_agreement.txt</instance>
+        <component Cclass="nRF_SoftDevice" Cgroup="s130" Cvariant="default" Cvendor="NordicSemiconductor" Cversion="2.0.0-7.alpha" condition="s130_default"/>
+        <package name="nRF_SoftDevice_S130" schemaVersion="1.2" supportContact="http://www.nordicsemi.com/About-us/Contact-us" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_SoftDevice_S130/" vendor="NordicSemiconductor" version="2.0.0-7.alpha"/>
+        <targetInfos>
+          <targetInfo name="nrf51422_xxac_s130"/>
+        </targetInfos>
+      </file>
+      <file attr="config" category="other" name="hex\s130_nrf51_2.0.0-7.alpha_softdevice.hex" version="2.0.0-7.alpha">
+        <instance index="0">RTE\nRF_SoftDevice\nRF51422_xxAC\s130_nrf51_2.0.0-7.alpha_softdevice.hex</instance>
+        <component Cclass="nRF_SoftDevice" Cgroup="s130_hex" Cvendor="NordicSemiconductor" Cversion="2.0.0-7.alpha" condition="s130_hex"/>
+        <package name="nRF_SoftDevice_S130" schemaVersion="1.2" supportContact="http://www.nordicsemi.com/About-us/Contact-us" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_SoftDevice_S130/" vendor="NordicSemiconductor" version="2.0.0-7.alpha"/>
+        <targetInfos>
+          <targetInfo excluded="1" name="nrf51422_xxac_s130"/>
+        </targetInfos>
+      </file>
+      <file attr="config" category="source" name="softdevice_handler\softdevice_handler.c" version="2.0.0-2.alpha">
+        <instance index="0">RTE\nRF_SoftDevice\nRF51422_xxAC\softdevice_handler.c</instance>
+        <component Cclass="nRF_SoftDevice" Cgroup="Internal" Csub="sd_common" Cvariant="default" Cvendor="NordicSemiconductor" Cversion="2.0.0-2.alpha" condition="sd_common_default"/>
+        <package name="nRF_SoftDevice_Common" schemaVersion="1.2" supportContact="http://www.nordicsemi.com/About-us/Contact-us" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_SoftDevice_Common/" vendor="NordicSemiconductor" version="2.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo name="nrf51422_xxac_s130"/>
+        </targetInfos>
+      </file>
+    </files>
+  </RTE>
 
 </Project>

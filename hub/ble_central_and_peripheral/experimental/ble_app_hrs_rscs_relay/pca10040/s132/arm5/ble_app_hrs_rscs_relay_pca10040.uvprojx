@@ -334,9 +334,9 @@ rf52xxx_uicr.flm))</FlashDriverDll>
             <v6WtE>0</v6WtE>
             <VariousControls>
               <MiscControls>--c99</MiscControls>
-              <Define> BLE_STACK_SUPPORT_REQD __HEAP_SIZE=0 S132 NRF52_PAN_53 NRF52_PAN_15 NRF52_PAN_54 NRF52_PAN_20 NRF52_PAN_55 NRF52_PAN_30 NRF52_PAN_58 NRF52_PAN_31 NRF52_PAN_62 NRF52_PAN_36 NRF52_PAN_63 NRF52_PAN_51 NRF52_PAN_64 CONFIG_GPIO_AS_PINRESET BOARD_PCA10040 NRF52_PAN_12 NRF_LOG_USES_UART=1 SOFTDEVICE_PRESENT NRF52 SWI_DISABLE0</Define>
+              <Define>BLE_STACK_SUPPORT_REQD __HEAP_SIZE=0 S132 NRF52_PAN_53 NRF52_PAN_15 NRF52_PAN_54 NRF52_PAN_20 NRF52_PAN_55 NRF52_PAN_30 NRF52_PAN_58 NRF52_PAN_31 NRF52_PAN_62 NRF52_PAN_36 NRF52_PAN_63 NRF52_PAN_51 NRF52_PAN_64 CONFIG_GPIO_AS_PINRESET BOARD_PCA10040 NRF52_PAN_12 NRF_LOG_USES_UART=1 SOFTDEVICE_PRESENT NRF52 SWI_DISABLE0</Define>
               <Undefine></Undefine>
-              <IncludePath></IncludePath>
+              <IncludePath>..\..\..\..\..\..\..\shared_libs</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -432,6 +432,16 @@ rf52xxx_uicr.flm))</FlashDriverDll>
                   </Cads>
                 </FileArmAds>
               </FileOption>
+            </File>
+            <File>
+              <FileName>battery_measure_nrf52.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\..\..\shared_libs\battery_measure_nrf52.c</FilePath>
+            </File>
+            <File>
+              <FileName>gpio_lib.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\..\..\shared_libs\gpio_lib.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -898,6 +908,16 @@ rf52xxx_uicr.flm))</FlashDriverDll>
                   </Cads>
                 </FileArmAds>
               </FileOption>
+            </File>
+            <File>
+              <FileName>battery_measure_nrf52.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\..\..\shared_libs\battery_measure_nrf52.c</FilePath>
+            </File>
+            <File>
+              <FileName>gpio_lib.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\..\..\..\..\shared_libs\gpio_lib.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -1483,8 +1503,8 @@ rf52xxx_uicr.flm))</FlashDriverDll>
           <targetInfo name="nrf52832_xxaa_s132" versionMatchMode="fixed"/>
         </targetInfos>
       </component>
-      <component Cclass="Device" Cgroup="Startup" Cvendor="NordicSemiconductor" Cversion="8.3.2" condition="nRF52 Series CMSIS Device">
-        <package license="License\license.txt" name="nRF_DeviceFamilyPack" schemaVersion="1.3" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_DeviceFamilyPack/" vendor="NordicSemiconductor" version="8.3.2"/>
+      <component Cclass="Device" Cgroup="Startup" Cvendor="NordicSemiconductor" Cversion="8.6.0" condition="nRF52 Series CMSIS Device">
+        <package license="License\license.txt" name="nRF_DeviceFamilyPack" schemaVersion="1.3" url="http://developer.nordicsemi.com/nRF5_SDK/pieces/nRF_DeviceFamilyPack/" vendor="NordicSemiconductor" version="8.6.0"/>
         <targetInfos>
           <targetInfo excluded="1" name="flash_s132_nrf52_2.0.0-7.alpha_softdevice" versionMatchMode=""/>
         </targetInfos>
@@ -1536,6 +1556,13 @@ rf52xxx_uicr.flm))</FlashDriverDll>
         <targetInfos>
           <targetInfo name="flash_s132_nrf52_2.0.0-7.alpha_softdevice"/>
           <targetInfo name="nrf52832_xxaa_s132" versionMatchMode="fixed"/>
+        </targetInfos>
+      </component>
+      <component Cclass="nRF_BLE" Cgroup="BLE_Modules" Csub="device_manager" Cvariant="Peripheral" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha" condition="device_manager_Peripheral">
+        <package name="nRF_BLE" schemaVersion="1.2" supportContact="http://www.nordicsemi.com/About-us/Contact-us" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_BLE/" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo name="flash_s132_nrf52_2.0.0-7.alpha_softdevice"/>
+          <targetInfo name="nrf52832_xxaa_s132"/>
         </targetInfos>
       </component>
       <component Cclass="nRF_BLE" Cgroup="BLE_Modules" Csub="gatt_cache_manager" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha" condition="gatt_cache_manager">
@@ -1636,6 +1663,13 @@ rf52xxx_uicr.flm))</FlashDriverDll>
           <targetInfo name="nrf52832_xxaa_s132"/>
         </targetInfos>
       </component>
+      <component Cclass="nRF_BLE" Cgroup="BLE_Services" Csub="ble_cscs" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha" condition="ble_cscs">
+        <package name="nRF_BLE" schemaVersion="1.2" supportContact="http://www.nordicsemi.com/About-us/Contact-us" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_BLE/" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo name="flash_s132_nrf52_2.0.0-7.alpha_softdevice"/>
+          <targetInfo name="nrf52832_xxaa_s132"/>
+        </targetInfos>
+      </component>
       <component Cclass="nRF_BLE" Cgroup="BLE_Services" Csub="ble_dis" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha" condition="ble_dis">
         <package name="nRF_BLE" schemaVersion="1.2" supportContact="http://www.nordicsemi.com/About-us/Contact-us" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_BLE/" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
         <targetInfos>
@@ -1669,6 +1703,13 @@ rf52xxx_uicr.flm))</FlashDriverDll>
         <targetInfos>
           <targetInfo name="flash_s132_nrf52_2.0.0-7.alpha_softdevice"/>
           <targetInfo name="nrf52832_xxaa_s132" versionMatchMode="fixed"/>
+        </targetInfos>
+      </component>
+      <component Cclass="nRF_BLE" Cgroup="BLE_Services" Csub="ble_sc_ctrlpt" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha" condition="ble_sc_ctrlpt">
+        <package name="nRF_BLE" schemaVersion="1.2" supportContact="http://www.nordicsemi.com/About-us/Contact-us" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_BLE/" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo name="flash_s132_nrf52_2.0.0-7.alpha_softdevice"/>
+          <targetInfo name="nrf52832_xxaa_s132"/>
         </targetInfos>
       </component>
       <component Cclass="nRF_Drivers" Cgroup="app_uart" Cvariant="default" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha" condition="app_uart_default">
@@ -1994,6 +2035,15 @@ rf52xxx_uicr.flm))</FlashDriverDll>
       <file attr="config" category="header" name="ble_db_discovery\ble_db_discovery.h" version="4.0.0-2.alpha">
         <instance index="0">RTE\nRF_BLE\nRF52832_xxAA\ble_db_discovery.h</instance>
         <component Cclass="nRF_BLE" Cgroup="BLE_Modules" Csub="ble_db_discovery" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha" condition="ble_db_discovery"/>
+        <package name="nRF_BLE" schemaVersion="1.2" supportContact="http://www.nordicsemi.com/About-us/Contact-us" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_BLE/" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
+        <targetInfos>
+          <targetInfo name="flash_s132_nrf52_2.0.0-7.alpha_softdevice"/>
+          <targetInfo name="nrf52832_xxaa_s132"/>
+        </targetInfos>
+      </file>
+      <file attr="config" category="header" name="device_manager\config\device_manager_cnfg.h" version="4.0.0-2.alpha">
+        <instance index="0">RTE\nRF_BLE\nRF52832_xxAA\device_manager_cnfg.h</instance>
+        <component Cclass="nRF_BLE" Cgroup="BLE_Modules" Csub="device_manager" Cvariant="Peripheral" Cvendor="NordicSemiconductor" Cversion="4.0.0-2.alpha" condition="device_manager_Peripheral"/>
         <package name="nRF_BLE" schemaVersion="1.2" supportContact="http://www.nordicsemi.com/About-us/Contact-us" url="http://developer.nordicsemi.com/nRF51_SDK/pieces/nRF_BLE/" vendor="NordicSemiconductor" version="4.0.0-2.alpha"/>
         <targetInfos>
           <targetInfo name="flash_s132_nrf52_2.0.0-7.alpha_softdevice"/>
